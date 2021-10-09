@@ -7,11 +7,8 @@
 			"problemMatcher": [
 				"$rustc"
 			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"label": "run"
+			"group": "build",
+			"label": "hostess: build"
 		}
 	]
 }

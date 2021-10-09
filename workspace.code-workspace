@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": ".\\doc"
+		},
+		{
+			"path": ".\\sample"
+		},
+		{
+			"path": ".\\hostess"
+		}
+	],
+	"settings": {}
+}
