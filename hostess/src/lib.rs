@@ -12,5 +12,7 @@ pub use game::*;
 
 pub use log;
 
+pub use uuid;
+
 #[cfg(not(target_arch = "wasm32"))]
 pub use tokio;

@@ -1,0 +1,7 @@
+- 2021-10-15
+- 2021-10-14
+- 2021-10-13
+- 2021-10-12
+- 2021-10-11    
+- 2021-10-10    20m created devlog, started masterserv migration
+- 2021-10-09    30m initival created. 
