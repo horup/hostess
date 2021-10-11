@@ -6,6 +6,12 @@ pub enum ClientMsg {
     Hello {
         client_id:Uuid
     },
+    CreateHost {
+
+    },
+    JoinHost {
+        host_id:Uuid
+    }
 }
 
 
@@ -13,6 +19,9 @@ pub enum ClientMsg {
 pub enum ServerMsg {
     Welcome {
 
+    },
+    HostCreated {
+        host_id:Uuid
     }
 }
 

@@ -63,8 +63,12 @@ impl Client {
         for msg in &self.server_messages {
             match msg {
                 ServerMsg::Welcome {  } => {
-                    self.status = "✓ Connected to Server ✓".into()
+                    self.status = "✓ Connected to Server ✓".into();
+                    self.client_messages.push(ClientMsg::CreateHost {
+
+                    });
                 },
+                _ => {}
             }
         }
 

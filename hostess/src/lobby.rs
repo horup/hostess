@@ -14,12 +14,9 @@ impl Lobby {
         }
     }
 
-    pub async fn client_entered(mut tx: SplitSink<WebSocket, Message>, mut rx: SplitStream<WebSocket>, client_id:Uuid) {
-        info!("Client {:?} entered lobby", client_id);
-
-        // process messages
-        while let Some(msg) = rx.next().await {}
-
-        // all done
+    pub fn new_host(&mut self, creator:Uuid) -> Uuid {
+        let host_id = Uuid::new_v4();
+        info!("Host {:?} created by client {}", host_id, creator);
+        return host_id;
     }
 }

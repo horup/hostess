@@ -1,23 +1,29 @@
-use std::{marker::PhantomData, net::SocketAddr, str::FromStr};
+use std::{marker::PhantomData, net::SocketAddr, str::FromStr, sync::Arc};
 
 use futures_util::{
     stream::{SplitSink, SplitStream},
     FutureExt, SinkExt, StreamExt,
 };
 use log::{error, info};
-use tokio::task::JoinHandle;
+use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
 use warp::{
     ws::{Message, WebSocket},
     Filter,
 };
 
-use crate::{ClientMsg, ServerMsg, game::Game, lobby::Lobby};
+use crate::{game::Game, lobby::Lobby, ClientMsg, ServerMsg};
 
 pub struct Server<T> {
     addr: String,
     phantom: PhantomData<T>,
-    lobby:Lobby
+    lobby: Arc<RwLock<Lobby>>,
+}
+
+struct ConnectedClient {
+    pub tx: SplitSink<WebSocket, Message>,
+    pub rx: SplitStream<WebSocket>,
+    pub client_id:Uuid
 }
 
 impl<T: Game + Send + 'static> Server<T> {
@@ -25,21 +31,49 @@ impl<T: Game + Send + 'static> Server<T> {
         Self {
             addr: addr.into(),
             phantom: PhantomData::default(),
-            lobby:Lobby::new()
+            lobby: Arc::new(RwLock::new(Lobby::new())),
         }
     }
 
-    async fn client_joined(
-        mut tx: SplitSink<WebSocket, Message>,
-        mut rx: SplitStream<WebSocket>,
-        client_id: Uuid,
+    async fn client_joined_lobby(
+        mut client:ConnectedClient,
+        lobby: Arc<RwLock<Lobby>>,
     ) {
-        info!("Client {:?} joined", client_id);
+        info!("Client {:?} entered lobby", client.client_id);
 
-        while let Some(msg) = rx.next().await {}
+        while let Some(msg) = client.rx.next().await {
+            match msg {
+                Ok(msg) => {
+                    let bytes = msg.as_bytes();
+                    if bytes.len() > 0 {
+                        match bincode::deserialize::<ClientMsg>(bytes) {
+                            Ok(msg) => {
+                                match msg {
+                                    ClientMsg::CreateHost {} => {
+                                        // create new host
+                                        let mut lobby = lobby.write().await;
+                                        let host_id = lobby.new_host(client.client_id);
+                                    },
+                                    _ => {}
+                                }
+                            },
+                            Err(err) => {
+                                error!("{:?}", err);
+                                break;
+                            }
+                        }
+                    }
+                }
+                Err(err) => {
+                    error!("{:?}", err);
+                    break;
+                }
+            }
+        }
     }
 
-    async fn client_connected(ws: WebSocket) {
+
+    async fn client_connected(ws: WebSocket, lobby: Arc<RwLock<Lobby>>) {
         let (mut tx, mut rx) = ws.split();
 
         let mut id = None;
@@ -72,14 +106,19 @@ impl<T: Game + Send + 'static> Server<T> {
             }
         }
 
-        if let Some(id) = id {
+        if let Some(client_id) = id {
+            // Hello received, send Welcome message
+            // and proceed to lobby if successfull
             let msg = ServerMsg::Welcome {};
-
             match tx.send(Message::binary(msg.to_bincode())).await {
-                Ok(_) => Self::client_joined(tx, rx, id).await,
-                Err(_) => error!("Client {} failed to join", id),
+                Ok(_) => {
+                    Self::client_joined_lobby(ConnectedClient{tx, rx, client_id}, lobby).await
+                },
+                Err(_) => error!("Client {} failed to join", client_id),
             }
         }
+
+        // no more, disconnect the client
 
         match id {
             Some(id) => info!("Client {} disconnected", id),
@@ -92,9 +131,11 @@ impl<T: Game + Send + 'static> Server<T> {
             let addr = SocketAddr::from_str(&self.addr).expect("Could not parse address");
 
             let public_route = warp::fs::dir("./public");
-
-            let ws_route = warp::ws()
-                .map(move |ws: warp::ws::Ws| ws.on_upgrade(move |ws| Self::client_connected(ws)));
+            let lobby = self.lobby.clone();
+            let ws_route = warp::ws().map(move |ws: warp::ws::Ws| {
+                let lobby = lobby.clone();
+                ws.on_upgrade(move |ws| Self::client_connected(ws, lobby))
+            });
 
             let routes = warp::get().and(ws_route).or(public_route);
 
