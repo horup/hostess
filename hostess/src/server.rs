@@ -4,43 +4,48 @@ use futures_util::{
     stream::{SplitSink, SplitStream},
     FutureExt, SinkExt, StreamExt,
 };
-use log::info;
+use log::{error, info};
 use tokio::task::JoinHandle;
+use uuid::Uuid;
 use warp::{
     ws::{Message, WebSocket},
     Filter,
 };
 
-use crate::game::Game;
+use crate::{ClientMsg, ServerMsg, game::Game, lobby::Lobby};
 
 pub struct Server<T> {
     addr: String,
     phantom: PhantomData<T>,
+    lobby:Lobby
 }
 
 impl<T: Game + Send + 'static> Server<T> {
     pub fn new(addr: &str) -> Self {
         Self {
-            addr:addr.into(),
+            addr: addr.into(),
             phantom: PhantomData::default(),
+            lobby:Lobby::new()
         }
     }
 
-    /* async fn client_joined(mut tx: SplitSink<WebSocket, Message>, mut rx:SplitStream<WebSocket>, bus:Bus, client_id:Uuid) {
+    async fn client_joined(
+        mut tx: SplitSink<WebSocket, Message>,
+        mut rx: SplitStream<WebSocket>,
+        client_id: Uuid,
+    ) {
         info!("Client {:?} joined", client_id);
 
-        while let Some(msg) = rx.next().await {
-
-        }
-    }*/
+        while let Some(msg) = rx.next().await {}
+    }
 
     async fn client_connected(ws: WebSocket) {
         let (mut tx, mut rx) = ws.split();
 
-        //let mut id = None;
+        let mut id = None;
 
         // wait for Hello message to get client id
-        /*     while let Some(msg) = rx.next().await {
+        while let Some(msg) = rx.next().await {
             match msg {
                 Ok(msg) => {
                     let bytes = msg.as_bytes();
@@ -65,25 +70,21 @@ impl<T: Game + Send + 'static> Server<T> {
                     break;
                 }
             }
-        }*/
+        }
 
-        /*  if let Some(id) = id {
-            let msg = ServerMsg::Welcome {
-
-            };
-
+        if let Some(id) = id {
+            let msg = ServerMsg::Welcome {};
 
             match tx.send(Message::binary(msg.to_bincode())).await {
-                Ok(_) => Self::client_joined(tx, rx, bus, id).await,
+                Ok(_) => Self::client_joined(tx, rx, id).await,
                 Err(_) => error!("Client {} failed to join", id),
             }
         }
 
-
         match id {
             Some(id) => info!("Client {} disconnected", id),
-            None => info!("Unknown Client disconnected")
-        }*/
+            None => info!("Unknown Client disconnected"),
+        }
     }
 
     pub fn spawn(self) -> JoinHandle<()> {

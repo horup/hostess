@@ -1,6 +1,6 @@
 use std::f64::consts::PI;
 
-use wasm_bindgen::{JsCast, JsValue};
+use wasm_bindgen::{JsCast};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlImageElement};
 
 pub struct Canvas {

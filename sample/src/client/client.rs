@@ -1,5 +1,5 @@
 
-use hostess::{log::info, uuid::Uuid};
+use hostess::{ClientMsg, ServerMsg, log::info, uuid::Uuid};
 use crate::{shared::GameState};
 use super::Canvas;
 

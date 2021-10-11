@@ -5,6 +5,9 @@ pub use host::*;
 mod server;
 
 #[cfg(not(target_arch = "wasm32"))]
+mod lobby;
+
+#[cfg(not(target_arch = "wasm32"))]
 pub use server::*;
 
 mod game;
@@ -16,3 +19,6 @@ pub use uuid;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use tokio;
+
+mod protocols;
+pub use protocols::*;
