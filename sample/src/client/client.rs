@@ -68,6 +68,9 @@ impl Client {
 
                     });
                 },
+                ServerMsg::HostCreated { host_id: _} => {
+                    self.client_messages.push(ClientMsg::RefreshHosts);
+                },
                 _ => {}
             }
         }

@@ -1,5 +1,5 @@
 mod platform;
-use hostess::{ServerMsg, log::error};
+use hostess::{ServerMsg, log::{error, info}};
 pub use platform::*;
 
 mod client;
@@ -89,6 +89,7 @@ pub fn message(data:&[u8]) {
         if let Some(client) = &mut GLOBAL_CLIENT {
             match bincode::deserialize::<ServerMsg>(data) {
                 Ok(msg) => {
+                    info!("{:?}", msg);
                     client.server_messages.push(msg);
                 }
                 Err(err) => {
