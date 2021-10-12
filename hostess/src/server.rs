@@ -85,6 +85,16 @@ impl<T: Game + Send + 'static> Server<T> {
                                             hosts:lobby.read().await.hosts()
                                         }).await;
                                     },
+                                    ClientMsg::JoinHost { host_id } => {
+                                        let mut lobby = lobby.write().await;
+                                        if let Some(host) = lobby.get_host_mut(host_id) {
+                                            client.send(ServerMsg::HostJoined {
+                                                host:host.clone()
+                                            }).await;
+
+                                            // host now takes over socket
+                                        }
+                                    },
                                     _ => {}
                                 }
                             },
@@ -140,7 +150,7 @@ impl<T: Game + Send + 'static> Server<T> {
         if let Some(client_id) = id {
             // Hello received, send Welcome message
             // and proceed to lobby if successfull
-            let msg = ServerMsg::Welcome {};
+            let msg = ServerMsg::LobbyJoined {};
             match tx.send(Message::binary(msg.to_bincode())).await {
                 Ok(_) => {
                     Self::client_joined_lobby(ConnectedClient{tx, rx, client_id}, lobby, config).await

@@ -11,8 +11,8 @@ pub enum ClientMsg {
     },
     JoinHost {
         host_id:Uuid
-    }, 
-    RefreshHosts
+    },
+    RefreshHosts,
 }
 
 
@@ -24,7 +24,7 @@ pub struct HostInfo {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ServerMsg {
-    Welcome {
+    LobbyJoined {
 
     },
     HostCreated {
@@ -32,6 +32,9 @@ pub enum ServerMsg {
     },
     Hosts {
         hosts:Vec<HostInfo>
+    },
+    HostJoined {
+        host:HostInfo
     }
 }
 

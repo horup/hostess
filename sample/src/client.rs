@@ -59,20 +59,35 @@ impl Client {
         self.canvas.fill_text(&self.status, (self.canvas.width() / 2 / grid_size as u32) as f64, 0.5);
     }
 
-    pub fn update(&mut self) {
-        for msg in &self.server_messages {
-            match msg {
-                ServerMsg::Welcome {  } => {
-                    self.status = "✓ Connected to Server ✓".into();
-                    self.client_messages.push(ClientMsg::CreateHost {
+    pub fn send(&mut self, msg:ClientMsg) {
+        self.client_messages.push(msg)
+    }
 
+    pub fn recv(&mut self, msg:&ServerMsg) {
+        match msg {
+            ServerMsg::LobbyJoined {  } => {
+                self.status = "Connected to Server".into();
+               
+            },
+            ServerMsg::Hosts {hosts} => {
+                if let Some(host) = hosts.first() {
+                    self.status = format!("Joining host {}..", host.id);
+                    let id = host.id;
+                    self.send(ClientMsg::JoinHost {
+                        host_id:id
                     });
-                },
-                ServerMsg::HostCreated { host_id: _} => {
-                    self.client_messages.push(ClientMsg::RefreshHosts);
-                },
-                _ => {}
+                }
+            },
+            ServerMsg::HostJoined {host} => {
+                self.status = format!("✓ Joined host {} ✓ ", host.id);
             }
+            _ => {}
+        }
+    }
+
+    pub fn update(&mut self) {
+        for msg in &self.server_messages.clone() {
+            self.recv(msg);
         }
 
         self.draw();

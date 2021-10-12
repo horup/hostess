@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::HostInfo;
 
 pub struct Lobby {
-    pub hosts:HashMap<Uuid, HostInfo>
+    hosts:HashMap<Uuid, HostInfo>
 }
 
 impl Lobby {
@@ -29,5 +29,9 @@ impl Lobby {
     pub fn hosts(&self) -> Vec<HostInfo> {
         let list = self.hosts.iter().map(|(_, host)| host.clone()).collect();
         return list;
+    }
+
+    pub fn get_host_mut(&mut self, id:Uuid) -> Option<&mut HostInfo> {
+        self.hosts.get_mut(&id)
     }
 }
