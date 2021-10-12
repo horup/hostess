@@ -1,6 +1,6 @@
 
 use hostess::{ClientMsg, ServerMsg, log::info, uuid::Uuid};
-use crate::{shared::GameState};
+use crate::{GameState};
 use super::Canvas;
 
 pub struct Client {
