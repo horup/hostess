@@ -12,6 +12,8 @@ pub enum ClientMsg {
     JoinHost {
         host_id:Uuid
     },
+    LeaveHost {
+    },
     RefreshHosts,
 }
 

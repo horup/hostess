@@ -19,14 +19,14 @@ pub struct ServerConfig {
     pub host_creation:bool
 }
 
-pub struct Server<T> {
+pub struct Server<T:Game> {
     addr: String,
     phantom: PhantomData<T>,
-    pub lobby: Arc<RwLock<Lobby>>,
+    pub lobby: Arc<RwLock<Lobby<T>>>,
     pub config:ServerConfig
 }
 
-struct ConnectedClient {
+pub struct ConnectedClient {
     pub tx: SplitSink<WebSocket, Message>,
     pub rx: SplitStream<WebSocket>,
     pub client_id:Uuid
@@ -38,7 +38,7 @@ impl ConnectedClient {
     }
 }
 
-impl<T: Game + Send + 'static> Server<T> {
+impl<T: Game> Server<T> {
     pub fn new(addr: &str) -> Self {
         Self {
             addr: addr.into(),
@@ -50,7 +50,7 @@ impl<T: Game + Send + 'static> Server<T> {
 
     async fn client_joined_lobby(
         mut client:ConnectedClient,
-        lobby: Arc<RwLock<Lobby>>,
+        lobby: Arc<RwLock<Lobby<T>>>,
         config:ServerConfig
     ) {
         info!("Client {:?} entered lobby", client.client_id);
@@ -88,11 +88,7 @@ impl<T: Game + Send + 'static> Server<T> {
                                     ClientMsg::JoinHost { host_id } => {
                                         let mut lobby = lobby.write().await;
                                         if let Some(host) = lobby.get_host_mut(host_id) {
-                                            client.send(ServerMsg::HostJoined {
-                                                host:host.clone()
-                                            }).await;
-
-                                            // host now takes over socket
+                                            host.join(&mut client).await;
                                         }
                                     },
                                     _ => {}
@@ -114,7 +110,7 @@ impl<T: Game + Send + 'static> Server<T> {
     }
 
 
-    async fn client_connected(ws: WebSocket, lobby: Arc<RwLock<Lobby>>, config:ServerConfig) {
+    async fn client_connected(ws: WebSocket, lobby: Arc<RwLock<Lobby<T>>>, config:ServerConfig) {
         let (mut tx, mut rx) = ws.split();
 
         let mut id = None;

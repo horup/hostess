@@ -1,37 +1,40 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, marker::PhantomData};
 
 use log::info;
 use uuid::Uuid;
-use crate::HostInfo;
+use crate::{Game, Host, HostInfo};
 
-pub struct Lobby {
-    hosts:HashMap<Uuid, HostInfo>
+pub struct Lobby<T:Game + Send> {
+    hosts:HashMap<Uuid, Host>,
+    phantom:PhantomData<T>
 }
 
-impl Lobby {
+impl<T:Game + Send> Lobby<T> {
     pub fn new() -> Self {
         Lobby {
-            hosts:HashMap::new()
+            hosts:HashMap::new(),
+            phantom:PhantomData::default()
         }
     }
 
     pub fn new_host(&mut self, creator:Uuid) -> Uuid {
         let host_id = Uuid::new_v4();
-        let host = HostInfo {
+        let host = Host::new::<T>(HostInfo {
             id:host_id,
             creator:creator
-        };
+        });
+
         self.hosts.insert(host_id, host);
         info!("Host {:?} created by client {}", host_id, creator);
         return host_id;
     }
 
     pub fn hosts(&self) -> Vec<HostInfo> {
-        let list = self.hosts.iter().map(|(_, host)| host.clone()).collect();
+        let list = self.hosts.iter().map(|(_, host)| host.info.clone()).collect();
         return list;
     }
 
-    pub fn get_host_mut(&mut self, id:Uuid) -> Option<&mut HostInfo> {
+    pub fn get_host_mut(&mut self, id:Uuid) -> Option<&mut Host> {
         self.hosts.get_mut(&id)
     }
 }

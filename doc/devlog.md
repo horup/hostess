@@ -1,6 +1,6 @@
-- 2021-10-15
-- 2021-10-14
-- 2021-10-13
+- 2021-10-15    50m+ worked on spawning host
+- 2021-10-14    30m worked on spawning host
+- 2021-10-13    60m worked on spawning host
 - 2021-10-12    30m worked on joining host
 - 2021-10-11    90m worked on lobby abstraction, added support for host creation message, worked on host creation
 - 2021-10-10    20m created devlog, started masterserv migration
