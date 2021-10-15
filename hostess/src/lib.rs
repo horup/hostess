@@ -1,5 +1,5 @@
+#[cfg(not(target_arch = "wasm32"))]
 mod host;
-pub use host::*;
 
 #[cfg(not(target_arch = "wasm32"))]
 mod server;

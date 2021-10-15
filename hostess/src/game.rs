@@ -8,6 +8,10 @@ pub enum HostMsg {
     },
     ClientLeft {
         client_id:Uuid
+    },
+    CustomMsg {
+        client_id:Uuid,
+        msg:Vec<u8>
     }
 }
 

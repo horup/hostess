@@ -108,6 +108,10 @@ impl Client {
         // right = 39
         // esc = 27
 
+        self.send(ClientMsg::CustomMsg {
+            msg:[1, 2, 3].into()
+        });
+
         info!("{}", _code);
     }
 

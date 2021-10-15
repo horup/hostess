@@ -32,6 +32,7 @@ pub struct ConnectedClient {
     pub client_id:Uuid
 }
 
+
 impl ConnectedClient {
     pub async fn send(&mut self, server_msg:ServerMsg) {
         let _ = self.tx.send(Message::binary(server_msg.to_bincode())).await;
@@ -88,7 +89,7 @@ impl<T: Game> Server<T> {
                                     ClientMsg::JoinHost { host_id } => {
                                         let mut lobby = lobby.write().await;
                                         if let Some(host) = lobby.get_host_mut(host_id) {
-                                            host.join(&mut client).await;
+                                            client = host.join(client).await;
                                         }
                                     },
                                     _ => {}

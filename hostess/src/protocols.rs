@@ -14,6 +14,9 @@ pub enum ClientMsg {
     },
     LeaveHost {
     },
+    CustomMsg {
+        msg:Vec<u8>
+    },
     RefreshHosts,
 }
 

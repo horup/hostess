@@ -1,9 +1,10 @@
 use std::{collections::HashMap, sync::{Arc}, time::Duration};
 
-use futures_util::StreamExt;
+use futures_util::{SinkExt, StreamExt};
 use tokio::{sync::{RwLock, mpsc::channel, mpsc::Sender, mpsc::Receiver}, time::{interval}};
 use uuid::Uuid;
 use log::{info};
+use warp::ws::Message;
 
 use crate::{ClientMsg, ConnectedClient, Context, Game, GameMsg, HostInfo, HostMsg, ServerMsg};
 
@@ -61,10 +62,13 @@ impl Host {
         host
     }
 
-    pub async fn join(&self, mut client:&mut ConnectedClient) {
-        client.send(ServerMsg::HostJoined {
+    pub async fn join(&self, mut client:ConnectedClient) -> ConnectedClient {
+        let mut tx = client.tx;
+        let mut rx = client.rx;
+        
+        let _ = tx.send(Message::binary(ServerMsg::HostJoined {
             host:self.info.clone()
-        }).await;
+        }.to_bincode())).await;
 
         info!("Client {} joined Host {}", client.client_id, self.info.id);
 
@@ -74,7 +78,7 @@ impl Host {
         }).await;
 
         // while part of host
-        while let Some(msg) = client.rx.next().await {
+        while let Some(msg) = rx.next().await {
             match msg {
                 Ok(msg) => {
                     let bytes = msg.as_bytes();
@@ -82,8 +86,17 @@ impl Host {
                         Some(msg) => {
                             match msg {
                                 ClientMsg::LeaveHost {} => {
+                                    // exit while and leave host
                                     break;
                                 },
+                                ClientMsg::CustomMsg {
+                                    msg
+                                } => {
+                                    let _ = host_sender.send(HostMsg::CustomMsg {
+                                        client_id:client.client_id,
+                                        msg
+                                    }).await;
+                                }
                                 _ => {}
                             }
                         },
@@ -101,5 +114,11 @@ impl Host {
         }).await;
 
         info!("Client {} left Host {}", client.client_id, self.info.id);
+
+        ConnectedClient {
+            tx,
+            rx,
+            client_id:client.client_id
+        }
     }
 }
