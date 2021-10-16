@@ -1,27 +1,35 @@
 use std::{collections::HashMap, sync::{Arc}, time::Duration};
 
-use futures_util::{SinkExt, StreamExt};
+use futures_util::{SinkExt, StreamExt, stream::SplitSink};
 use tokio::{sync::{RwLock, mpsc::channel, mpsc::Sender, mpsc::Receiver}, time::{interval}};
 use uuid::Uuid;
 use log::{info};
-use warp::ws::Message;
+use warp::ws::{Message, WebSocket};
 
 use crate::{ClientMsg, ConnectedClient, Context, Game, GameMsg, HostInfo, HostMsg, ServerMsg};
 
+enum Msg {
+    HostMsg(HostMsg),
+    ClientTransfer {
+        client_id:Uuid,
+        tx:SplitSink<WebSocket, Message>,
+        return_tx:tokio::sync::oneshot::Sender<SplitSink<WebSocket, Message>>
+    }
+}
 pub struct Host {
     pub info:HostInfo,
     //pub messages_to_game:Arc<RwLock<Vec<HostMsg>>>
     //pub HashMap<Uuid,  
-    pub sender:Sender<HostMsg>
+    sender:Sender<Msg>,
 }
 
 impl Host {
     pub fn new<T:Game>(info:HostInfo) -> Self {
         let buffer_len = 1024;
-        let (sender, mut receiver) = channel::<HostMsg>(buffer_len);
+        let (sender, mut receiver) = channel::<Msg>(buffer_len);
         let host = Self {
             info,
-            sender
+            sender,
         };
 
         tokio::spawn(async move {
@@ -35,13 +43,38 @@ impl Host {
                 host_messages:Vec::with_capacity(buffer_len)
             };
 
+            let mut clients:HashMap<Uuid, (SplitSink<WebSocket, Message>, tokio::sync::oneshot::Sender<SplitSink<WebSocket, Message>>)> = HashMap::new();
+
             loop {
                 //receiver.poll_recv(cx)
                 loop {
                     match receiver.try_recv() {
                         Ok(msg) => {
-                            info!("{:?}", msg);
-                            context.host_messages.push(msg);
+                            match msg {
+                                Msg::HostMsg(msg) => {
+                                    info!("{:?}", msg);
+                                    match &msg {
+                                        HostMsg::ClientLeft { client_id } => {
+                                            if let Some((tx, transfer)) = clients.remove(client_id) {
+                                                transfer.send(tx);
+                                            }
+                                        },
+                                        HostMsg::CustomMsg { client_id, msg } => {
+
+                                        },
+                                        _=>{}
+                                    }
+
+                                    context.host_messages.push(msg);
+                                },
+                                Msg::ClientTransfer { 
+                                    client_id, 
+                                    tx, 
+                                    return_tx 
+                                } => {
+                                    clients.insert(client_id, (tx, return_tx));
+                                },
+                            }
                         },
                         Err(_) => {
                             break;
@@ -66,15 +99,25 @@ impl Host {
         let mut tx = client.tx;
         let mut rx = client.rx;
         
-        let _ = tx.send(Message::binary(ServerMsg::HostJoined {
+       /* let _ = tx.send(Message::binary(ServerMsg::HostJoined {
             host:self.info.clone()
         }.to_bincode())).await;
+
+
 
         info!("Client {} joined Host {}", client.client_id, self.info.id);
 
         let host_sender = self.sender.clone();
-        let _ = host_sender.send(HostMsg::ClientJoined {
+        let _ = host_sender.send(Msg::HostMsg(HostMsg::ClientJoined {
             client_id:client.client_id
+        })).await;*/
+
+        let (return_tx, return_rx) = tokio::sync::oneshot::channel::<SplitSink<WebSocket, Message>>();
+        let host_sender = self.sender.clone();
+        let _ = host_sender.send(Msg::ClientTransfer {
+            client_id: client.client_id,
+            tx,
+            return_tx,
         }).await;
 
         // while part of host
@@ -92,10 +135,10 @@ impl Host {
                                 ClientMsg::CustomMsg {
                                     msg
                                 } => {
-                                    let _ = host_sender.send(HostMsg::CustomMsg {
+                                    let _ = host_sender.send(Msg::HostMsg(HostMsg::CustomMsg {
                                         client_id:client.client_id,
                                         msg
-                                    }).await;
+                                    })).await;
                                 }
                                 _ => {}
                             }
@@ -109,9 +152,11 @@ impl Host {
             }
         }
 
-        let _ = host_sender.send(HostMsg::ClientLeft {
+        let _ = host_sender.send(Msg::HostMsg(HostMsg::ClientLeft {
             client_id:client.client_id
-        }).await;
+        })).await;
+
+        let tx = return_rx.await.expect("needs to be handled gracefully...");
 
         info!("Client {} left Host {}", client.client_id, self.info.id);
 
