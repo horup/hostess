@@ -87,8 +87,8 @@ impl<T: Game> Server<T> {
                                         }).await;
                                     },
                                     ClientMsg::JoinHost { host_id } => {
-                                        let mut lobby = lobby.write().await;
-                                        if let Some(host) = lobby.get_host_mut(host_id) {
+                                        let lobby = lobby.read().await;
+                                        if let Some(host) = lobby.get_host(host_id) {
                                             if let Some(c) = host.join(client).await {
                                                 client = c;
                                             } else {

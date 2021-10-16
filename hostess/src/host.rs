@@ -16,10 +16,9 @@ enum Msg {
         return_tx:tokio::sync::oneshot::Sender<SplitSink<WebSocket, Message>>
     }
 }
+#[derive(Clone)]
 pub struct Host {
     pub info:HostInfo,
-    //pub messages_to_game:Arc<RwLock<Vec<HostMsg>>>
-    //pub HashMap<Uuid,  
     sender:Sender<Msg>,
 }
 

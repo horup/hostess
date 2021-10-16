@@ -34,7 +34,11 @@ impl<T:Game + Send> Lobby<T> {
         return list;
     }
 
-    pub fn get_host_mut(&mut self, id:Uuid) -> Option<&mut Host> {
-        self.hosts.get_mut(&id)
+    pub fn get_host(&self, id:Uuid) -> Option<Host> {
+        if let Some(host) = self.hosts.get(&id) {
+            return Some(host.clone());
+        }
+
+        None
     }
 }
