@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::{Arc}, time::Duration};
+use std::{collections::{HashMap, VecDeque}, sync::{Arc}, time::Duration};
 
 use futures_util::{SinkExt, StreamExt, stream::SplitSink};
 use tokio::{sync::{RwLock, mpsc::channel, mpsc::Sender, mpsc::Receiver}, time::{interval}};
@@ -28,7 +28,7 @@ impl Host {
         let buffer_len = 1024;
         let (sender, mut receiver) = channel::<Msg>(buffer_len);
         let host = Self {
-            info,
+            info:info.clone(),
             sender,
         };
 
@@ -39,14 +39,13 @@ impl Host {
             let mut run = true;
 
             let mut context = Context {
-                game_messages:Vec::new(),
+                game_messages:VecDeque::new(),
                 host_messages:Vec::with_capacity(buffer_len)
             };
 
             let mut clients:HashMap<Uuid, (SplitSink<WebSocket, Message>, tokio::sync::oneshot::Sender<SplitSink<WebSocket, Message>>)> = HashMap::new();
 
             loop {
-                //receiver.poll_recv(cx)
                 loop {
                     match receiver.try_recv() {
                         Ok(msg) => {
@@ -56,7 +55,7 @@ impl Host {
                                     match &msg {
                                         HostMsg::ClientLeft { client_id } => {
                                             if let Some((tx, transfer)) = clients.remove(client_id) {
-                                                transfer.send(tx);
+                                                let _ = transfer.send(tx);
                                             }
                                         },
                                         HostMsg::CustomMsg { client_id, msg } => {
@@ -69,9 +68,16 @@ impl Host {
                                 },
                                 Msg::ClientTransfer { 
                                     client_id, 
-                                    tx, 
+                                    mut tx, 
                                     return_tx 
                                 } => {
+                                    context.host_messages.push(HostMsg::ClientJoined {
+                                        client_id:client_id
+                                    });
+                                    let _ = tx.send(Message::binary(ServerMsg::HostJoined {
+                                        host:info.clone()
+                                    }.to_bincode())).await;
+
                                     clients.insert(client_id, (tx, return_tx));
                                 },
                             }
@@ -85,9 +91,23 @@ impl Host {
                 //messages_to_game.read().await;
                 g.update(&mut context);
 
-                for msg in &context.game_messages {
-
+                // TODO: can be fuffered maybe?
+                for msg in context.game_messages.drain(..) {
+                    match msg {
+                        GameMsg::CustomToAll { msg } => {
+                            for (sink, _) in &mut clients.values_mut() {
+                                let _ = sink.send(Message::binary(ServerMsg::Custom{
+                                    msg:msg.clone()
+                                }.to_bincode())).await;
+                            }
+                        },
+                        GameMsg::CustomTo { client_id, msg } => {
+                            todo!();
+                        },
+                    }
                 }
+                
+                //while let Some(msg) in context.game_messages.remove(0)
                 timer.tick().await;
             }
         });
@@ -95,22 +115,10 @@ impl Host {
         host
     }
 
-    pub async fn join(&self, mut client:ConnectedClient) -> ConnectedClient {
-        let mut tx = client.tx;
-        let mut rx = client.rx;
-        
-       /* let _ = tx.send(Message::binary(ServerMsg::HostJoined {
-            host:self.info.clone()
-        }.to_bincode())).await;
-
-
-
+    pub async fn join(&self, client:ConnectedClient) -> Option<ConnectedClient> {
         info!("Client {} joined Host {}", client.client_id, self.info.id);
-
-        let host_sender = self.sender.clone();
-        let _ = host_sender.send(Msg::HostMsg(HostMsg::ClientJoined {
-            client_id:client.client_id
-        })).await;*/
+        let tx = client.tx;
+        let mut rx = client.rx;
 
         let (return_tx, return_rx) = tokio::sync::oneshot::channel::<SplitSink<WebSocket, Message>>();
         let host_sender = self.sender.clone();
@@ -155,15 +163,16 @@ impl Host {
         let _ = host_sender.send(Msg::HostMsg(HostMsg::ClientLeft {
             client_id:client.client_id
         })).await;
-
-        let tx = return_rx.await.expect("needs to be handled gracefully...");
-
+        
         info!("Client {} left Host {}", client.client_id, self.info.id);
+        if let Ok(tx) = return_rx.await {
+            return Some(ConnectedClient {
+                tx,
+                rx,
+                client_id:client.client_id
+            });
+        };
 
-        ConnectedClient {
-            tx,
-            rx,
-            client_id:client.client_id
-        }
+        None
     }
 }

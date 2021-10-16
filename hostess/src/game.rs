@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use uuid::Uuid;
 
 
@@ -17,12 +19,18 @@ pub enum HostMsg {
 
 #[derive(Clone, Debug)]
 pub enum GameMsg {
-
+    CustomToAll {
+        msg:Vec<u8>
+    },
+    CustomTo {
+        client_id:Uuid,
+        msg:Vec<u8>
+    }
 }
 
 pub struct Context {
     pub host_messages:Vec<HostMsg>,
-    pub game_messages:Vec<GameMsg>
+    pub game_messages:VecDeque<GameMsg>
 }
 
 pub trait Game : Send + Sync + 'static {

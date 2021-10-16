@@ -40,6 +40,9 @@ pub enum ServerMsg {
     },
     HostJoined {
         host:HostInfo
+    },
+    Custom {
+        msg:Vec<u8>
     }
 }
 
