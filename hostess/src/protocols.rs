@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ClientMsg {
@@ -46,6 +46,32 @@ pub enum ServerMsg {
     }
 }
 
+pub trait Bincode<'de> : Sized + Deserialize<'de> + Serialize {
+    fn from_bincode(bytes:&'de [u8]) -> Option<Self> {
+        let res = bincode::deserialize::<Self>(bytes);
+        match res {
+            Ok(msg) => return Some(msg),
+            Err(_) => return None,
+        }
+    }
+
+    fn to_bincode(&self) -> Vec<u8> {
+        let res = bincode::serialize::<Self>(self);
+        match res {
+            Ok(bytes) => return bytes,
+            Err(_) => return Vec::new(),
+        }
+    }
+}
+
+impl<'de : 'a, 'a> Bincode<'de> for ClientMsg {
+    
+}
+
+impl<'de : 'a, 'a> Bincode<'de> for ServerMsg {
+
+}
+/*
 impl ClientMsg {
     pub fn from_bincode(bytes:&[u8]) -> Option<Self> {
         let res = bincode::deserialize::<Self>(bytes);
@@ -81,3 +107,4 @@ impl ServerMsg {
         }
     }
 }
+*/

@@ -12,7 +12,7 @@ use warp::{
     Filter,
 };
 
-use crate::{game::Game, lobby::Lobby, ClientMsg, ServerMsg};
+use crate::{Bincode, ClientMsg, ServerMsg, game::Game, lobby::Lobby};
 
 #[derive(Clone, Copy, Default)]
 pub struct ServerConfig {

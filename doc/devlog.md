@@ -1,4 +1,4 @@
-- 2021-10-17    
+- 2021-10-17    25m made bincode trait 
 - 2021-10-16    65m worked on host
 - 2021-10-15    70m worked on spawning host
 - 2021-10-14    30m worked on spawning host

@@ -6,7 +6,7 @@ use uuid::Uuid;
 use log::{info};
 use warp::ws::{Message, WebSocket};
 
-use crate::{ClientMsg, ConnectedClient, Context, Game, GameMsg, HostInfo, HostMsg, ServerMsg};
+use crate::{Bincode, ClientMsg, ConnectedClient, Context, Game, GameMsg, HostInfo, HostMsg, ServerMsg};
 
 enum Msg {
     HostMsg(HostMsg),
