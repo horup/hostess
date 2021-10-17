@@ -8,9 +8,6 @@ mod server;
 mod lobby;
 
 #[cfg(not(target_arch = "wasm32"))]
-mod socket;
-
-#[cfg(not(target_arch = "wasm32"))]
 pub use server::*;
 
 mod game;

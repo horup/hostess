@@ -2,15 +2,12 @@ use std::{marker::PhantomData, net::SocketAddr, str::FromStr, sync::Arc};
 
 use futures_util::{
     stream::{SplitSink, SplitStream},
-    FutureExt, SinkExt, StreamExt,
+     SinkExt, StreamExt,
 };
 use log::{error, info};
 use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
-use warp::{
-    ws::{Message, WebSocket},
-    Filter,
-};
+use warp::{Error, Filter, ws::{Message, WebSocket}};
 
 use crate::{Bincode, ClientMsg, ServerMsg, game::Game, lobby::Lobby};
 
@@ -27,15 +24,66 @@ pub struct Server<T:Game> {
 }
 
 pub struct ConnectedClient {
-    pub tx: SplitSink<WebSocket, Message>,
-    pub rx: SplitStream<WebSocket>,
+    pub sink: ClientSink,
+    pub stream: ClientStream,
     pub client_id:Uuid
 }
 
+pub struct ClientSink {
+    sink:SplitSink<WebSocket, Message>
+}
 
-impl ConnectedClient {
-    pub async fn send(&mut self, server_msg:ServerMsg) {
-        let _ = self.tx.send(Message::binary(server_msg.to_bincode())).await;
+impl ClientSink {
+    pub async fn send(&mut self, msg:ServerMsg) -> Result<(), Error> {
+        self.sink.send(Message::binary(msg.to_bincode())).await
+    }
+}
+
+impl From<SplitSink<WebSocket, Message>> for ClientSink {
+    fn from(sink: SplitSink<WebSocket, Message>) -> Self {
+        Self {
+            sink
+        }
+    }
+}
+pub struct ClientStream {
+    stream: SplitStream<WebSocket>
+}
+
+impl ClientStream {
+    pub async fn next<'a, T : Bincode>(&'a mut self) -> Option<Result<T, Box<dyn std::error::Error + Send>>> {
+        match self.stream.next().await {
+            Some(msg) => {
+                match msg {
+                    Ok(msg) => {
+                        let bytes = msg.as_bytes();//.as_bytes();
+                        match T::from_bincode(bytes) {
+                            Some(msg) => {
+                                return Some(Ok(msg));
+                            },
+                            None => {
+                                None 
+                            },
+                        }
+
+                    },
+                    Err(err) => {
+                        return Some(Err(Box::new(err)));
+                    },
+                }
+            },
+            None => {
+                return None;
+            },
+        }
+    }
+}
+
+impl From<SplitStream<WebSocket>> for ClientStream {
+    fn from(stream: SplitStream<WebSocket>) -> Self {
+        Self {
+            stream
+        }
     }
 }
 
@@ -57,11 +105,11 @@ impl<T: Game> Server<T> {
         info!("Client {:?} entered lobby", client.client_id);
 
         // send list of hosts to client
-        client.send(ServerMsg::Hosts {
+        let _ = client.sink.send(ServerMsg::Hosts {
             hosts:lobby.read().await.hosts()
         }).await;
 
-        while let Some(msg) = client.rx.next().await {
+        while let Some(msg) = client.stream.stream.next().await {
             match msg {
                 Ok(msg) => {
                     let bytes = msg.as_bytes();
@@ -76,13 +124,13 @@ impl<T: Game> Server<T> {
                                             let host_id = lobby.new_host(client.client_id);
 
                                             // and tell this to the  client
-                                            client.send(ServerMsg::HostCreated {
+                                            let _ = client.sink.send(ServerMsg::HostCreated {
                                                 host_id:host_id
                                             }).await;
                                         }
                                     },
                                     ClientMsg::RefreshHosts => {
-                                        client.send(ServerMsg::Hosts {
+                                        let _ = client.sink.send(ServerMsg::Hosts {
                                             hosts:lobby.read().await.hosts()
                                         }).await;
                                     },
@@ -116,12 +164,14 @@ impl<T: Game> Server<T> {
 
 
     async fn client_connected(ws: WebSocket, lobby: Arc<RwLock<Lobby<T>>>, config:ServerConfig) {
-        let (mut tx, mut rx) = ws.split();
+        let (tx, rx) = ws.split();
+        let mut tx:ClientSink = tx.into();
+        let mut stream:ClientStream = rx.into();
 
         let mut id = None;
 
         // wait for Hello message to get client id
-        while let Some(msg) = rx.next().await {
+        while let Some(msg) = stream.stream.next().await {
             match msg {
                 Ok(msg) => {
                     let bytes = msg.as_bytes();
@@ -152,9 +202,9 @@ impl<T: Game> Server<T> {
             // Hello received, send Welcome message
             // and proceed to lobby if successfull
             let msg = ServerMsg::LobbyJoined {};
-            match tx.send(Message::binary(msg.to_bincode())).await {
+            match tx.send(msg).await {
                 Ok(_) => {
-                    Self::client_joined_lobby(ConnectedClient{tx, rx, client_id}, lobby, config).await
+                    Self::client_joined_lobby(ConnectedClient{sink: tx, stream, client_id}, lobby, config).await
                 },
                 Err(_) => error!("Client {} failed to join", client_id),
             }
