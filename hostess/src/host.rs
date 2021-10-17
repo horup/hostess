@@ -1,9 +1,10 @@
 use std::{collections::{HashMap, VecDeque}, time::Duration};
 
-use futures_util::{FutureExt, pin_mut, select};
+use futures_util::{FutureExt, pin_mut};
 use tokio::{sync::{mpsc::channel, mpsc::Sender}, time::{interval}};
 use uuid::Uuid;
 use log::{info};
+use tokio::select;
 
 use crate::{ClientMsg, ClientSink, ConnectedClient, Context, Game, GameMsg, HostInfo, HostMsg, ServerMsg};
 
