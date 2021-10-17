@@ -1,6 +1,8 @@
 
+use std::time::Instant;
+
 use hostess::{ClientMsg, ServerMsg, log::info, uuid::Uuid};
-use crate::{GameState};
+use crate::{GameState, performance_now};
 use super::Canvas;
 
 pub struct Client {
@@ -80,6 +82,11 @@ impl Client {
             },
             ServerMsg::HostJoined {host} => {
                 self.status = format!("✓ Joined host {} ✓ ", host.id);
+            },
+            ServerMsg::Pong {
+                tick
+            } => {
+                info!("ping {} ms", performance_now() - tick)
             }
             _ => {}
         }
@@ -108,8 +115,8 @@ impl Client {
         // right = 39
         // esc = 27
 
-        self.send(ClientMsg::CustomMsg {
-            msg:[1, 2, 3].into()
+        self.send(ClientMsg::Ping {
+            tick:performance_now()
         });
 
         info!("{}", _code);

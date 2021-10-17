@@ -1,4 +1,4 @@
-- 2021-10-17    60m+ made bincode trait , refactored a bit, removed some warnings, worked on try_recv
+- 2021-10-17    100m made bincode trait , refactored a bit, removed some warnings, host now uses select!, worked on ping pong
 - 2021-10-16    65m worked on host
 - 2021-10-15    70m worked on spawning host
 - 2021-10-14    30m worked on spawning host

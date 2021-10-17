@@ -1,7 +1,5 @@
 use std::collections::VecDeque;
-
 use uuid::Uuid;
-
 
 #[derive(Clone, Debug)]
 pub enum HostMsg {

@@ -20,6 +20,8 @@ impl Game for Server {
             msg:[1,2,3,4,5,6,7,8].into()
         });
 
-        info!("ticking...");
+
+
+        info!("ticking... {}", context.host_messages.len());
     }
 }

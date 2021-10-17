@@ -17,6 +17,9 @@ pub enum ClientMsg {
     CustomMsg {
         msg:Vec<u8>
     },
+    Ping {
+        tick:f64
+    },
     RefreshHosts,
 }
 
@@ -40,6 +43,9 @@ pub enum ServerMsg {
     },
     HostJoined {
         host:HostInfo
+    },
+    Pong {
+        tick:f64
     },
     Custom {
         msg:Vec<u8>

@@ -1,12 +1,16 @@
 use std::f64::consts::PI;
 
 use wasm_bindgen::{JsCast};
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlImageElement};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlImageElement, window};
 
 pub struct Canvas {
     context:CanvasRenderingContext2d,
     canvas:HtmlCanvasElement,
     images:[HtmlImageElement;1]
+}
+
+pub fn performance_now() -> f64 {
+    window().unwrap().performance().unwrap().now()
 }
 
 impl Canvas {

@@ -1,5 +1,6 @@
 use std::{collections::{HashMap, VecDeque}, time::Duration};
 
+use futures_util::{FutureExt, pin_mut, select};
 use tokio::{sync::{mpsc::channel, mpsc::Sender}, time::{interval}};
 use uuid::Uuid;
 use log::{info};
@@ -12,6 +13,10 @@ enum Msg {
         client_id:Uuid,
         sink:ClientSink,
         return_sink:tokio::sync::oneshot::Sender<ClientSink>
+    },
+    Ping {
+        client_id:Uuid,
+        tick:f64
     }
 }
 #[derive(Clone)]
@@ -42,70 +47,81 @@ impl Host {
             let mut clients:HashMap<Uuid, (ClientSink, tokio::sync::oneshot::Sender<ClientSink>)> = HashMap::new();
 
             loop {
-                loop {
-                    match receiver.try_recv() {
-                        Ok(msg) => {
+                let timer = timer.tick().fuse();//.await;
+                let recv = receiver.recv().fuse();
+                pin_mut!(timer, recv);
+                select! {
+                    _ = timer => {
+                        g.update(&mut context);
+                        for msg in context.game_messages.drain(..) {
                             match msg {
-                                Msg::HostMsg(msg) => {
-                                    info!("{:?}", msg);
-                                    match &msg {
-                                        HostMsg::ClientLeft { client_id } => {
-                                            if let Some((tx, transfer)) = clients.remove(client_id) {
-                                                let _ = transfer.send(tx);
-                                            }
-                                        },
-                                        _=>{}
+                                GameMsg::CustomToAll { msg } => {
+                                    for (sink, _) in &mut clients.values_mut() {
+                                        let _ = sink.send(ServerMsg::Custom{
+                                            msg:msg.clone()
+                                        }).await;
                                     }
-
-                                    context.host_messages.push(msg);
                                 },
-                                Msg::ClientTransfer { 
-                                    client_id, 
-                                    sink: mut tx, 
-                                    return_sink: return_tx 
-                                } => {
-                                    context.host_messages.push(HostMsg::ClientJoined {
-                                        client_id:client_id
-                                    });
-                                    let _ = tx.send(ServerMsg::HostJoined {
-                                        host:info.clone()
-                                    }).await;
-
-                                    clients.insert(client_id, (tx, return_tx));
+                                GameMsg::CustomTo { client_id, msg } => {
+                                    if let Some((sink, _)) = clients.get_mut(&client_id) {
+                                        let _ = sink.send(ServerMsg::Custom{
+                                            msg:msg.clone()
+                                        }).await;
+                                    }
                                 },
                             }
-                        },
-                        Err(_) => {
-                            break;
-                        },
-                    }
-                }
+                        }
 
-                //messages_to_game.read().await;
-                g.update(&mut context);
-
-                // TODO: can be fuffered maybe?
-                for msg in context.game_messages.drain(..) {
-                    match msg {
-                        GameMsg::CustomToAll { msg } => {
-                            for (sink, _) in &mut clients.values_mut() {
-                                let _ = sink.send(ServerMsg::Custom{
-                                    msg:msg.clone()
-                                }).await;
-                            }
-                        },
-                        GameMsg::CustomTo { client_id, msg } => {
-                            if let Some((sink, _)) = clients.get_mut(&client_id) {
-                                let _ = sink.send(ServerMsg::Custom{
-                                    msg:msg.clone()
-                                }).await;
-                            }
-                        },
+                        context.host_messages.clear();
+                    },
+                    msg = recv => {
+                        match msg {
+                            Some(msg) => {
+                                match msg {
+                                    Msg::HostMsg(msg) => {
+                                        info!("{:?}", msg);
+                                        match &msg {
+                                            HostMsg::ClientLeft { client_id } => {
+                                                if let Some((tx, transfer)) = clients.remove(client_id) {
+                                                    let _ = transfer.send(tx);
+                                                }
+                                            },
+                                            _=>{}
+                                        }
+    
+                                        context.host_messages.push(msg);
+                                    },
+                                    Msg::ClientTransfer { 
+                                        client_id, 
+                                        sink: mut tx, 
+                                        return_sink: return_tx 
+                                    } => {
+                                        context.host_messages.push(HostMsg::ClientJoined {
+                                            client_id:client_id
+                                        });
+                                        let _ = tx.send(ServerMsg::HostJoined {
+                                            host:info.clone()
+                                        }).await;
+    
+                                        clients.insert(client_id, (tx, return_tx));
+                                    },
+                                    Msg::Ping {
+                                        client_id,
+                                        tick
+                                    } => {
+                                        info!("{:?}", tick);
+                                        if let Some((tx, _)) = clients.get_mut(&client_id) {
+                                            let _ = tx.send(ServerMsg::Pong {
+                                                tick:tick
+                                            }).await;
+                                        }
+                                    }
+                                }
+                            },
+                            None => {}
+                        }
                     }
-                }
-                
-                //while let Some(msg) in context.game_messages.remove(0)
-                timer.tick().await;
+                };
             }
         });
 
@@ -140,6 +156,14 @@ impl Host {
                                 client_id:client.client_id,
                                 msg
                             })).await;
+                        },
+                        ClientMsg::Ping {
+                            tick
+                        } => {
+                            let _ = host_sender.send(Msg::Ping {
+                                client_id:client.client_id,
+                                tick:tick
+                            }).await;
                         }
                         _ => {}
                     }
