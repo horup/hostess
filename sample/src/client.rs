@@ -1,6 +1,6 @@
 
 use hostess::{ClientMsg, ServerMsg, log::info, uuid::Uuid, Bincoded};
-use crate::{GameState, Msg, performance_now};
+use crate::{GameClientMsg, GameServerMsg, GameState, performance_now};
 use super::Canvas;
 
 pub struct Client {
@@ -97,9 +97,9 @@ impl Client {
                 self.ping = ping;
             },
             ServerMsg::Custom { msg } => {
-                let msg = Msg::from_bincode(msg).unwrap();
+                let msg = GameServerMsg::from_bincode(msg).unwrap();
                 match msg {
-                    Msg::SnapshotFull { state } => {
+                    GameServerMsg::SnapshotFull { state } => {
                         self.state = state;
                     },
                 }
@@ -127,7 +127,7 @@ impl Client {
     pub fn keyup(&mut self, _code:KeyCode) {
     }
 
-    pub fn keydown(&mut self, _code:KeyCode) {
+    pub fn keydown(&mut self, code:KeyCode) {
         // w = 87
         // s = 83
         // a = 65
@@ -139,7 +139,16 @@ impl Client {
         // right = 39
         // esc = 27
 
-        info!("{}", _code);
+        // space
+        if code == 32 {
+            self.client_messages.push(ClientMsg::CustomMsg {
+                msg:GameClientMsg::ClientInput {
+                    position:None,
+                    shoot:true
+                }.to_bincode()
+            });
+        }
+        info!("{}", code);
     }
 
     pub fn connected(&mut self) {

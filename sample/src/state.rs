@@ -1,5 +1,6 @@
-use generational_arena::Arena;
+use generational_arena::{Arena, Index};
 use glam::Vec2;
+use hostess::uuid::Uuid;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Clone)]
