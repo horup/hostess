@@ -9,7 +9,7 @@ use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
 use warp::{Error, Filter, ws::{Message, WebSocket}};
 
-use crate::{Bincode, ClientMsg, GameConstructor, ServerMsg, lobby::Lobby};
+use crate::{Bincoded, ClientMsg, GameConstructor, ServerMsg, lobby::Lobby};
 
 #[derive(Clone)]
 pub struct ServerConfig {
@@ -51,7 +51,7 @@ pub struct ClientStream {
 }
 
 impl ClientStream {
-    pub async fn next<'a, T : Bincode>(&'a mut self) -> Option<Result<T, Box<dyn std::error::Error + Send>>> {
+    pub async fn next<'a, T : Bincoded>(&'a mut self) -> Option<Result<T, Box<dyn std::error::Error + Send>>> {
         match self.stream.next().await {
             Some(msg) => {
                 match msg {

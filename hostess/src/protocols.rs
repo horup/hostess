@@ -52,7 +52,7 @@ pub enum ServerMsg {
     }
 }
 
-pub trait Bincode : Sized + DeserializeOwned + 'static + Serialize {
+pub trait Bincoded : Sized + DeserializeOwned + 'static + Serialize {
     fn from_bincode(bytes:&[u8]) -> Option<Self> {
         let res = bincode::deserialize::<Self>(bytes);
         match res {
@@ -70,10 +70,10 @@ pub trait Bincode : Sized + DeserializeOwned + 'static + Serialize {
     }
 }
 
-impl Bincode for ClientMsg {
+impl Bincoded for ClientMsg {
     
 }
 
-impl Bincode for ServerMsg {
+impl Bincoded for ServerMsg {
 
 }
