@@ -7,7 +7,6 @@ pub struct Server {
 impl Game for Server {
     fn new() -> Self {
         Self {
-            
         }
     }
 
