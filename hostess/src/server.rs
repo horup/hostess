@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, net::SocketAddr, str::FromStr, sync::Arc};
+use std::{net::SocketAddr, str::FromStr, sync::Arc};
 
 use futures_util::{
     stream::{SplitSink, SplitStream},
@@ -9,17 +9,17 @@ use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
 use warp::{Error, Filter, ws::{Message, WebSocket}};
 
-use crate::{Bincode, ClientMsg, ServerMsg, game::Game, lobby::Lobby};
+use crate::{Bincode, ClientMsg, GameConstructor, ServerMsg, lobby::Lobby};
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone)]
 pub struct ServerConfig {
-    pub host_creation:bool
+    pub host_creation:bool,
+    pub constructor:GameConstructor
 }
 
-pub struct Server<T:Game> {
+pub struct Server {
     addr: String,
-    phantom: PhantomData<T>,
-    pub lobby: Arc<RwLock<Lobby<T>>>,
+    pub lobby: Arc<RwLock<Lobby>>,
     pub config:ServerConfig
 }
 
@@ -87,19 +87,18 @@ impl From<SplitStream<WebSocket>> for ClientStream {
     }
 }
 
-impl<T: Game> Server<T> {
-    pub fn new(addr: &str) -> Self {
+impl Server {
+    pub fn new(addr: &str, constructor:GameConstructor) -> Self {
         Self {
             addr: addr.into(),
-            phantom: PhantomData::default(),
             lobby: Arc::new(RwLock::new(Lobby::new())),
-            config:ServerConfig::default()
+            config:ServerConfig { host_creation: false, constructor:constructor }
         }
     }
 
     async fn client_joined_lobby(
         mut client:ConnectedClient,
-        lobby: Arc<RwLock<Lobby<T>>>,
+        lobby: Arc<RwLock<Lobby>>,
         config:ServerConfig
     ) {
         info!("Client {:?} entered lobby", client.client_id);
@@ -121,7 +120,7 @@ impl<T: Game> Server<T> {
                                         if config.host_creation {
                                             // create new host
                                             let mut lobby = lobby.write().await;
-                                            let host_id = lobby.new_host(client.client_id);
+                                            let host_id = lobby.new_host(client.client_id, config.constructor.clone());
 
                                             // and tell this to the  client
                                             let _ = client.sink.send(ServerMsg::HostCreated {
@@ -163,7 +162,7 @@ impl<T: Game> Server<T> {
     }
 
 
-    async fn client_connected(ws: WebSocket, lobby: Arc<RwLock<Lobby<T>>>, config:ServerConfig) {
+    async fn client_connected(ws: WebSocket, lobby: Arc<RwLock<Lobby>>, config:ServerConfig) {
         let (tx, rx) = ws.split();
         let mut tx:ClientSink = tx.into();
         let mut stream:ClientStream = rx.into();

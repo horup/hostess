@@ -4,12 +4,15 @@ pub struct Server {
 
 }
 
-impl Game for Server {
-    fn new() -> Self {
+impl Server {
+    pub fn new() -> Self {
         Self {
+            
         }
     }
+}
 
+impl Game for Server {
     fn tick_rate(&self) -> u64 {
         1
     }

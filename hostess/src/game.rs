@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, sync::Arc};
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
@@ -32,7 +32,9 @@ pub struct Context {
 }
 
 pub trait Game : Send + Sync + 'static {
-    fn new() -> Self;
+    //fn new() -> Self;
     fn tick_rate(&self) -> u64;
     fn update(&mut self, context:&mut Context);
 }
+
+pub type GameConstructor = Arc<Box<dyn Fn() -> Box<dyn Game> + Send + Sync>>;

@@ -1,28 +1,26 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::{collections::HashMap};
 
 use log::info;
 use uuid::Uuid;
-use crate::{Game, HostInfo, host::Host};
+use crate::{GameConstructor, HostInfo, host::Host};
 
-pub struct Lobby<T:Game + Send> {
-    hosts:HashMap<Uuid, Host>,
-    phantom:PhantomData<T>
+pub struct Lobby {
+    hosts:HashMap<Uuid, Host>
 }
 
-impl<T:Game + Send> Lobby<T> {
+impl Lobby {
     pub fn new() -> Self {
         Lobby {
-            hosts:HashMap::new(),
-            phantom:PhantomData::default()
+            hosts:HashMap::new()
         }
     }
 
-    pub fn new_host(&mut self, creator:Uuid) -> Uuid {
+    pub fn new_host(&mut self, creator:Uuid, constructor:GameConstructor) -> Uuid {
         let host_id = Uuid::new_v4();
-        let host = Host::new::<T>(HostInfo {
+        let host = Host::new(HostInfo {
             id:host_id,
             creator:creator
-        });
+        }, constructor);
 
         self.hosts.insert(host_id, host);
         info!("Host {:?} created by client {}", host_id, creator);

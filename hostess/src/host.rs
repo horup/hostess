@@ -6,7 +6,7 @@ use uuid::Uuid;
 use log::{info};
 use tokio::select;
 
-use crate::{ClientMsg, ClientSink, ConnectedClient, Context, Game, GameMsg, HostInfo, HostMsg, ServerMsg};
+use crate::{ClientMsg, ClientSink, ConnectedClient, Context, Game, GameConstructor, GameMsg, HostInfo, HostMsg, ServerMsg};
 
 enum Msg {
     HostMsg(HostMsg),
@@ -27,7 +27,7 @@ pub struct Host {
 }
 
 impl Host {
-    pub fn new<T:Game>(info:HostInfo) -> Self {
+    pub fn new(info:HostInfo, constructor:GameConstructor) -> Self {
         let buffer_len = 1024;
         let (sender, mut receiver) = channel::<Msg>(buffer_len);
         let host = Self {
@@ -36,7 +36,7 @@ impl Host {
         };
 
         tokio::spawn(async move {
-            let mut g = T::new();
+            let mut g = constructor();
             let period = Duration::from_millis(1000 / g.tick_rate());
             let mut timer = interval(period);
 
@@ -110,7 +110,6 @@ impl Host {
                                         client_id,
                                         tick
                                     } => {
-                                        info!("{:?}", tick);
                                         if let Some((tx, _)) = clients.get_mut(&client_id) {
                                             let _ = tx.send(ServerMsg::Pong {
                                                 tick:tick
