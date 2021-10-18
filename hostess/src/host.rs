@@ -36,7 +36,7 @@ impl Host {
         };
 
         tokio::spawn(async move {
-            let mut g = constructor();
+            let mut g = constructor.construct();
             let period = Duration::from_millis(1000 / g.tick_rate());
             let mut timer = interval(period);
 

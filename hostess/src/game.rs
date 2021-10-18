@@ -37,4 +37,24 @@ pub trait Game : Send + Sync + 'static {
     fn update(&mut self, context:&mut Context);
 }
 
-pub type GameConstructor = Arc<Box<dyn Fn() -> Box<dyn Game> + Send + Sync>>;
+//pub type GameConstructor = Arc<Box<dyn Fn() -> Box<dyn Game> + Send + Sync>>;
+
+pub type GameConstructorFn = Box<dyn Fn() -> Box<dyn Game> + Send + Sync>;
+
+#[derive(Clone)]
+pub struct GameConstructor {
+    arc:Arc<GameConstructorFn>
+}
+
+impl GameConstructor {
+    pub fn new(f:GameConstructorFn) -> Self {
+        Self {
+            arc:Arc::new(Box::new(f))
+        }
+    }
+
+    pub fn construct(&self) -> Box<dyn Game> {
+        let f = self.arc.as_ref();
+        f()
+    }
+}
