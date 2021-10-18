@@ -1,6 +1,6 @@
 
-use hostess::{ClientMsg, ServerMsg, log::info, uuid::Uuid};
-use crate::{GameState, performance_now};
+use hostess::{ClientMsg, ServerMsg, log::info, uuid::Uuid, Bincoded};
+use crate::{GameState, Msg, performance_now};
 use super::Canvas;
 
 pub struct Client {
@@ -95,6 +95,14 @@ impl Client {
             } => {
                 let ping:f64 = performance_now() - tick;
                 self.ping = ping;
+            },
+            ServerMsg::Custom { msg } => {
+                let msg = Msg::from_bincode(msg).unwrap();
+                match msg {
+                    Msg::SnapshotFull { state } => {
+                        self.state = state;
+                    },
+                }
             }
             _ => {}
         }

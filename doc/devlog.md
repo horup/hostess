@@ -1,4 +1,6 @@
-- 2021-10-18    50m worked on ping and latency test, removed generic from Server
+- 2021-10-20    
+- 2021-10-19
+- 2021-10-18    100m worked on ping and latency test, removed generic from Server, added working snapshot for sample game
 - 2021-10-17    100m made bincode trait , refactored a bit, removed some warnings, host now uses select!, worked on ping pong
 - 2021-10-16    65m worked on host
 - 2021-10-15    70m worked on spawning host

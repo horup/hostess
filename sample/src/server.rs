@@ -1,13 +1,14 @@
-use hostess::{Context, Game, GameMsg, log::info};
+use hostess::{Context, Game, GameMsg, log::info, Bincoded};
+use sample_lib::{GameState, Msg};
 
 pub struct Server {
-
+    state:GameState
 }
 
 impl Server {
     pub fn new() -> Self {
         Self {
-            
+            state:GameState::demo()
         }
     }
 }
@@ -19,10 +20,10 @@ impl Game for Server {
 
     fn update(&mut self, context:&mut Context) {
         context.game_messages.push_back(GameMsg::CustomToAll{
-            msg:[1,2,3,4,5,6,7,8].into()
+            msg:Msg::SnapshotFull {
+                state:self.state.clone()
+            }.to_bincode()
         });
-
-
 
         info!("ticking... {}", context.host_messages.len());
     }

@@ -1,6 +1,8 @@
 use generational_arena::Arena;
 use glam::Vec2;
+use serde::{Serialize, Deserialize};
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Thing {
     pub pos:Vec2,
     pub vel:Vec2,
@@ -20,6 +22,7 @@ impl Thing {
 }
 
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GameState {
     pub things:Arena<Thing>
 }

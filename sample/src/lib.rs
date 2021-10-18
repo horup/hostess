@@ -5,6 +5,8 @@ use client::*;
 mod state;
 pub use state::*;
 
+mod msg;
+pub use msg::*;
 
 mod platform;
 use hostess::{ServerMsg, log::{error, info}};
