@@ -10,6 +10,8 @@ pub struct Client {
     canvas:Canvas,
     state:GameState,
     status:String,
+    ping:f64,
+    updates:u64,
     pub server_messages:Vec<ServerMsg>,
     pub client_messages:Vec<ClientMsg>
 }
@@ -24,7 +26,9 @@ impl Client {
             server_messages:Vec::new(),
             status:"Not connected!".into(),
             client_messages:Vec::new(),
-            id:Uuid::new_v4()
+            id:Uuid::new_v4(),
+            ping:0.0,
+            updates:0
         }
     }
 
@@ -59,6 +63,8 @@ impl Client {
         }
 
         self.canvas.fill_text(&self.status, (self.canvas.width() / 2 / grid_size as u32) as f64, 0.5);
+        self.canvas.fill_text(format!("ping:{:0.00}ms", self.ping).as_str(), (self.canvas.width() / 2 / grid_size as u32) as f64, 1.5);
+        
     }
 
     pub fn send(&mut self, msg:ClientMsg) {
@@ -86,7 +92,8 @@ impl Client {
             ServerMsg::Pong {
                 tick
             } => {
-                info!("ping {} ms", performance_now() - tick)
+                let ping:f64 = performance_now() - tick;
+                self.ping = ping;
             }
             _ => {}
         }
@@ -95,6 +102,14 @@ impl Client {
     pub fn update(&mut self) {
         for msg in &self.server_messages.clone() {
             self.recv(msg);
+        }
+
+        self.updates += 1; 
+
+        if self.updates % 10 == 0 {
+            self.send(ClientMsg::Ping {
+                tick:performance_now()
+            });
         }
 
         self.draw();
@@ -114,10 +129,6 @@ impl Client {
         // left = 37
         // right = 39
         // esc = 27
-
-        self.send(ClientMsg::Ping {
-            tick:performance_now()
-        });
 
         info!("{}", _code);
     }
