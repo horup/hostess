@@ -1,6 +1,4 @@
 
-use std::time::Instant;
-
 use hostess::{ClientMsg, ServerMsg, log::info, uuid::Uuid};
 use crate::{GameState, performance_now};
 use super::Canvas;
