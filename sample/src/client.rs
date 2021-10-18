@@ -60,8 +60,11 @@ impl Client {
             self.canvas.fill_text(&thing.name, x, y - 1.0);
         }
 
+
+        self.canvas.set_text_style("center", "middle");
         self.canvas.fill_text(&self.status, (self.canvas.width() / 2 / grid_size as u32) as f64, 0.5);
-        self.canvas.fill_text(format!("ping:{:0.00}ms", self.ping).as_str(), (self.canvas.width() / 2 / grid_size as u32) as f64, 1.5);
+        self.canvas.set_text_style("right", "middle");
+        self.canvas.fill_text(format!("ping:{:0.00}ms", self.ping).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 0.5);
         
     }
 

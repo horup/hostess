@@ -63,6 +63,11 @@ impl Canvas {
         self.context.fill_rect(x, y, w, h);
     }
 
+    pub fn set_text_style(&self, text_align:&str, baseline:&str) {
+        self.context.set_text_align(text_align);
+        self.context.set_text_baseline(baseline);
+    }
+
     pub fn fill_text(&self, text:&str, x:f64, y:f64) {
         let _ = self.context.fill_text(text, x, y);
     }
