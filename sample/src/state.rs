@@ -1,9 +1,8 @@
-use generational_arena::{Arena, Index};
+use generational_arena::{Arena};
 use glam::Vec2;
-use hostess::uuid::Uuid;
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Thing {
     pub pos:Vec2,
     pub vel:Vec2,
@@ -20,19 +19,28 @@ impl Thing {
             name:"".into()
         }
     }
+
+    pub fn random_new(state:&GameState) -> Self {
+        let thing = Thing::new(rand::random::<f32>() * state.width, rand::random::<f32>() * state.height);
+        thing
+    }
 }
 
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GameState {
-    pub things:Arena<Thing>
+    pub things:Arena<Thing>,
+    pub width:f32,
+    pub height:f32
 }
 
 impl GameState {
     pub fn new() -> Self
     {
         Self {
-            things:Arena::new()
+            things:Arena::new(),
+            width:40.0,
+            height:30.0
         }
     }
 
@@ -41,7 +49,7 @@ impl GameState {
         
         // make some players
         for i in 0..10 {
-            let mut thing = Thing::new(rand::random::<f32>() * 40.0, rand::random::<f32>() * 30.0);
+            let mut thing = Thing::new(rand::random::<f32>() * state.width, rand::random::<f32>() * state.height);
             thing.name = format!("P{}", i);
             state.things.insert(thing);
         }

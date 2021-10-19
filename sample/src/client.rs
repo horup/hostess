@@ -1,4 +1,5 @@
 
+use generational_arena::Index;
 use hostess::{ClientMsg, ServerMsg, log::info, uuid::Uuid, Bincoded};
 use crate::{GameClientMsg, GameServerMsg, GameState, performance_now};
 use super::Canvas;
@@ -9,6 +10,7 @@ pub struct Client {
     state:GameState,
     status:String,
     ping:f64,
+    my_thing:Option<Index>,
     updates:u64,
     pub server_messages:Vec<ServerMsg>,
     pub client_messages:Vec<ClientMsg>
@@ -21,6 +23,7 @@ impl Client {
         Self {
             canvas:Canvas::new(),
             state:GameState::new(),
+            my_thing:None,
             server_messages:Vec::new(),
             status:"Not connected!".into(),
             client_messages:Vec::new(),
@@ -102,6 +105,11 @@ impl Client {
                     GameServerMsg::SnapshotFull { state } => {
                         self.state = state;
                     },
+                    GameServerMsg::PlayerThing {
+                        thing_id
+                    } => {
+                        self.my_thing = thing_id;
+                    }
                 }
             }
             _ => {}

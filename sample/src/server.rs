@@ -49,18 +49,20 @@ impl Game for Server {
                     if let Some(msg) = GameClientMsg::from_bincode(&msg) {
                         match msg {
                             GameClientMsg::ClientInput { 
-                                position, 
+                                position:_, 
                                 shoot 
                             } => {
                                 if let Some(player) = self.players.get_mut(&client_id) {
                                     if shoot && player.thing == None {
-                                        let thing = Thing {
-                                            name:"".into(),
-                                            pos:Vec2::new(2.0, 2.0),
-                                            radius:0.5,
-                                            vel:Vec2::new(0.0, 0.0)
-                                        };
+                                        let thing = Thing::random_new(&self.state);
                                         player.thing = Some(self.state.things.insert(thing));
+
+                                        context.game_messages.push_back(GameMsg::CustomTo {
+                                            client_id:player.client_id,
+                                            msg:GameServerMsg::PlayerThing {
+                                                thing_id:player.thing
+                                            }.to_bincode()
+                                        });
                                     }
                                 }
                             },

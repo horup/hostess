@@ -1,4 +1,5 @@
 use crate::GameState;
+use generational_arena::Index;
 use glam::Vec2;
 use hostess::Bincoded;
 use serde::{Serialize, Deserialize};
@@ -7,6 +8,9 @@ use serde::{Serialize, Deserialize};
 pub enum GameServerMsg {
     SnapshotFull {
         state:GameState
+    },
+    PlayerThing {
+        thing_id:Option<Index>
     }
 }
 
