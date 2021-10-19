@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use generational_arena::Index;
 use glam::Vec2;
-use hostess::{Bincoded, ClientMsg, Context, Game, GameMsg, log::info, uuid::Uuid};
+use hostess::{Bincoded, ClientMsg, Context, Game, GameMsg, log::info, typed_game::TypedGame, uuid::Uuid};
 use sample_lib::{GameClientMsg, GameServerMsg, State, Thing};
 use serde::{Serialize, Deserialize};
+use web_sys::console::info;
 
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -26,6 +27,20 @@ impl Server {
     }
 }
 
+impl TypedGame for Server {
+    type A = GameServerMsg;
+    type B = GameClientMsg;
+
+    fn update(&mut self, context:&mut hostess::typed_game::TypedContext<Self::A, Self::B>) {
+        info!("ticking");
+    }
+
+    fn tick_rate(&self) -> u64 {
+        20
+    }
+}
+
+/*
 impl Game for Server {
     fn tick_rate(&self) -> u64 {
         20
@@ -83,4 +98,4 @@ impl Game for Server {
             }.to_bincode()
         });
     }
-} 
+} */ 

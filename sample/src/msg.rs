@@ -1,6 +1,8 @@
+use std::convert::TryFrom;
+
 use crate::{Input, State};
 use generational_arena::Index;
-use hostess::Bincoded;
+use hostess::{Bincoded, GameMsg};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
@@ -12,6 +14,7 @@ pub enum GameServerMsg {
         thing_id:Option<Index>
     }
 }
+
 
 #[derive(Serialize, Deserialize)]
 pub enum GameClientMsg {

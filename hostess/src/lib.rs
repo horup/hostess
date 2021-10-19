@@ -5,10 +5,13 @@ mod host;
 mod server;
 
 #[cfg(not(target_arch = "wasm32"))]
+pub use server::*;
+
+#[cfg(not(target_arch = "wasm32"))]
 mod lobby;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use server::*;
+pub mod typed_game;
 
 mod game;
 pub use game::*;
