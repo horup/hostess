@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use generational_arena::Index;
 use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, Context, Game, GameMsg, log::info, uuid::Uuid};
-use sample_lib::{GameClientMsg, GameServerMsg, GameState, Thing};
+use sample_lib::{GameClientMsg, GameServerMsg, State, Thing};
 use serde::{Serialize, Deserialize};
 
 
@@ -13,14 +13,14 @@ pub struct Player {
 }
 
 pub struct Server {
-    state:GameState,
+    state:State,
     players:HashMap<Uuid, Player>
 }
 
 impl Server {
     pub fn new() -> Self {
         Self {
-            state:GameState::new(),
+            state:State::new(),
             players:HashMap::new()
         }
     }
@@ -28,7 +28,7 @@ impl Server {
 
 impl Game for Server {
     fn tick_rate(&self) -> u64 {
-        1
+        20
     }
 
     fn update(&mut self, context:&mut Context) {
@@ -49,11 +49,11 @@ impl Game for Server {
                     if let Some(msg) = GameClientMsg::from_bincode(&msg) {
                         match msg {
                             GameClientMsg::ClientInput { 
-                                position:_, 
-                                shoot 
+                                input 
                             } => {
                                 if let Some(player) = self.players.get_mut(&client_id) {
-                                    if shoot && player.thing == None {
+                                    if input.shoot && player.thing == None {
+                                        // spawn player thing
                                         let thing = Thing::random_new(&self.state);
                                         player.thing = Some(self.state.things.insert(thing));
 
@@ -63,6 +63,12 @@ impl Game for Server {
                                                 thing_id:player.thing
                                             }.to_bincode()
                                         });
+                                    }
+
+                                    if let Some(thing_id) = player.thing {
+                                        if let Some(thing) = self.state.things.get_mut(thing_id) {
+                                            thing.pos = input.position;
+                                        }
                                     }
                                 }
                             },
@@ -76,7 +82,5 @@ impl Game for Server {
                 state:self.state.clone()
             }.to_bincode()
         });
-
-        info!("ticking... {}", context.host_messages.len());
     }
-}
+} 

@@ -7,10 +7,7 @@
 			"problemMatcher": [
 				"$rustc"
 			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
+			"group": "build",
 			"label": "sample: server run"
 		},
 		{
@@ -19,6 +16,19 @@
 			"args": ["build", "--target", "web", "--out-dir", "public/pkg"],
 			"group": "build",
 			"label": "sample: client build"
-		}
+		},
+		{
+			"type": "cargo",
+			"command": "run",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"dependsOn":["sample: client build"],
+			"label": "sample: run"
+		},
 	]
 }

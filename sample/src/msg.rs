@@ -1,13 +1,12 @@
-use crate::GameState;
+use crate::{Input, State};
 use generational_arena::Index;
-use glam::Vec2;
 use hostess::Bincoded;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
 pub enum GameServerMsg {
     SnapshotFull {
-        state:GameState
+        state:State
     },
     PlayerThing {
         thing_id:Option<Index>
@@ -17,8 +16,7 @@ pub enum GameServerMsg {
 #[derive(Serialize, Deserialize)]
 pub enum GameClientMsg {
     ClientInput {
-        position:Option<Vec2>,
-        shoot:bool
+        input:Input
     }
 }
 

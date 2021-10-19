@@ -1,5 +1,5 @@
 - 2021-10-20    
-- 2021-10-19    15m worked on sample state spawning
+- 2021-10-19    50m+ worked on sample state spawning, now builds both client and server same time
 - 2021-10-18    130m worked on ping and latency test, removed generic from Server, added working snapshot for sample game, worked on state, added wip player spawning
 - 2021-10-17    100m made bincode trait , refactored a bit, removed some warnings, host now uses select!, worked on ping pong
 - 2021-10-16    65m worked on host

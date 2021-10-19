@@ -1,16 +1,16 @@
 
 use generational_arena::Index;
 use hostess::{ClientMsg, ServerMsg, log::info, uuid::Uuid, Bincoded};
-use crate::{GameClientMsg, GameServerMsg, GameState, performance_now};
+use crate::{GameClientMsg, GameServerMsg, State, Input, performance_now};
 use super::Canvas;
 
 pub struct Client {
     id:Uuid,
     canvas:Canvas,
-    state:GameState,
+    state:State,
     status:String,
     ping:f64,
-    my_thing:Option<Index>,
+    input:Input,
     updates:u64,
     pub server_messages:Vec<ServerMsg>,
     pub client_messages:Vec<ClientMsg>
@@ -22,8 +22,13 @@ impl Client {
     pub fn new() -> Self {
         Self {
             canvas:Canvas::new(),
-            state:GameState::new(),
-            my_thing:None,
+            state:State::new(),
+            input:Input {
+                position:[0.0, 0.0].into(),
+                dir:[0.0, 0.0].into(),
+                shoot:false,
+                thing_id:None
+            },
             server_messages:Vec::new(),
             status:"Not connected!".into(),
             client_messages:Vec::new(),
@@ -108,7 +113,7 @@ impl Client {
                     GameServerMsg::PlayerThing {
                         thing_id
                     } => {
-                        self.my_thing = thing_id;
+                        self.input.thing_id = thing_id;
                     }
                 }
             }
@@ -129,13 +134,55 @@ impl Client {
             });
         }
 
+        self.state.update(Some(&mut self.input));
+        self.client_messages.push(ClientMsg::CustomMsg {
+            msg:GameClientMsg::ClientInput {
+                input:self.input.clone()
+            }.to_bincode()
+        });
         self.draw();
     }
 
-    pub fn keyup(&mut self, _code:KeyCode) {
+    pub fn keyup(&mut self, code:KeyCode) {
+        let i = &mut self.input;
+        if code == 87 && i.dir.y == -1.0 {
+            i.dir.y = 0.0;
+        }
+        if code == 83 && i.dir.y == 1.0 {
+            i.dir.y = 0.0;
+        }
+        if code == 65 && i.dir.x == -1.0 {
+            i.dir.x = 0.0;
+        }
+        if code == 68 && i.dir.x == 1.0 {
+            i.dir.x = 0.0;
+        }
+
+        if code == 32 {
+            i.shoot = false;
+        }
     }
 
     pub fn keydown(&mut self, code:KeyCode) {
+        let i = &mut self.input;
+        if code == 87 {
+            i.dir.y = -1.0;
+        }
+        if code == 83 {
+            i.dir.y = 1.0;
+        }
+
+        if code == 65 {
+            i.dir.x = -1.0;
+        }
+        if code == 68 {
+            i.dir.x = 1.0;
+        }
+
+        if code == 32 {
+            i.shoot = true;
+        }
+
         // w = 87
         // s = 83
         // a = 65
@@ -147,16 +194,16 @@ impl Client {
         // right = 39
         // esc = 27
 
-        // space
-        if code == 32 {
+
+      /*  if code == 32 {
             self.client_messages.push(ClientMsg::CustomMsg {
                 msg:GameClientMsg::ClientInput {
                     position:None,
                     shoot:true
                 }.to_bincode()
             });
-        }
-        info!("{}", code);
+        }*/
+        //info!("{}", code);
     }
 
     pub fn connected(&mut self) {

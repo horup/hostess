@@ -80,7 +80,6 @@ impl Host {
                             Some(msg) => {
                                 match msg {
                                     Msg::HostMsg(msg) => {
-                                        info!("{:?}", msg);
                                         match &msg {
                                             HostMsg::ClientLeft { client_id } => {
                                                 if let Some((tx, transfer)) = clients.remove(client_id) {

@@ -1,4 +1,4 @@
-use generational_arena::{Arena};
+use generational_arena::{Arena, Index};
 use glam::Vec2;
 use serde::{Serialize, Deserialize};
 
@@ -20,7 +20,7 @@ impl Thing {
         }
     }
 
-    pub fn random_new(state:&GameState) -> Self {
+    pub fn random_new(state:&State) -> Self {
         let thing = Thing::new(rand::random::<f32>() * state.width, rand::random::<f32>() * state.height);
         thing
     }
@@ -28,13 +28,21 @@ impl Thing {
 
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct GameState {
+pub struct State {
     pub things:Arena<Thing>,
     pub width:f32,
     pub height:f32
 }
 
-impl GameState {
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Input {
+    pub thing_id:Option<Index>,
+    pub dir:Vec2,
+    pub position:Vec2,
+    pub shoot:bool
+}
+
+impl State {
     pub fn new() -> Self
     {
         Self {
@@ -55,5 +63,19 @@ impl GameState {
         }
 
         state
+    }
+
+    pub fn update(&mut self, input:Option<&mut Input>) {
+        if let Some(input) = input {
+            if let Some(thing_id) = input.thing_id {
+                if let Some(thing) = self.things.get_mut(thing_id) {
+                    let speed = 0.1;
+                    thing.pos.y += input.dir.y * speed;
+                    thing.pos.x += input.dir.x * speed;
+
+                    input.position = thing.pos;
+                }
+            }
+        }
     }
 }
