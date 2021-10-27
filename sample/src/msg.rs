@@ -5,7 +5,7 @@ use generational_arena::Index;
 use hostess::{Bincoded, GameMsg};
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum GameServerMsg {
     SnapshotFull {
         state:State
@@ -16,7 +16,7 @@ pub enum GameServerMsg {
 }
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum GameClientMsg {
     ClientInput {
         input:Input

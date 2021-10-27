@@ -1,4 +1,4 @@
-- 2021-10-20    
+- 2021-10-27    30m worked on typed support    
 - 2021-10-19    100m worked on sample state spawning, now builds both client and server same time, started working on TypedGame
 - 2021-10-18    130m worked on ping and latency test, removed generic from Server, added working snapshot for sample game, worked on state, added wip player spawning
 - 2021-10-17    100m made bincode trait , refactored a bit, removed some warnings, host now uses select!, worked on ping pong

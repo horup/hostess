@@ -27,14 +27,14 @@ impl Thing {
 }
 
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
     pub things:Arena<Thing>,
     pub width:f32,
     pub height:f32
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Input {
     pub thing_id:Option<Index>,
     pub dir:Vec2,
