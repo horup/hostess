@@ -63,7 +63,7 @@ impl TypedGame for Server {
 
                                     context.game_messages.push(TypedGameMsg::CustomTo {
                                         client_id:player.client_id,
-                                        msg:CustomMsg::PlayerThing {
+                                        msg:CustomMsg::ServerPlayerThing {
                                             thing_id:player.thing
                                         }
                                     });
@@ -78,15 +78,15 @@ impl TypedGame for Server {
 
 
                         },
-                        CustomMsg::SnapshotFull { state } => {},
-                        CustomMsg::PlayerThing { thing_id } => {},
+                        CustomMsg::ServerSnapshotFull { state } => {},
+                        CustomMsg::ServerPlayerThing { thing_id } => {},
                     }
                 },
             }
         }
 
         context.game_messages.push(TypedGameMsg::CustomToAll {
-            msg:CustomMsg::SnapshotFull {
+            msg:CustomMsg::ServerSnapshotFull {
                 state:self.state.clone()
             }
         });

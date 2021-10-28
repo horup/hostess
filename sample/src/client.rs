@@ -107,10 +107,10 @@ impl Client {
             ServerMsg::Custom { msg } => {
                 let msg = CustomMsg::from_bincode(msg).unwrap();
                 match msg {
-                    CustomMsg::SnapshotFull { state } => {
+                    CustomMsg::ServerSnapshotFull { state } => {
                         self.state = state;
                     },
-                    CustomMsg::PlayerThing {
+                    CustomMsg::ServerPlayerThing {
                         thing_id
                     } => {
                         self.input.thing_id = thing_id;
