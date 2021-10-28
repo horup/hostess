@@ -32,12 +32,9 @@ pub struct UntypedContext {
 }
 
 pub trait UntypedGameServer : Send + Sync + 'static {
-    //fn new() -> Self;
     fn tick_rate(&self) -> u64;
     fn update(&mut self, context:UntypedContext) -> UntypedContext;
 }
-
-//pub type GameConstructor = Arc<Box<dyn Fn() -> Box<dyn Game> + Send + Sync>>;
 
 pub type GameServerConstructorFn = Box<dyn Fn() -> Box<dyn UntypedGameServer> + Send + Sync>;
 

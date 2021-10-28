@@ -71,9 +71,7 @@ pub trait Bincoded : Sized + DeserializeOwned + 'static + Serialize {
 }
 
 impl Bincoded for ClientMsg {
-    
 }
 
 impl Bincoded for ServerMsg {
-
 }
