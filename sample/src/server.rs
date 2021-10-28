@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use generational_arena::Index;
 use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, Context, Game, GameMsg, log::info, typed_game::{TypedGame, TypedGameMsg, TypedHostMsg}, uuid::Uuid};
-use sample_lib::{GameClientMsg, GameServerMsg, State, Thing};
+use sample_lib::{CustomMsg, State, Thing};
 use serde::{Serialize, Deserialize};
 use web_sys::console::info;
 
@@ -28,10 +28,9 @@ impl Server {
 }
 
 impl TypedGame for Server {
-    type A = GameClientMsg;
-    type B = GameServerMsg;
+    type CustomMsg = CustomMsg;
 
-    fn update(&mut self, context:&mut hostess::typed_game::TypedContext<Self::A, Self::B>) {
+    fn update(&mut self, context:&mut hostess::typed_game::TypedContext<CustomMsg>) {
         info!("ticking");
         for msg in context.host_messages.drain(..) {
             match msg {
@@ -48,7 +47,7 @@ impl TypedGame for Server {
                 },
                 hostess::typed_game::TypedHostMsg::CustomMsg { client_id, msg } => {
                     match msg {
-                        GameClientMsg::ClientInput { input } => {
+                        CustomMsg::ClientInput { input } => {
                             if let Some(player) = self.players.get_mut(&client_id) {
                                 if input.shoot && player.thing == None {
                                     // spawn player thing
@@ -64,7 +63,7 @@ impl TypedGame for Server {
 
                                     context.game_messages.push(TypedGameMsg::CustomTo {
                                         client_id:player.client_id,
-                                        msg:GameServerMsg::PlayerThing {
+                                        msg:CustomMsg::PlayerThing {
                                             thing_id:player.thing
                                         }
                                     });
@@ -79,13 +78,15 @@ impl TypedGame for Server {
 
 
                         },
+                        CustomMsg::SnapshotFull { state } => {},
+                        CustomMsg::PlayerThing { thing_id } => {},
                     }
                 },
             }
         }
 
         context.game_messages.push(TypedGameMsg::CustomToAll {
-            msg:GameServerMsg::SnapshotFull {
+            msg:CustomMsg::SnapshotFull {
                 state:self.state.clone()
             }
         });

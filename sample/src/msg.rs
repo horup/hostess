@@ -6,27 +6,19 @@ use hostess::{Bincoded, GameMsg};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum GameServerMsg {
+pub enum CustomMsg {
     SnapshotFull {
         state:State
     },
     PlayerThing {
         thing_id:Option<Index>
-    }
-}
-
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum GameClientMsg {
+    },
     ClientInput {
         input:Input
     }
 }
 
-impl Bincoded for GameServerMsg {
-    
-}
 
-impl Bincoded for GameClientMsg {
+impl Bincoded for CustomMsg {
     
 }

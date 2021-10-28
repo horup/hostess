@@ -1,7 +1,7 @@
 
 use generational_arena::Index;
 use hostess::{ClientMsg, ServerMsg, log::info, uuid::Uuid, Bincoded};
-use crate::{GameClientMsg, GameServerMsg, State, Input, performance_now};
+use crate::{Input, CustomMsg, State, performance_now};
 use super::Canvas;
 
 pub struct Client {
@@ -105,16 +105,19 @@ impl Client {
                 self.ping = ping;
             },
             ServerMsg::Custom { msg } => {
-                let msg = GameServerMsg::from_bincode(msg).unwrap();
+                let msg = CustomMsg::from_bincode(msg).unwrap();
                 match msg {
-                    GameServerMsg::SnapshotFull { state } => {
+                    CustomMsg::SnapshotFull { state } => {
                         self.state = state;
                     },
-                    GameServerMsg::PlayerThing {
+                    CustomMsg::PlayerThing {
                         thing_id
                     } => {
                         self.input.thing_id = thing_id;
                     }
+                    CustomMsg::ClientInput { input } => {
+                        
+                    },
                 }
             }
             _ => {}
@@ -136,7 +139,7 @@ impl Client {
 
         self.state.update(Some(&mut self.input));
         self.client_messages.push(ClientMsg::CustomMsg {
-            msg:GameClientMsg::ClientInput {
+            msg:CustomMsg::ClientInput {
                 input:self.input.clone()
             }.to_bincode()
         });

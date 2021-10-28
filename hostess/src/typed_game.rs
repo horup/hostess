@@ -88,12 +88,12 @@ impl<T:Bincoded> TryFrom<TypedGameMsg<T>> for GameMsg {
     
 }
 
-pub struct TypedContext<A, B> {
-    pub host_messages:Vec<TypedHostMsg<A>>,
-    pub game_messages:Vec<TypedGameMsg<B>>
+pub struct TypedContext<T> {
+    pub host_messages:Vec<TypedHostMsg<T>>,
+    pub game_messages:Vec<TypedGameMsg<T>>
 }
 
-impl<A, B> TypedContext<A, B> {
+impl<T> TypedContext<T> {
     pub fn new() -> Self {
         TypedContext {
             host_messages: Vec::new(),
@@ -102,17 +102,16 @@ impl<A, B> TypedContext<A, B> {
     }
 }
 pub trait TypedGame : Game {
-    type A : Serialize + DeserializeOwned + Bincoded;
-    type B : Serialize + DeserializeOwned + Bincoded;
+    type CustomMsg : Serialize + DeserializeOwned + Bincoded;
     fn tick_rate(&self) -> u64;
-    fn update(&mut self, context:&mut TypedContext<Self::A, Self::B>);
+    fn update(&mut self, context:&mut TypedContext<Self::CustomMsg>);
 }
 
 impl<T: TypedGame> Game for T {
     fn update(&mut self, context:&mut Context) {
         let mut c = TypedContext::new();
         for msg in context.host_messages.drain(..) {
-            if let Ok(msg) = TypedHostMsg::<T::A>::try_from(msg) {
+            if let Ok(msg) = TypedHostMsg::<T::CustomMsg>::try_from(msg) {
                 c.host_messages.push(msg);
             }
         }
