@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use generational_arena::Index;
 use glam::Vec2;
-use hostess::{Bincoded, ClientMsg, UntypedContext, UntypedGameServer, UntypedGameMsg, log::info, game_server::{GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
+use hostess::{Bincoded, ClientMsg, UntypedContext, UntypedGameServer, UntypedGameServerMsg, log::info, game_server::{GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
 use sample_lib::{CustomMsg, State, Thing};
 use serde::{Serialize, Deserialize};
 use web_sys::console::info;
@@ -31,7 +31,7 @@ impl GameServer for Server {
     type CustomMsg = CustomMsg;
 
     fn update(&mut self, context:&mut hostess::game_server::Context<CustomMsg>) {
-        for msg in context.host_messages.drain(..) {
+        while let Some(msg) = context.pop_host_msg() {
             match msg {
                 hostess::game_server::HostMsg::ClientJoined { client_id } => {
                     if !self.players.contains_key(&client_id) {
@@ -53,7 +53,7 @@ impl GameServer for Server {
                                     let thing = Thing::random_new(&self.state);
                                     player.thing = Some(self.state.things.insert(thing));
 
-                                    context.game_messages.push(GameServerMsg::CustomTo {
+                                    context.push_game_msg(GameServerMsg::CustomTo {
                                         client_id:player.client_id,
                                         msg:CustomMsg::ServerPlayerThing {
                                             thing_id:player.thing
@@ -77,7 +77,7 @@ impl GameServer for Server {
             }
         }
 
-        context.game_messages.push(GameServerMsg::CustomToAll {
+        context.push_game_msg(GameServerMsg::CustomToAll {
             msg:CustomMsg::ServerSnapshotFull {
                 state:self.state.clone()
             }

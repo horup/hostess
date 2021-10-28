@@ -6,7 +6,7 @@ use uuid::Uuid;
 use log::{info};
 use tokio::select;
 
-use crate::{ClientMsg, ClientSink, ConnectedClient, UntypedContext, GameServerConstructor, UntypedGameMsg, HostInfo, UntypedHostMsg, ServerMsg};
+use crate::{ClientMsg, ClientSink, ConnectedClient, UntypedContext, GameServerConstructor, UntypedGameServerMsg, HostInfo, UntypedHostMsg, ServerMsg};
 
 enum Msg {
     HostMsg(UntypedHostMsg),
@@ -42,7 +42,7 @@ impl Host {
 
             let mut context = UntypedContext {
                 game_messages:VecDeque::new(),
-                host_messages:Vec::with_capacity(buffer_len)
+                host_messages:VecDeque::with_capacity(buffer_len)
             };
 
             let mut clients:HashMap<Uuid, (ClientSink, tokio::sync::oneshot::Sender<ClientSink>)> = HashMap::new();
@@ -53,17 +53,17 @@ impl Host {
                 pin_mut!(timer, recv);
                 select! {
                     _ = timer => {
-                        g.update(&mut context);
+                        context = g.update(context);
                         for msg in context.game_messages.drain(..) {
                             match msg {
-                                UntypedGameMsg::CustomToAll { msg } => {
+                                UntypedGameServerMsg::CustomToAll { msg } => {
                                     for (sink, _) in &mut clients.values_mut() {
                                         let _ = sink.send(ServerMsg::Custom{
                                             msg:msg.clone()
                                         }).await;
                                     }
                                 },
-                                UntypedGameMsg::CustomTo { client_id, msg } => {
+                                UntypedGameServerMsg::CustomTo { client_id, msg } => {
                                     if let Some((sink, _)) = clients.get_mut(&client_id) {
                                         let _ = sink.send(ServerMsg::Custom{
                                             msg:msg.clone()
@@ -89,14 +89,14 @@ impl Host {
                                             _=>{}
                                         }
     
-                                        context.host_messages.push(msg);
+                                        context.host_messages.push_back(msg);
                                     },
                                     Msg::ClientTransfer { 
                                         client_id, 
                                         sink: mut tx, 
                                         return_sink: return_tx 
                                     } => {
-                                        context.host_messages.push(UntypedHostMsg::ClientJoined {
+                                        context.host_messages.push_back(UntypedHostMsg::ClientJoined {
                                             client_id:client_id
                                         });
                                         let _ = tx.send(ServerMsg::HostJoined {

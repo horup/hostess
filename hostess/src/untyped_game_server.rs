@@ -16,7 +16,7 @@ pub enum UntypedHostMsg {
 }
 
 #[derive(Clone, Debug)]
-pub enum UntypedGameMsg {
+pub enum UntypedGameServerMsg {
     CustomToAll {
         msg:Vec<u8>
     },
@@ -27,14 +27,14 @@ pub enum UntypedGameMsg {
 }
 
 pub struct UntypedContext {
-    pub host_messages:Vec<UntypedHostMsg>,
-    pub game_messages:VecDeque<UntypedGameMsg>
+    pub host_messages:VecDeque<UntypedHostMsg>,
+    pub game_messages:VecDeque<UntypedGameServerMsg>
 }
 
 pub trait UntypedGameServer : Send + Sync + 'static {
     //fn new() -> Self;
     fn tick_rate(&self) -> u64;
-    fn update(&mut self, context:&mut UntypedContext);
+    fn update(&mut self, context:UntypedContext) -> UntypedContext;
 }
 
 //pub type GameConstructor = Arc<Box<dyn Fn() -> Box<dyn Game> + Send + Sync>>;

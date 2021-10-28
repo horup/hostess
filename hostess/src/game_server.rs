@@ -1,10 +1,7 @@
-use std::convert::TryFrom;
+use std::{convert::{TryFrom}, marker::PhantomData};
 
-use log::info;
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use uuid::Uuid;
-use crate::{Bincoded, UntypedContext, UntypedGameServer, UntypedGameMsg, UntypedHostMsg};
-
+use crate::{Bincoded, UntypedContext, UntypedGameServer, UntypedGameServerMsg, UntypedHostMsg};
 
 #[derive(Clone, Debug)]
 pub enum HostMsg<T> {
@@ -61,67 +58,74 @@ pub enum GameServerMsg<T> {
     }
 }
 
-
-impl<T:Bincoded> TryFrom<GameServerMsg<T>> for UntypedGameMsg {
-    type Error = ();
-
-    fn try_from(value: GameServerMsg<T>) -> Result<Self, Self::Error> {
-        match value {
+impl<T:Bincoded> From<GameServerMsg<T>> for UntypedGameServerMsg {
+    fn from(msg: GameServerMsg<T>) -> Self {
+        match msg {
             GameServerMsg::CustomToAll { 
                 msg 
             } => {
-                return Ok(UntypedGameMsg::CustomToAll {
+                UntypedGameServerMsg::CustomToAll {
                     msg: msg.to_bincode(),
-                });
+                }
             },
             GameServerMsg::CustomTo { 
                 client_id, msg 
             } => {
-                return Ok(UntypedGameMsg::CustomTo {
+                UntypedGameServerMsg::CustomTo {
                     client_id:client_id,
                     msg: msg.to_bincode(),
-                });
+                }
             },
         }
     }
-
-    
 }
 
 pub struct Context<T> {
-    pub host_messages:Vec<HostMsg<T>>,
-    pub game_messages:Vec<GameServerMsg<T>>
+    context:UntypedContext,
+    phantom:PhantomData<T>
 }
 
-impl<T> Context<T> {
-    pub fn new() -> Self {
-        Context {
-            host_messages: Vec::new(),
-            game_messages: Vec::new(),
+impl<T : Bincoded> Context<T> {
+    pub fn lock(context:UntypedContext) -> Self {
+        Self {
+            context,
+            phantom:PhantomData::default()
         }
     }
+
+    pub fn release(self) -> UntypedContext {
+        self.context
+    }
+
+    pub fn pop_host_msg(&mut self) -> Option<HostMsg<T>> {
+        let msg = self.context.host_messages.pop_front();
+        match msg {
+            Some(msg) => {
+                let msg = HostMsg::try_from(msg).ok();
+                return msg;
+            },
+            None => return None,
+        }
+    }
+
+    pub fn push_game_msg(&mut self, msg:GameServerMsg<T>) {
+        let msg = msg.into();
+        self.context.game_messages.push_back(msg);
+    }
 }
+
 pub trait GameServer : UntypedGameServer {
-    type CustomMsg : Serialize + DeserializeOwned + Bincoded;
+    type CustomMsg : Bincoded;
     fn tick_rate(&self) -> u64;
     fn update(&mut self, context:&mut Context<Self::CustomMsg>);
 }
 
-impl<T: GameServer> UntypedGameServer for T {
-    fn update(&mut self, context:&mut UntypedContext) {
-        let mut c = Context::new();
-        for msg in context.host_messages.drain(..) {
-            if let Ok(msg) = HostMsg::<T::CustomMsg>::try_from(msg) {
-                c.host_messages.push(msg);
-            }
-        }
-        GameServer::update(self, &mut c);
 
-        for msg in c.game_messages.drain(..) {
-            if let Ok(msg) = UntypedGameMsg::try_from(msg) {
-                context.game_messages.push_back(msg);
-            }
-        }
+impl<T: GameServer> UntypedGameServer for T {
+    fn update(&mut self, mut context:UntypedContext) -> UntypedContext {
+        let mut context = Context::lock(context);
+        GameServer::update(self, &mut context);
+        context.release()
     }
 
     fn tick_rate(&self) -> u64 {

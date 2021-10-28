@@ -36,7 +36,7 @@
 				"kind": "build",
 				"isDefault": true
 			},
-			"dependsOn":["sample: client build", "sample: run"],
+			"dependsOn":["sample: run", "sample: client build"],
 			"label": "sample: all"
 		},
 	]
