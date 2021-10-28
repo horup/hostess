@@ -6,10 +6,10 @@ use uuid::Uuid;
 use log::{info};
 use tokio::select;
 
-use crate::{ClientMsg, ClientSink, ConnectedClient, Context, GameConstructor, GameMsg, HostInfo, HostMsg, ServerMsg};
+use crate::{ClientMsg, ClientSink, ConnectedClient, UntypedContext, GameServerConstructor, UntypedGameMsg, HostInfo, UntypedHostMsg, ServerMsg};
 
 enum Msg {
-    HostMsg(HostMsg),
+    HostMsg(UntypedHostMsg),
     ClientTransfer {
         client_id:Uuid,
         sink:ClientSink,
@@ -27,7 +27,7 @@ pub struct Host {
 }
 
 impl Host {
-    pub fn new(info:HostInfo, constructor:GameConstructor) -> Self {
+    pub fn new(info:HostInfo, constructor:GameServerConstructor) -> Self {
         let buffer_len = 1024;
         let (sender, mut receiver) = channel::<Msg>(buffer_len);
         let host = Self {
@@ -40,7 +40,7 @@ impl Host {
             let period = Duration::from_millis(1000 / g.tick_rate());
             let mut timer = interval(period);
 
-            let mut context = Context {
+            let mut context = UntypedContext {
                 game_messages:VecDeque::new(),
                 host_messages:Vec::with_capacity(buffer_len)
             };
@@ -56,14 +56,14 @@ impl Host {
                         g.update(&mut context);
                         for msg in context.game_messages.drain(..) {
                             match msg {
-                                GameMsg::CustomToAll { msg } => {
+                                UntypedGameMsg::CustomToAll { msg } => {
                                     for (sink, _) in &mut clients.values_mut() {
                                         let _ = sink.send(ServerMsg::Custom{
                                             msg:msg.clone()
                                         }).await;
                                     }
                                 },
-                                GameMsg::CustomTo { client_id, msg } => {
+                                UntypedGameMsg::CustomTo { client_id, msg } => {
                                     if let Some((sink, _)) = clients.get_mut(&client_id) {
                                         let _ = sink.send(ServerMsg::Custom{
                                             msg:msg.clone()
@@ -81,7 +81,7 @@ impl Host {
                                 match msg {
                                     Msg::HostMsg(msg) => {
                                         match &msg {
-                                            HostMsg::ClientLeft { client_id } => {
+                                            UntypedHostMsg::ClientLeft { client_id } => {
                                                 if let Some((tx, transfer)) = clients.remove(client_id) {
                                                     let _ = transfer.send(tx);
                                                 }
@@ -96,7 +96,7 @@ impl Host {
                                         sink: mut tx, 
                                         return_sink: return_tx 
                                     } => {
-                                        context.host_messages.push(HostMsg::ClientJoined {
+                                        context.host_messages.push(UntypedHostMsg::ClientJoined {
                                             client_id:client_id
                                         });
                                         let _ = tx.send(ServerMsg::HostJoined {
@@ -151,7 +151,7 @@ impl Host {
                         ClientMsg::CustomMsg {
                             msg
                         } => {
-                            let _ = host_sender.send(Msg::HostMsg(HostMsg::CustomMsg {
+                            let _ = host_sender.send(Msg::HostMsg(UntypedHostMsg::CustomMsg {
                                 client_id:client.client_id,
                                 msg
                             })).await;
@@ -173,7 +173,7 @@ impl Host {
             }
         }
 
-        let _ = host_sender.send(Msg::HostMsg(HostMsg::ClientLeft {
+        let _ = host_sender.send(Msg::HostMsg(UntypedHostMsg::ClientLeft {
             client_id:client.client_id
         })).await;
         

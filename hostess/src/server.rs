@@ -9,12 +9,12 @@ use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
 use warp::{Error, Filter, ws::{Message, WebSocket}};
 
-use crate::{Bincoded, ClientMsg, GameConstructor, ServerMsg, lobby::Lobby};
+use crate::{Bincoded, ClientMsg, GameServerConstructor, ServerMsg, lobby::Lobby};
 
 #[derive(Clone)]
 pub struct ServerConfig {
     pub host_creation:bool,
-    pub constructor:GameConstructor
+    pub constructor:GameServerConstructor
 }
 
 pub struct Server {
@@ -88,7 +88,7 @@ impl From<SplitStream<WebSocket>> for ClientStream {
 }
 
 impl Server {
-    pub fn new(addr: &str, constructor:GameConstructor) -> Self {
+    pub fn new(addr: &str, constructor:GameServerConstructor) -> Self {
         Self {
             addr: addr.into(),
             lobby: Arc::new(RwLock::new(Lobby::new())),

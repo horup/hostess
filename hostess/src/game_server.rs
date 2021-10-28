@@ -3,11 +3,11 @@ use std::convert::TryFrom;
 use log::info;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use uuid::Uuid;
-use crate::{Bincoded, Context, Game, GameMsg, HostMsg};
+use crate::{Bincoded, UntypedContext, UntypedGameServer, UntypedGameMsg, UntypedHostMsg};
 
 
 #[derive(Clone, Debug)]
-pub enum TypedHostMsg<T> {
+pub enum HostMsg<T> {
     ClientJoined {
         client_id:Uuid
     },
@@ -20,25 +20,25 @@ pub enum TypedHostMsg<T> {
     }
 }
 
-impl<T:Bincoded> TryFrom<HostMsg> for TypedHostMsg<T> {
+impl<T:Bincoded> TryFrom<UntypedHostMsg> for HostMsg<T> {
     type Error = ();
 
-    fn try_from(hm: HostMsg) -> Result<Self, Self::Error> {
+    fn try_from(hm: UntypedHostMsg) -> Result<Self, Self::Error> {
         match hm {
-            HostMsg::ClientJoined { client_id } => {
-                return Ok(TypedHostMsg::ClientJoined {
+            UntypedHostMsg::ClientJoined { client_id } => {
+                return Ok(HostMsg::ClientJoined {
                     client_id
                 });
             },
-            HostMsg::ClientLeft { client_id } => {
-                return Ok(TypedHostMsg::ClientLeft {
+            UntypedHostMsg::ClientLeft { client_id } => {
+                return Ok(HostMsg::ClientLeft {
                     client_id
                 });
             },
-            HostMsg::CustomMsg { client_id, msg } => {
+            UntypedHostMsg::CustomMsg { client_id, msg } => {
                 
                 if let Some(msg) = T::from_bincode(&msg) {
-                    return Ok(TypedHostMsg::CustomMsg {
+                    return Ok(HostMsg::CustomMsg {
                         client_id,
                         msg
                     });
@@ -51,7 +51,7 @@ impl<T:Bincoded> TryFrom<HostMsg> for TypedHostMsg<T> {
 }
 
 #[derive(Clone, Debug)]
-pub enum TypedGameMsg<T> {
+pub enum GameServerMsg<T> {
     CustomToAll {
         msg:T
     },
@@ -62,22 +62,22 @@ pub enum TypedGameMsg<T> {
 }
 
 
-impl<T:Bincoded> TryFrom<TypedGameMsg<T>> for GameMsg {
+impl<T:Bincoded> TryFrom<GameServerMsg<T>> for UntypedGameMsg {
     type Error = ();
 
-    fn try_from(value: TypedGameMsg<T>) -> Result<Self, Self::Error> {
+    fn try_from(value: GameServerMsg<T>) -> Result<Self, Self::Error> {
         match value {
-            TypedGameMsg::CustomToAll { 
+            GameServerMsg::CustomToAll { 
                 msg 
             } => {
-                return Ok(GameMsg::CustomToAll {
+                return Ok(UntypedGameMsg::CustomToAll {
                     msg: msg.to_bincode(),
                 });
             },
-            TypedGameMsg::CustomTo { 
+            GameServerMsg::CustomTo { 
                 client_id, msg 
             } => {
-                return Ok(GameMsg::CustomTo {
+                return Ok(UntypedGameMsg::CustomTo {
                     client_id:client_id,
                     msg: msg.to_bincode(),
                 });
@@ -88,43 +88,43 @@ impl<T:Bincoded> TryFrom<TypedGameMsg<T>> for GameMsg {
     
 }
 
-pub struct TypedContext<T> {
-    pub host_messages:Vec<TypedHostMsg<T>>,
-    pub game_messages:Vec<TypedGameMsg<T>>
+pub struct Context<T> {
+    pub host_messages:Vec<HostMsg<T>>,
+    pub game_messages:Vec<GameServerMsg<T>>
 }
 
-impl<T> TypedContext<T> {
+impl<T> Context<T> {
     pub fn new() -> Self {
-        TypedContext {
+        Context {
             host_messages: Vec::new(),
             game_messages: Vec::new(),
         }
     }
 }
-pub trait TypedGame : Game {
+pub trait GameServer : UntypedGameServer {
     type CustomMsg : Serialize + DeserializeOwned + Bincoded;
     fn tick_rate(&self) -> u64;
-    fn update(&mut self, context:&mut TypedContext<Self::CustomMsg>);
+    fn update(&mut self, context:&mut Context<Self::CustomMsg>);
 }
 
-impl<T: TypedGame> Game for T {
-    fn update(&mut self, context:&mut Context) {
-        let mut c = TypedContext::new();
+impl<T: GameServer> UntypedGameServer for T {
+    fn update(&mut self, context:&mut UntypedContext) {
+        let mut c = Context::new();
         for msg in context.host_messages.drain(..) {
-            if let Ok(msg) = TypedHostMsg::<T::CustomMsg>::try_from(msg) {
+            if let Ok(msg) = HostMsg::<T::CustomMsg>::try_from(msg) {
                 c.host_messages.push(msg);
             }
         }
-        TypedGame::update(self, &mut c);
+        GameServer::update(self, &mut c);
 
         for msg in c.game_messages.drain(..) {
-            if let Ok(msg) = GameMsg::try_from(msg) {
+            if let Ok(msg) = UntypedGameMsg::try_from(msg) {
                 context.game_messages.push_back(msg);
             }
         }
     }
 
     fn tick_rate(&self) -> u64 {
-        TypedGame::tick_rate(self)
+        GameServer::tick_rate(self)
     }
 }

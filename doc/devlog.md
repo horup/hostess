@@ -1,7 +1,7 @@
 - 2021-10-31
 - 2021-10-30
 - 2021-10-29    
-- 2021-10-28    
+- 2021-10-28    30m refactored typigns a bit, added run all all which depends on others
 - 2021-10-27    30m worked on typed support    
 - 2021-10-19    100m worked on sample state spawning, now builds both client and server same time, started working on TypedGame
 - 2021-10-18    130m worked on ping and latency test, removed generic from Server, added working snapshot for sample game, worked on state, added wip player spawning

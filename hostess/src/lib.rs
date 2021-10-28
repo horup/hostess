@@ -11,10 +11,10 @@ pub use server::*;
 mod lobby;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub mod typed_game;
+pub mod game_server;
 
-mod game;
-pub use game::*;
+mod untyped_game_server;
+pub use untyped_game_server::*;
 
 pub use log;
 

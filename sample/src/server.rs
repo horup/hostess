@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use generational_arena::Index;
 use glam::Vec2;
-use hostess::{Bincoded, ClientMsg, Context, Game, GameMsg, log::info, typed_game::{TypedGame, TypedGameMsg, TypedHostMsg}, uuid::Uuid};
+use hostess::{Bincoded, ClientMsg, UntypedContext, UntypedGameServer, UntypedGameMsg, log::info, game_server::{GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
 use sample_lib::{CustomMsg, State, Thing};
 use serde::{Serialize, Deserialize};
 use web_sys::console::info;
@@ -27,14 +27,14 @@ impl Server {
     }
 }
 
-impl TypedGame for Server {
+impl GameServer for Server {
     type CustomMsg = CustomMsg;
 
-    fn update(&mut self, context:&mut hostess::typed_game::TypedContext<CustomMsg>) {
+    fn update(&mut self, context:&mut hostess::game_server::Context<CustomMsg>) {
         info!("ticking");
         for msg in context.host_messages.drain(..) {
             match msg {
-                hostess::typed_game::TypedHostMsg::ClientJoined { client_id } => {
+                hostess::game_server::HostMsg::ClientJoined { client_id } => {
                     if !self.players.contains_key(&client_id) {
                         self.players.insert(client_id, Player {
                             client_id:client_id,
@@ -42,10 +42,10 @@ impl TypedGame for Server {
                         });
                     }
                 },
-                hostess::typed_game::TypedHostMsg::ClientLeft { client_id } => {
+                hostess::game_server::HostMsg::ClientLeft { client_id } => {
 
                 },
-                hostess::typed_game::TypedHostMsg::CustomMsg { client_id, msg } => {
+                hostess::game_server::HostMsg::CustomMsg { client_id, msg } => {
                     match msg {
                         CustomMsg::ClientInput { input } => {
                             if let Some(player) = self.players.get_mut(&client_id) {
@@ -61,7 +61,7 @@ impl TypedGame for Server {
                                         }.to_bincode()
                                     });*/
 
-                                    context.game_messages.push(TypedGameMsg::CustomTo {
+                                    context.game_messages.push(GameServerMsg::CustomTo {
                                         client_id:player.client_id,
                                         msg:CustomMsg::ServerPlayerThing {
                                             thing_id:player.thing
@@ -85,7 +85,7 @@ impl TypedGame for Server {
             }
         }
 
-        context.game_messages.push(TypedGameMsg::CustomToAll {
+        context.game_messages.push(GameServerMsg::CustomToAll {
             msg:CustomMsg::ServerSnapshotFull {
                 state:self.state.clone()
             }

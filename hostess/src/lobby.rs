@@ -2,7 +2,7 @@ use std::{collections::HashMap};
 
 use log::info;
 use uuid::Uuid;
-use crate::{GameConstructor, HostInfo, host::Host};
+use crate::{GameServerConstructor, HostInfo, host::Host};
 
 pub struct Lobby {
     hosts:HashMap<Uuid, Host>
@@ -15,7 +15,7 @@ impl Lobby {
         }
     }
 
-    pub fn new_host(&mut self, creator:Uuid, constructor:GameConstructor) -> Uuid {
+    pub fn new_host(&mut self, creator:Uuid, constructor:GameServerConstructor) -> Uuid {
         let host_id = Uuid::new_v4();
         let host = Host::new(HostInfo {
             id:host_id,
