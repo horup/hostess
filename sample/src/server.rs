@@ -31,7 +31,6 @@ impl GameServer for Server {
     type CustomMsg = CustomMsg;
 
     fn update(&mut self, context:&mut hostess::game_server::Context<CustomMsg>) {
-        info!("ticking");
         for msg in context.host_messages.drain(..) {
             match msg {
                 hostess::game_server::HostMsg::ClientJoined { client_id } => {
@@ -53,13 +52,6 @@ impl GameServer for Server {
                                     // spawn player thing
                                     let thing = Thing::random_new(&self.state);
                                     player.thing = Some(self.state.things.insert(thing));
-
-                                   /* context.game_messages.push_back(GameServerMsg::CustomTo {
-                                        client_id:player.client_id,
-                                        msg:GameServerMsg::PlayerThing {
-                                            thing_id:player.thing
-                                        }.to_bincode()
-                                    });*/
 
                                     context.game_messages.push(GameServerMsg::CustomTo {
                                         client_id:player.client_id,
