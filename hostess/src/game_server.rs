@@ -1,7 +1,8 @@
 use std::{convert::{TryFrom}, marker::PhantomData};
 
 use uuid::Uuid;
-use crate::{Bincoded, UntypedContext, UntypedGameServer, UntypedGameServerMsg, UntypedHostMsg};
+
+use crate::{Bincoded, untyped_game_server::{UntypedContext, UntypedGameServer, UntypedGameServerMsg, UntypedHostMsg}};
 
 #[derive(Clone, Debug)]
 pub enum HostMsg<T> {

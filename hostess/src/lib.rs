@@ -1,27 +1,22 @@
 #[cfg(not(target_arch = "wasm32"))]
-mod host;
+pub use tokio;
 
 #[cfg(not(target_arch = "wasm32"))]
-mod server;
+pub mod host;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use server::*;
+pub mod server;
 
 #[cfg(not(target_arch = "wasm32"))]
-mod lobby;
+pub mod lobby;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod game_server;
 
-mod untyped_game_server;
-pub use untyped_game_server::*;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod untyped_game_server;
 
 pub use log;
-
 pub use uuid;
-
-#[cfg(not(target_arch = "wasm32"))]
-pub use tokio;
-
 mod protocols;
 pub use protocols::*;

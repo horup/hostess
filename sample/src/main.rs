@@ -1,4 +1,4 @@
-use hostess::{UntypedGameServer, GameServerConstructor, Server, log::LevelFilter, tokio, uuid::Uuid};
+use hostess::{log::LevelFilter, server::Server, tokio, untyped_game_server::{GameServerConstructor, UntypedGameServer}, uuid::Uuid};
 mod server;
 
 #[tokio::main]
