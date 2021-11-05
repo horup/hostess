@@ -10,10 +10,17 @@
 			"group": "build",
 			"label": "sample: server run"
 		},
-		{
+		/*{
 			"type": "process",
 			"command":"wasm-pack",
 			"args": ["build", "--target", "web", "--out-dir", "public/pkg"],
+			"group": "build",
+			"label": "sample: client build"
+		},*/
+		{
+			"type": "cargo",
+			"command": "watch",
+			"args": ["-i", ".gitignore", "-i", "public/*", "-i", "target/*", "-s", "wasm-pack build"],
 			"group": "build",
 			"label": "sample: client build"
 		},
@@ -31,13 +38,13 @@
 			"command": "run",
 			"problemMatcher": [
 				"$rustc"
-			],
+			], 
 			"group": {
 				"kind": "build",
 				"isDefault": true
 			},
 			"dependsOn":["sample: run", "sample: client build"],
-			"label": "sample: all"
+			"label": "sample: all",
 		},
 	]
 }

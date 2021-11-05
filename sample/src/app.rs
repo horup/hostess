@@ -60,14 +60,14 @@ impl App {
         self.canvas.clear();
         let grid_size = 16.0;
         self.canvas.set_scale(grid_size);
-
+ 
         // draw things circle of things
         for (_, thing) in &self.state.things {
             let x = thing.pos.x as f64;
             let y = thing.pos.y as f64;
             self.canvas.draw_circle(x, y, thing.radius as f64);
         }
-
+ 
         // draw names of things
         for (_, thing) in &self.state.things {
             let x = thing.pos.x as f64;
@@ -77,12 +77,15 @@ impl App {
             }
         }
 
+        self.canvas.set_text_style("left", "middle");
+        self.canvas.fill_text("100%", 0.0, 0.5);
 
-      /*  self.canvas.set_text_style("center", "middle");
-        self.canvas.fill_text(&self.status, (self.canvas.width() / 2 / grid_size as u32) as f64, 0.5);
+
         self.canvas.set_text_style("right", "middle");
-        self.canvas.fill_text(format!("ping:{:0.00}ms", self.ping).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 0.5);
-        */
+        self.canvas.fill_text(&self.status, (self.canvas.width() / grid_size as u32) as f64, 0.5);
+        self.canvas.set_text_style("right", "middle");
+        self.canvas.fill_text(format!("ping:{:0.00}ms", self.ping).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 1.5);
+        
     }
 
     pub fn send(&mut self, msg:ClientMsg) {
@@ -99,7 +102,7 @@ impl App {
             } => {
                 self.input.thing_id = thing_id;
             }
-            CustomMsg::ClientInput { input } => {
+            _=> {
                 
             },
         }
