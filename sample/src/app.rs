@@ -89,6 +89,22 @@ impl App {
         self.client_messages.push(msg)
     }
 
+    pub fn recv_custom(&mut self, msg:CustomMsg) {
+        match msg {
+            CustomMsg::ServerSnapshotFull { state } => {
+                self.state = state;
+            },
+            CustomMsg::ServerPlayerThing {
+                thing_id
+            } => {
+                self.input.thing_id = thing_id;
+            }
+            CustomMsg::ClientInput { input } => {
+                
+            },
+        }
+    }
+
     pub fn recv(&mut self, msg:&ServerMsg) {
         match msg {
             ServerMsg::LobbyJoined {  } => {
@@ -115,22 +131,16 @@ impl App {
             },
             ServerMsg::Custom { msg } => {
                 let msg = CustomMsg::from_bincode(msg).unwrap();
-                match msg {
-                    CustomMsg::ServerSnapshotFull { state } => {
-                        self.state = state;
-                    },
-                    CustomMsg::ServerPlayerThing {
-                        thing_id
-                    } => {
-                        self.input.thing_id = thing_id;
-                    }
-                    CustomMsg::ClientInput { input } => {
-                        
-                    },
-                }
+                self.recv_custom(msg);
             }
             _ => {}
         }
+    }
+
+    pub fn send_custom(&mut self, msg:CustomMsg) {
+        self.client_messages.push(ClientMsg::CustomMsg {
+            msg:msg.to_bincode()
+        });
     }
 
     pub fn update(&mut self) {
@@ -147,11 +157,11 @@ impl App {
         }
 
         self.state.update(Some(&mut self.input));
-        self.client_messages.push(ClientMsg::CustomMsg {
-            msg:CustomMsg::ClientInput {
-                input:self.input.clone()
-            }.to_bincode()
+
+        self.send_custom(CustomMsg::ClientInput {
+            input:self.input.clone()
         });
+      
         self.draw();
     }
 
