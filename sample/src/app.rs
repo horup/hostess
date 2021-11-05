@@ -1,10 +1,10 @@
 
-use generational_arena::Index;
-use hostess::{ClientMsg, ServerMsg, log::info, uuid::Uuid, Bincoded};
+use hostess::{ClientMsg, ServerMsg, uuid::Uuid, Bincoded};
 use crate::{Input, CustomMsg, State, performance_now};
 use super::Canvas;
 
-pub struct Client {
+pub struct App {
+    app_state:AppState,
     id:Uuid,
     canvas:Canvas,
     state:State,
@@ -18,9 +18,23 @@ pub struct Client {
 
 pub type KeyCode = u32;
 
-impl Client {
+
+/// enum holdning the client app state
+enum AppState {
+    Initial,
+    EnterName {
+        name:String
+    },
+    InGame {
+        
+    }
+}
+
+
+impl App {
     pub fn new() -> Self {
         Self {
+            app_state:AppState::Initial,
             canvas:Canvas::new(),
             state:State::new(),
             input:Input {
@@ -47,33 +61,28 @@ impl Client {
         let grid_size = 16.0;
         self.canvas.set_scale(grid_size);
 
-        // draw debug circle of things
+        // draw things circle of things
         for (_, thing) in &self.state.things {
             let x = thing.pos.x as f64;
             let y = thing.pos.y as f64;
             self.canvas.draw_circle(x, y, thing.radius as f64);
         }
 
-        // draw things
-        for (_, thing) in &self.state.things {
-            let x = thing.pos.x as f64;
-            let y = thing.pos.y as f64;
-            self.canvas.draw_normalized_image(0, x, y);
-        }
-
         // draw names of things
         for (_, thing) in &self.state.things {
             let x = thing.pos.x as f64;
             let y = thing.pos.y as f64;
-            self.canvas.fill_text(&thing.name, x, y - 1.0);
+            if thing.name.len() > 0 {
+                self.canvas.fill_text(&thing.name, x, y - 1.0);
+            }
         }
 
 
-        self.canvas.set_text_style("center", "middle");
+      /*  self.canvas.set_text_style("center", "middle");
         self.canvas.fill_text(&self.status, (self.canvas.width() / 2 / grid_size as u32) as f64, 0.5);
         self.canvas.set_text_style("right", "middle");
         self.canvas.fill_text(format!("ping:{:0.00}ms", self.ping).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 0.5);
-        
+        */
     }
 
     pub fn send(&mut self, msg:ClientMsg) {
@@ -221,7 +230,7 @@ impl Client {
     }
 }
 
-unsafe impl Send for Client {
+unsafe impl Send for App {
 }
-unsafe impl Sync for Client {
+unsafe impl Sync for App {
 }

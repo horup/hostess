@@ -1,6 +1,6 @@
 #[allow(dead_code)]
-mod client;
-use client::*;
+mod app;
+use app::*;
 
 mod state;
 pub use state::*;
@@ -15,14 +15,14 @@ pub use platform::*;
 
 use wasm_bindgen::prelude::*;
 
-static mut GLOBAL_CLIENT:Option<Client> = None;
+static mut GLOBAL_CLIENT:Option<App> = None;
 
 #[wasm_bindgen]
 pub fn start() {
     wasm_logger::init(wasm_logger::Config::default());
 
     unsafe {
-        let mut client = Client::new();
+        let mut client = App::new();
         client.init();
         GLOBAL_CLIENT = Some(client);
     }
