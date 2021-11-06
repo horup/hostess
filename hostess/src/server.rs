@@ -9,7 +9,7 @@ use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
 use warp::{Error, Filter, ws::{Message, WebSocket}};
 
-use crate::{Bincoded, ClientMsg, ServerMsg, lobby::Lobby, untyped_game_server::GameServerConstructor};
+use crate::{Bincoded, ClientMsg, ServerMsg, lobby::Lobby, game_server::GameServerConstructor};
 
 #[derive(Clone)]
 pub struct ServerConfig {

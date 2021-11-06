@@ -1,4 +1,4 @@
-use hostess::{log::LevelFilter, server::Server, tokio, untyped_game_server::{GameServerConstructor, UntypedGameServer}, uuid::Uuid};
+use hostess::{log::LevelFilter, server::Server, tokio, game_server::{GameServerConstructor, GameServer}, uuid::Uuid};
 mod server;
 
 #[tokio::main]
@@ -6,7 +6,7 @@ async fn main() {
     env_logger::builder().filter_level(LevelFilter::Info).init();
 
     let f = || {
-        let boxed:Box<dyn UntypedGameServer> = Box::new(server::Server::new());
+        let boxed:Box<dyn GameServer> = Box::new(server::Server::new());
         return boxed;
     };
     let constructor = GameServerConstructor::new(Box::new(f));

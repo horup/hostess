@@ -2,7 +2,7 @@ use std::{collections::VecDeque, sync::Arc};
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
-pub enum UntypedHostMsg {
+pub enum HostMsg {
     ClientJoined {
         client_id:Uuid
     },
@@ -16,7 +16,7 @@ pub enum UntypedHostMsg {
 }
 
 #[derive(Clone, Debug)]
-pub enum UntypedGameServerMsg {
+pub enum GameServerMsg {
     CustomToAll {
         msg:Vec<u8>
     },
@@ -26,29 +26,29 @@ pub enum UntypedGameServerMsg {
     }
 }
 
-pub struct UntypedContext {
-    pub host_messages:VecDeque<UntypedHostMsg>,
-    pub game_messages:VecDeque<UntypedGameServerMsg>
+pub struct Context {
+    pub host_messages:VecDeque<HostMsg>,
+    pub game_messages:VecDeque<GameServerMsg>
 }
 
-impl UntypedContext {
-    pub fn pop_host_msg(&mut self) -> Option<UntypedHostMsg> {
+impl Context {
+    pub fn pop_host_msg(&mut self) -> Option<HostMsg> {
         let msg = self.host_messages.pop_front();
         return msg;
     }
 
-    pub fn push_game_msg(&mut self, msg:UntypedGameServerMsg) {
+    pub fn push_game_msg(&mut self, msg:GameServerMsg) {
         let msg = msg.into();
         self.game_messages.push_back(msg);
     }
 }
 
-pub trait UntypedGameServer : Send + Sync + 'static {
+pub trait GameServer : Send + Sync + 'static {
     fn tick_rate(&self) -> u64;
-    fn update(&mut self, context:UntypedContext) -> UntypedContext;
+    fn update(&mut self, context:Context) -> Context;
 }
 
-pub type GameServerConstructorFn = Box<dyn Fn() -> Box<dyn UntypedGameServer> + Send + Sync>;
+pub type GameServerConstructorFn = Box<dyn Fn() -> Box<dyn GameServer> + Send + Sync>;
 
 #[derive(Clone)]
 pub struct GameServerConstructor {
@@ -62,7 +62,7 @@ impl GameServerConstructor {
         }
     }
 
-    pub fn construct(&self) -> Box<dyn UntypedGameServer> {
+    pub fn construct(&self) -> Box<dyn GameServer> {
         let f = self.arc.as_ref();
         f()
     }

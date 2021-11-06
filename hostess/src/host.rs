@@ -6,10 +6,10 @@ use uuid::Uuid;
 use log::{info};
 use tokio::select;
 
-use crate::{ClientMsg, HostInfo, ServerMsg, server::{ClientSink, ConnectedClient}, untyped_game_server::{GameServerConstructor, UntypedContext, UntypedGameServerMsg, UntypedHostMsg}};
+use crate::{ClientMsg, HostInfo, ServerMsg, server::{ClientSink, ConnectedClient}, game_server::{GameServerConstructor, Context, GameServerMsg, HostMsg}};
 
 enum Msg {
-    HostMsg(UntypedHostMsg),
+    HostMsg(HostMsg),
     ClientTransfer {
         client_id:Uuid,
         sink:ClientSink,
@@ -40,7 +40,7 @@ impl Host {
             let period = Duration::from_millis(1000 / g.tick_rate());
             let mut timer = interval(period);
 
-            let mut context = UntypedContext {
+            let mut context = Context {
                 game_messages:VecDeque::new(),
                 host_messages:VecDeque::with_capacity(buffer_len)
             };
@@ -56,14 +56,14 @@ impl Host {
                         context = g.update(context);
                         for msg in context.game_messages.drain(..) {
                             match msg {
-                                UntypedGameServerMsg::CustomToAll { msg } => {
+                                GameServerMsg::CustomToAll { msg } => {
                                     for (sink, _) in &mut clients.values_mut() {
                                         let _ = sink.send(ServerMsg::Custom{
                                             msg:msg.clone()
                                         }).await;
                                     }
                                 },
-                                UntypedGameServerMsg::CustomTo { client_id, msg } => {
+                                GameServerMsg::CustomTo { client_id, msg } => {
                                     if let Some((sink, _)) = clients.get_mut(&client_id) {
                                         let _ = sink.send(ServerMsg::Custom{
                                             msg:msg.clone()
@@ -81,7 +81,7 @@ impl Host {
                                 match msg {
                                     Msg::HostMsg(msg) => {
                                         match &msg {
-                                            UntypedHostMsg::ClientLeft { client_id } => {
+                                            HostMsg::ClientLeft { client_id } => {
                                                 if let Some((tx, transfer)) = clients.remove(client_id) {
                                                     let _ = transfer.send(tx);
                                                 }
@@ -96,7 +96,7 @@ impl Host {
                                         sink: mut tx, 
                                         return_sink: return_tx 
                                     } => {
-                                        context.host_messages.push_back(UntypedHostMsg::ClientJoined {
+                                        context.host_messages.push_back(HostMsg::ClientJoined {
                                             client_id:client_id
                                         });
                                         let _ = tx.send(ServerMsg::HostJoined {
@@ -151,7 +151,7 @@ impl Host {
                         ClientMsg::CustomMsg {
                             msg
                         } => {
-                            let _ = host_sender.send(Msg::HostMsg(UntypedHostMsg::CustomMsg {
+                            let _ = host_sender.send(Msg::HostMsg(HostMsg::CustomMsg {
                                 client_id:client.client_id,
                                 msg
                             })).await;
@@ -173,7 +173,7 @@ impl Host {
             }
         }
 
-        let _ = host_sender.send(Msg::HostMsg(UntypedHostMsg::ClientLeft {
+        let _ = host_sender.send(Msg::HostMsg(HostMsg::ClientLeft {
             client_id:client.client_id
         })).await;
         

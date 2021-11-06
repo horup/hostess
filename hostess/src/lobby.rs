@@ -2,7 +2,7 @@ use std::{collections::HashMap};
 
 use log::info;
 use uuid::Uuid;
-use crate::{HostInfo, host::Host, untyped_game_server::GameServerConstructor};
+use crate::{HostInfo, host::Host, game_server::GameServerConstructor};
 
 pub struct Lobby {
     hosts:HashMap<Uuid, Host>

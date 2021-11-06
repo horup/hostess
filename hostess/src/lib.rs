@@ -11,7 +11,7 @@ pub mod server;
 pub mod lobby;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub mod untyped_game_server;
+pub mod game_server;
 
 pub use log;
 pub use uuid;
