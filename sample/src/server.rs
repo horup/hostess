@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use generational_arena::Index;
 use glam::Vec2;
-use hostess::{Bincoded, ClientMsg, game_server::{GameServer, GameServerMsg, HostMsg}, log::info, untyped_game_server::{UntypedContext, UntypedGameServer, UntypedGameServerMsg, UntypedHostMsg}, uuid::Uuid};
+use hostess::{Bincoded, ClientMsg, log::info, untyped_game_server::{UntypedContext, UntypedGameServer, UntypedGameServerMsg, UntypedHostMsg}, uuid::Uuid};
 use sample_lib::{CustomMsg, State, Thing};
 use serde::{Serialize, Deserialize};
 use web_sys::console::info;
