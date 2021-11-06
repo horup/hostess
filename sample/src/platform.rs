@@ -1,7 +1,19 @@
 use std::f64::consts::PI;
 
 use wasm_bindgen::{JsCast};
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlImageElement, window};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlImageElement, Storage, console::info, window};
+
+
+pub fn set_item(key:&str, value:&str) {
+    let storage = window().unwrap().local_storage().unwrap().unwrap();
+    storage.set_item(key, value).unwrap();
+}
+
+pub fn get_item(key:&str) -> Option<String> {
+    let storage = window().unwrap().local_storage().unwrap().unwrap();
+    let item = storage.get_item(key).unwrap();
+    return item;
+}
 
 pub struct Canvas {
     context:CanvasRenderingContext2d,

@@ -1,6 +1,6 @@
 
 use hostess::{Bincoded, ClientMsg, ServerMsg, uuid::Uuid};
-use crate::{Input, CustomMsg, State, performance_now};
+use crate::{CustomMsg, Input, State, get_item, performance_now, set_item};
 use super::Canvas;
 
 pub struct App {
@@ -46,7 +46,7 @@ enum AppState {
 impl App {
     pub fn new() -> Self {
         Self {
-            player_name:String::default(),
+            player_name:get_item("player_name").unwrap_or_default(),
             debug:true,
             app_state:AppState::Initial,
             canvas:Canvas::new(),
@@ -242,6 +242,7 @@ impl App {
                 }
                 else if key == "Enter" && name.len() > 0 {
                     self.player_name = name.clone();
+                    set_item("player_name", self.player_name.as_str());
                     self.new_app_state(AppState::ReadyToJoin {});
                 }
                 else if key == "Backspace" && name.len() > 0 {
