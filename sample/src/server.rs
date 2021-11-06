@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 use generational_arena::Index;
-use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, log::info, game_server::{Context, GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
 use sample_lib::{CustomMsg, State, Thing};
 use serde::{Serialize, Deserialize};
-use web_sys::console::info;
 
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -29,11 +27,10 @@ impl Server {
 
 impl GameServer for Server {
     fn tick_rate(&self) -> u64 {
-        todo!()
+        3
     }
 
     fn update(&mut self, mut context:Context) -> Context {
-
         while let Some(msg) = context.pop_host_msg() {
             match msg {
                 HostMsg::ClientJoined { client_id } => {
