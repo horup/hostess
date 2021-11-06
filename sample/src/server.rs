@@ -8,6 +8,7 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Player {
     pub client_id:Uuid,
+    pub client_name:String,
     pub thing:Option<Index>
 }
 
@@ -33,16 +34,21 @@ impl GameServer for Server {
     fn update(&mut self, mut context:Context) -> Context {
         while let Some(msg) = context.pop_host_msg() {
             match msg {
-                HostMsg::ClientJoined { client_id } => {
+                HostMsg::ClientJoined { client_id, client_name } => {
                     if !self.players.contains_key(&client_id) {
                         self.players.insert(client_id, Player {
                             client_id:client_id,
+                            client_name,
                             thing:None
                         });
                     }
                 },
-                HostMsg::ClientLeft { client_id:_ } => {
-
+                HostMsg::ClientLeft { client_id } => {
+                    if let Some(player) = self.players.remove(&client_id) {
+                        if let Some(thing_id) = player.thing {
+                            self.state.things.remove(thing_id);
+                        }
+                    }
                 },
                 HostMsg::CustomMsg { client_id, msg } => {
                     if let Some(msg) = Bincoded::from_bincode(&msg) {
@@ -83,7 +89,8 @@ impl Server {
                 if let Some(player) = self.players.get_mut(&client_id) {
                     if player.thing == None {
                         // player has no thing
-                        let thing = Thing::random_new(&self.state);
+                        let mut thing = Thing::random_new(&self.state);
+                        thing.name = player.client_name.clone();
                         player.thing = Some(self.state.things.insert(thing));
 
                         // the the player its thing id

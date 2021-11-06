@@ -4,7 +4,8 @@ use uuid::Uuid;
 #[derive(Clone, Debug)]
 pub enum HostMsg {
     ClientJoined {
-        client_id:Uuid
+        client_id:Uuid,
+        client_name:String
     },
     ClientLeft {
         client_id:Uuid

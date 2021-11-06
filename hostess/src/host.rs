@@ -12,6 +12,7 @@ enum Msg {
     HostMsg(HostMsg),
     ClientTransfer {
         client_id:Uuid,
+        client_name:String,
         sink:ClientSink,
         return_sink:tokio::sync::oneshot::Sender<ClientSink>
     },
@@ -93,11 +94,13 @@ impl Host {
                                     },
                                     Msg::ClientTransfer { 
                                         client_id, 
+                                        client_name,
                                         sink: mut tx, 
                                         return_sink: return_tx 
                                     } => {
                                         context.host_messages.push_back(HostMsg::ClientJoined {
-                                            client_id:client_id
+                                            client_id:client_id,
+                                            client_name:client_name
                                         });
                                         let _ = tx.send(ServerMsg::HostJoined {
                                             host:info.clone()
@@ -136,6 +139,7 @@ impl Host {
         let host_sender = self.sender.clone();
         let _ = host_sender.send(Msg::ClientTransfer {
             client_id: client.client_id,
+            client_name:client.client_name.clone(),
             sink: tx,
             return_sink: return_tx,
         }).await;
