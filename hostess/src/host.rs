@@ -128,7 +128,7 @@ impl Host {
     }
 
     pub async fn join(&self, client:ConnectedClient) -> Option<ConnectedClient> {
-        info!("Client {} joined Host {}", client.client_id, self.info.id);
+        info!("Client {} with name '{}' joined Host {}", client.client_id, client.client_name, self.info.id);
         let tx = client.sink;
         let mut rx = client.stream;
 
