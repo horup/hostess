@@ -182,7 +182,8 @@ impl Host {
             return Some(ConnectedClient {
                 sink: tx,
                 stream: rx,
-                client_id:client.client_id
+                client_id:client.client_id,
+                client_name:client.client_name
             });
         };
 

@@ -26,7 +26,8 @@ pub struct Server {
 pub struct ConnectedClient {
     pub sink: ClientSink,
     pub stream: ClientStream,
-    pub client_id:Uuid
+    pub client_id:Uuid,
+    pub client_name:String
 }
 
 pub struct ClientSink {
@@ -168,6 +169,7 @@ impl Server {
         let mut stream:ClientStream = rx.into();
 
         let mut id = None;
+        let mut name = "".into();
 
         // wait for Hello message to get client id
         while let Some(msg) = stream.stream.next().await {
@@ -177,8 +179,9 @@ impl Server {
                     if bytes.len() > 0 {
                         match bincode::deserialize::<ClientMsg>(bytes) {
                             Ok(msg) => match msg {
-                                ClientMsg::Hello { client_id } => {
+                                ClientMsg::Hello { client_id, client_name } => {
                                     id = Some(client_id);
+                                    name = client_name;
                                     break;
                                 }
                                 _ => {}
@@ -203,7 +206,7 @@ impl Server {
             let msg = ServerMsg::LobbyJoined {};
             match tx.send(msg).await {
                 Ok(_) => {
-                    Self::client_joined_lobby(ConnectedClient{sink: tx, stream, client_id}, lobby, config).await
+                    Self::client_joined_lobby(ConnectedClient{sink: tx, stream, client_id, client_name: name}, lobby, config).await
                 },
                 Err(_) => error!("Client {} failed to join", client_id),
             }

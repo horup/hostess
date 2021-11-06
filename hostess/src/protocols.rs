@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ClientMsg {
     Hello {
-        client_id:Uuid
+        client_id:Uuid,
+        client_name:String
     },
     CreateHost {
 

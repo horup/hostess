@@ -7,7 +7,7 @@ use crate::{Bincoded, untyped_game_server::{UntypedContext, UntypedGameServer, U
 #[derive(Clone, Debug)]
 pub enum HostMsg<T> {
     ClientJoined {
-        client_id:Uuid
+        client_id:Uuid,
     },
     ClientLeft {
         client_id:Uuid

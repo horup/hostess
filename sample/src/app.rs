@@ -307,7 +307,8 @@ impl App {
             AppState::ReadyToJoin => {
                 self.connection_status = format!("Sending Hello");
                 self.client_messages.push(ClientMsg::Hello {
-                    client_id:self.id.clone()
+                    client_id:self.id.clone(),
+                    client_name:self.player_name.clone()
                 });
             }
             _ => {},
