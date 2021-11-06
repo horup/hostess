@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use generational_arena::Index;
 use glam::Vec2;
-use hostess::{Bincoded, ClientMsg, log::info, game_server::{GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
+use hostess::{Bincoded, ClientMsg, game_server::{GameServer, GameServerMsg, HostMsg}, log::info, untyped_game_server::{UntypedContext, UntypedGameServer, UntypedGameServerMsg, UntypedHostMsg}, uuid::Uuid};
 use sample_lib::{CustomMsg, State, Thing};
 use serde::{Serialize, Deserialize};
 use web_sys::console::info;
@@ -27,6 +27,76 @@ impl Server {
     }
 }
 
+impl UntypedGameServer for Server {
+    fn tick_rate(&self) -> u64 {
+        todo!()
+    }
+
+    fn update(&mut self, mut context:UntypedContext) -> UntypedContext {
+
+        while let Some(msg) = context.pop_host_msg() {
+            match msg {
+                UntypedHostMsg::ClientJoined { client_id } => {
+                    if !self.players.contains_key(&client_id) {
+                        self.players.insert(client_id, Player {
+                            client_id:client_id,
+                            thing:None
+                        });
+                    }
+                },
+                UntypedHostMsg::ClientLeft { client_id } => {
+
+                },
+                UntypedHostMsg::CustomMsg { client_id, msg } => {
+                    if let Some(msg) = Bincoded::from_bincode(&msg) {
+                        self.custom_msg(&mut context, client_id, msg);
+                    }
+                },
+            }
+        }
+
+        return context;
+    }
+}
+
+impl Server {
+    pub fn push_custom_to(context:&mut UntypedContext, client_id:Uuid, msg:CustomMsg) {
+        let msg = msg.to_bincode();
+        context.push_game_msg(UntypedGameServerMsg::CustomTo {
+            client_id,
+            msg
+        });
+    }
+
+    pub fn custom_msg(&mut self, context:&mut UntypedContext, client_id:Uuid, msg:CustomMsg) {
+        match msg {
+            CustomMsg::ClientInput { input } => {
+                if let Some(player) = self.players.get_mut(&client_id) {
+                    if input.shoot && player.thing == None {
+                        // spawn player thing
+                        let thing = Thing::random_new(&self.state);
+                        player.thing = Some(self.state.things.insert(thing));
+
+                        Self::push_custom_to( context, player.client_id, CustomMsg::ServerPlayerThing {
+                                thing_id:player.thing
+                        });
+                    }
+
+                    if let Some(thing_id) = player.thing {
+                        if let Some(thing) = self.state.things.get_mut(thing_id) {
+                            thing.pos = input.position;
+                        }
+                    }
+                }
+
+
+            },
+            CustomMsg::ServerSnapshotFull { state } => {},
+            CustomMsg::ServerPlayerThing { thing_id } => {},
+        }
+    }
+}
+/*
 impl GameServer for Server {
     type CustomMsg = CustomMsg;
 
@@ -87,7 +157,7 @@ impl GameServer for Server {
     fn tick_rate(&self) -> u64 {
         2
     }
-}
+}*/
 
 /*
 impl Game for Server {

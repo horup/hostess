@@ -31,6 +31,18 @@ pub struct UntypedContext {
     pub game_messages:VecDeque<UntypedGameServerMsg>
 }
 
+impl UntypedContext {
+    pub fn pop_host_msg(&mut self) -> Option<UntypedHostMsg> {
+        let msg = self.host_messages.pop_front();
+        return msg;
+    }
+
+    pub fn push_game_msg(&mut self, msg:UntypedGameServerMsg) {
+        let msg = msg.into();
+        self.game_messages.push_back(msg);
+    }
+}
+
 pub trait UntypedGameServer : Send + Sync + 'static {
     fn tick_rate(&self) -> u64;
     fn update(&mut self, context:UntypedContext) -> UntypedContext;
