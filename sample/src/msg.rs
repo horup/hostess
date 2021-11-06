@@ -11,6 +11,8 @@ pub enum CustomMsg {
     ServerPlayerThing {
         thing_id:Option<Index>
     },
+
+    /// input from a client, such as position, ability usage, e.g.
     ClientInput {
         input:Input
     }

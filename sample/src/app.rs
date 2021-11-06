@@ -207,7 +207,7 @@ impl App {
         self.draw();
     }
 
-    pub fn keyup(&mut self, code:KeyCode, key:&str) {
+    pub fn keyup(&mut self, code:KeyCode, _key:&str) {
         match &self.app_state {
             AppState::InGame {  } => {
                 let i = &mut self.input;

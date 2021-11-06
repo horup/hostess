@@ -9,7 +9,7 @@ mod msg;
 pub use msg::*;
 
 mod platform;
-use hostess::{ServerMsg, log::{error, info}};
+use hostess::{ServerMsg, log::{error}};
 pub use platform::*;
 
 
