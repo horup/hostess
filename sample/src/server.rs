@@ -52,29 +52,41 @@ impl GameServer for Server {
             }
         }
 
+        push_custom_all(&mut context, CustomMsg::ServerSnapshotFull {
+                state:self.state.clone()
+            }
+        );
+
         return context;
     }
 }
 
-impl Server {
-    pub fn push_custom_to(context:&mut Context, client_id:Uuid, msg:CustomMsg) {
-        let msg = msg.to_bincode();
-        context.push_game_msg(GameServerMsg::CustomTo {
-            client_id,
-            msg
-        });
-    }
+fn push_custom_all(context:&mut Context, msg:CustomMsg) {
+    let msg = msg.to_bincode();
+    context.push_game_msg(GameServerMsg::CustomToAll {
+        msg
+    });
+}
+fn push_custom_to(context:&mut Context, client_id:Uuid, msg:CustomMsg) {
+    let msg = msg.to_bincode();
+    context.push_game_msg(GameServerMsg::CustomTo {
+        client_id,
+        msg
+    });
+}
 
+impl Server {
     pub fn custom_msg(&mut self, context:&mut Context, client_id:Uuid, msg:CustomMsg) {
         match msg {
             CustomMsg::ClientInput { input } => {
                 if let Some(player) = self.players.get_mut(&client_id) {
                     if input.shoot && player.thing == None {
+                        info!("hi");
                         // spawn player thing
                         let thing = Thing::random_new(&self.state);
                         player.thing = Some(self.state.things.insert(thing));
 
-                        Self::push_custom_to( context, player.client_id, CustomMsg::ServerPlayerThing {
+                        push_custom_to(context, player.client_id, CustomMsg::ServerPlayerThing {
                                 thing_id:player.thing
                         });
                     }

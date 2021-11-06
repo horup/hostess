@@ -1,5 +1,5 @@
 
-use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
+use hostess::{Bincoded, ClientMsg, ServerMsg, uuid::Uuid};
 use crate::{Input, CustomMsg, State, performance_now};
 use super::Canvas;
 
@@ -39,9 +39,7 @@ enum AppState {
     ReadyToJoin,
 
     /// when in game and playing
-    InGame {
-        
-    }
+    InGame
 }
 
 
@@ -166,6 +164,7 @@ impl App {
             },
             ServerMsg::HostJoined {host} => {
                 self.connection_status = format!("✓ Joined host {} ✓ ", host.id);
+                self.new_app_state(AppState::InGame);
             },
             ServerMsg::Pong {
                 tick
@@ -201,7 +200,6 @@ impl App {
         }
 
         self.state.update(Some(&mut self.input));
-
         self.send_custom(CustomMsg::ClientInput {
             input:self.input.clone()
         });
@@ -211,9 +209,6 @@ impl App {
 
     pub fn keyup(&mut self, code:KeyCode, key:&str) {
         match &self.app_state {
-            AppState::EnterName { name } => {
-
-            },
             AppState::InGame {  } => {
                 let i = &mut self.input;
                 if code == 87 && i.dir.y == -1.0 {
@@ -247,7 +242,7 @@ impl App {
                 }
                 else if key == "Enter" && name.len() > 0 {
                     self.player_name = name.clone();
-                    self.state_transition(AppState::ReadyToJoin {});
+                    self.new_app_state(AppState::ReadyToJoin {});
                 }
                 else if key == "Backspace" && name.len() > 0 {
                     *name = name[0..name.len()-1].into();
@@ -288,20 +283,9 @@ impl App {
         // left = 37
         // right = 39
         // esc = 27
-
-
-      /*  if code == 32 {
-            self.client_messages.push(ClientMsg::CustomMsg {
-                msg:GameClientMsg::ClientInput {
-                    position:None,
-                    shoot:true
-                }.to_bincode()
-            });
-        }*/
-        //info!("{}", code);
     }
 
-    fn state_transition(&mut self, new_app_state:AppState) {
+    fn new_app_state(&mut self, new_app_state:AppState) {
         self.app_state = new_app_state;
         match &self.app_state {
             AppState::ReadyToJoin => {
@@ -317,14 +301,14 @@ impl App {
 
     pub fn connected(&mut self) {
         self.connection_status = format!("Connected");
-        self.state_transition(AppState::EnterName {
+        self.new_app_state(AppState::EnterName {
             name:self.player_name.clone()
         });
     }
 
     pub fn disconnected(&mut self) {
         self.connection_status = "Trying to reconnect...".into();
-        self.state_transition(AppState::Initial);
+        self.new_app_state(AppState::Initial);
     }
 }
 
