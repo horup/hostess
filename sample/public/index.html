@@ -77,11 +77,11 @@
             _update();
     
             document.addEventListener('keydown', e=>{
-                keydown(e.keyCode);
+                keydown(e.keyCode, e.key);
             });
     
             document.addEventListener('keyup', e=>{
-                keyup(e.keyCode);
+                keyup(e.keyCode, e.key);
             });
 
             let ws = null;

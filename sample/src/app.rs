@@ -1,14 +1,16 @@
 
-use hostess::{ClientMsg, ServerMsg, uuid::Uuid, Bincoded};
+use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
 use crate::{Input, CustomMsg, State, performance_now};
 use super::Canvas;
 
 pub struct App {
+    player_name:String,
+    debug:bool,
     app_state:AppState,
     id:Uuid,
     canvas:Canvas,
     state:State,
-    status:String,
+    connection_status:String,
     ping:f64,
     input:Input,
     updates:u64,
@@ -19,12 +21,24 @@ pub struct App {
 pub type KeyCode = u32;
 
 
+#[derive(Clone)]
 /// enum holdning the client app state
 enum AppState {
+    /// the initial state
+    /// whenever the client app is first connected or reconnected
+    /// the initial state will be this
     Initial,
+
+    /// enter name state where the player can enter his/her name before joing the match
+    /// maybe this should be part of the hostess protocol
     EnterName {
         name:String
     },
+
+    /// player is ready to join
+    ReadyToJoin,
+
+    /// when in game and playing
     InGame {
         
     }
@@ -34,6 +48,8 @@ enum AppState {
 impl App {
     pub fn new() -> Self {
         Self {
+            player_name:String::default(),
+            debug:true,
             app_state:AppState::Initial,
             canvas:Canvas::new(),
             state:State::new(),
@@ -44,7 +60,7 @@ impl App {
                 thing_id:None
             },
             server_messages:Vec::new(),
-            status:"Not connected!".into(),
+            connection_status:"Not connected!".into(),
             client_messages:Vec::new(),
             id:Uuid::new_v4(),
             ping:0.0,
@@ -77,15 +93,40 @@ impl App {
             }
         }
 
+        let cx = (self.canvas.width() / grid_size as u32 / 2) as f64;
+        let cy =  (self.canvas.height() / grid_size as u32 / 2) as f64;
+
+        self.draw_ui_gameui();
+        self.draw_ui_debug(grid_size);
+        self.draw_ui_centercontent(cx, cy);
+    }
+
+    fn draw_ui_gameui(&self) {
         self.canvas.set_text_style("left", "middle");
         self.canvas.fill_text("100%", 0.0, 0.5);
+    }
 
+    fn draw_ui_centercontent(&self, cx: f64, cy: f64) {
+        self.canvas.set_text_style("center", "middle");
+        match &self.app_state {
+            AppState::Initial | AppState::ReadyToJoin => {
+                self.canvas.fill_text(&self.connection_status, cx, cy);
+            },
+            AppState::EnterName { name } => {
+                self.canvas.fill_text(&format!("please enter your name and press enter"), cx, cy);
+                self.canvas.fill_text(name, cx, cy + 1.0);
+            },
+            AppState::InGame {  } => {
 
-        self.canvas.set_text_style("right", "middle");
-        self.canvas.fill_text(&self.status, (self.canvas.width() / grid_size as u32) as f64, 0.5);
-        self.canvas.set_text_style("right", "middle");
-        self.canvas.fill_text(format!("ping:{:0.00}ms", self.ping).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 1.5);
-        
+            },
+        };
+    }
+
+    fn draw_ui_debug(&self, grid_size: f64) {
+        if self.debug {
+            self.canvas.set_text_style("right", "middle");
+            self.canvas.fill_text(format!("ping:{:0.00}ms", self.ping).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 0.5);
+        }
     }
 
     pub fn send(&mut self, msg:ClientMsg) {
@@ -111,12 +152,12 @@ impl App {
     pub fn recv(&mut self, msg:&ServerMsg) {
         match msg {
             ServerMsg::LobbyJoined {  } => {
-                self.status = "Connected to Server".into();
+                self.connection_status = "Connected to Server".into();
                
             },
             ServerMsg::Hosts {hosts} => {
                 if let Some(host) = hosts.first() {
-                    self.status = format!("Joining host {}..", host.id);
+                    self.connection_status = format!("Joining host {}..", host.id);
                     let id = host.id;
                     self.send(ClientMsg::JoinHost {
                         host_id:id
@@ -124,7 +165,7 @@ impl App {
                 }
             },
             ServerMsg::HostJoined {host} => {
-                self.status = format!("✓ Joined host {} ✓ ", host.id);
+                self.connection_status = format!("✓ Joined host {} ✓ ", host.id);
             },
             ServerMsg::Pong {
                 tick
@@ -168,45 +209,74 @@ impl App {
         self.draw();
     }
 
-    pub fn keyup(&mut self, code:KeyCode) {
-        let i = &mut self.input;
-        if code == 87 && i.dir.y == -1.0 {
-            i.dir.y = 0.0;
-        }
-        if code == 83 && i.dir.y == 1.0 {
-            i.dir.y = 0.0;
-        }
-        if code == 65 && i.dir.x == -1.0 {
-            i.dir.x = 0.0;
-        }
-        if code == 68 && i.dir.x == 1.0 {
-            i.dir.x = 0.0;
-        }
+    pub fn keyup(&mut self, code:KeyCode, key:&str) {
+        match &self.app_state {
+            AppState::EnterName { name } => {
 
-        if code == 32 {
-            i.shoot = false;
-        }
+            },
+            AppState::InGame {  } => {
+                let i = &mut self.input;
+                if code == 87 && i.dir.y == -1.0 {
+                    i.dir.y = 0.0;
+                }
+                if code == 83 && i.dir.y == 1.0 {
+                    i.dir.y = 0.0;
+                }
+                if code == 65 && i.dir.x == -1.0 {
+                    i.dir.x = 0.0;
+                }
+                if code == 68 && i.dir.x == 1.0 {
+                    i.dir.x = 0.0;
+                }
+
+                if code == 32 {
+                    i.shoot = false;
+                }
+            },
+            _ => {
+
+            }
+        };
     }
 
-    pub fn keydown(&mut self, code:KeyCode) {
-        let i = &mut self.input;
-        if code == 87 {
-            i.dir.y = -1.0;
-        }
-        if code == 83 {
-            i.dir.y = 1.0;
-        }
+    pub fn keydown(&mut self, code:KeyCode, key:&str) {
+        match &mut self.app_state {
+            AppState::EnterName { name } => {
+                if key.is_ascii() && name.len() < 16 && key.len() == 1 {
+                    *name += key;
+                }
+                else if key == "Enter" && name.len() > 0 {
+                    self.player_name = name.clone();
+                    self.state_transition(AppState::ReadyToJoin {});
+                }
+                else if key == "Backspace" && name.len() > 0 {
+                    *name = name[0..name.len()-1].into();
+                }
+            },
+            AppState::InGame {  } => {
+                let i = &mut self.input;
+                if code == 87 {
+                    i.dir.y = -1.0;
+                }
+                if code == 83 {
+                    i.dir.y = 1.0;
+                }
+        
+                if code == 65 {
+                    i.dir.x = -1.0;
+                }
+                if code == 68 {
+                    i.dir.x = 1.0;
+                }
+        
+                if code == 32 {
+                    i.shoot = true;
+                }
+            },
+            _ => {
 
-        if code == 65 {
-            i.dir.x = -1.0;
-        }
-        if code == 68 {
-            i.dir.x = 1.0;
-        }
-
-        if code == 32 {
-            i.shoot = true;
-        }
+            }
+        };
 
         // w = 87
         // s = 83
@@ -231,15 +301,29 @@ impl App {
         //info!("{}", code);
     }
 
+    fn state_transition(&mut self, new_app_state:AppState) {
+        self.app_state = new_app_state;
+        match &self.app_state {
+            AppState::ReadyToJoin => {
+                self.connection_status = format!("Sending Hello");
+                self.client_messages.push(ClientMsg::Hello {
+                    client_id:self.id.clone()
+                });
+            }
+            _ => {},
+        }
+    }
+
     pub fn connected(&mut self) {
-        self.status = format!("Sending Hello");
-        self.client_messages.push(ClientMsg::Hello {
-            client_id:self.id.clone()
+        self.connection_status = format!("Connected");
+        self.state_transition(AppState::EnterName {
+            name:self.player_name.clone()
         });
     }
 
     pub fn disconnected(&mut self) {
-        self.status = "Trying to reconnect...".into();
+        self.connection_status = "Trying to reconnect...".into();
+        self.state_transition(AppState::Initial);
     }
 }
 

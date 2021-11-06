@@ -52,19 +52,19 @@ pub fn update() {
 }
 
 #[wasm_bindgen]
-pub fn keyup(keycode:u32) {
+pub fn keyup(keycode:u32, key:&str) {
     unsafe {
         if let Some(client) = &mut GLOBAL_CLIENT {
-            client.keyup(keycode);
+            client.keyup(keycode, key);
         }
     }
 }
 
 #[wasm_bindgen]
-pub fn keydown(keycode:u32) {
+pub fn keydown(keycode:u32, key:&str) {
     unsafe {
         if let Some(client) = &mut GLOBAL_CLIENT {
-            client.keydown(keycode);
+            client.keydown(keycode, key);
         }
     }
 }

@@ -20,7 +20,7 @@
 		{
 			"type": "cargo",
 			"command": "watch",
-			"args": ["-i", ".gitignore", "-i", "public/*", "-i", "target/*", "-s", "wasm-pack build"],
+			"args": ["-i", ".gitignore", "-i", "public/*", "-i", "target/*", "-s", "wasm-pack build --target web --out-dir public/pkg"],
 			"group": "build",
 			"label": "sample: client build"
 		},
