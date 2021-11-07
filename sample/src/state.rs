@@ -29,6 +29,9 @@ pub struct Thing {
 
     /// name of the thing
     pub name:String,
+
+    /// max speed of thing
+    pub max_speed:f32
 }
 
 
@@ -42,7 +45,8 @@ impl Thing {
             health:100.0,
             ability_cooldown:0.0,
             name:"".into(),
-            is_player:true
+            is_player:true,
+            max_speed:10.0
         }
     }
 
@@ -95,10 +99,8 @@ impl State {
         if let Some(input) = input {
             if let Some(thing_id) = input.thing_id {
                 if let Some(thing) = self.things.get_mut(thing_id) {
-                    let speed = 1.0 * dt;
-                    thing.pos.y += input.movement_dir.y * speed as f32;
-                    thing.pos.x += input.movement_dir.x * speed as f32;
-
+                    thing.pos.y += input.movement_dir.y * thing.max_speed * dt as f32;
+                    thing.pos.x += input.movement_dir.x * thing.max_speed * dt as f32;
                     input.pos = thing.pos;
                 }
             }
