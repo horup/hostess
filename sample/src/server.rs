@@ -31,7 +31,7 @@ impl GameServer for Server {
         20
     }
 
-    fn update(&mut self, mut context:Context) -> Context {
+    fn tick(&mut self, mut context:Context) -> Context {
         while let Some(msg) = context.pop_host_msg() {
             match msg {
                 HostMsg::ClientJoined { client_id, client_name } => {

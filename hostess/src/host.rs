@@ -60,7 +60,7 @@ impl Host {
                         let now = Instant::now();
                         let diff = now - last_tick;
                         context.dt = diff.as_secs_f32();
-                        context = g.update(context);
+                        context = g.tick(context);
                         for msg in context.game_messages.drain(..) {
                             match msg {
                                 GameServerMsg::CustomToAll { msg } => {

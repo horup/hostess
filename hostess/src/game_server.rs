@@ -52,7 +52,7 @@ impl Context {
 
 pub trait GameServer : Send + Sync + 'static {
     fn tick_rate(&self) -> u64;
-    fn update(&mut self, context:Context) -> Context;
+    fn tick(&mut self, context:Context) -> Context;
 }
 
 pub type GameServerConstructorFn = Box<dyn Fn() -> Box<dyn GameServer> + Send + Sync>;
