@@ -1,4 +1,4 @@
-- 2021-11-07    90m added mouse support, added tick support to server, refactored a bit, things no longer teleport, started working on bytes / second, added max_speed to thing, added delta to app
+- 2021-11-07    110m added mouse support, added tick support to server, refactored a bit, things no longer teleport, started working on bytes / second, added max_speed to thing, added delta to app
 - 2021-11-06    100m worked on client name and ui to support this in sample, removed typed gameserver reverted to untyped, renamed untyped, added player name support and removal of player
 - 2021-11-05    30m added autobuild using cargo watch
 - 2021-11-01    5m can build again    
