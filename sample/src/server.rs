@@ -63,8 +63,6 @@ impl GameServer for Server {
             }
         );
 
-        info!("delta time {}", context.dt);
-
         return context;
     }
 }
@@ -107,6 +105,7 @@ impl Server {
                             let mut v = input.pos - thing.pos;
                             let max_allowed_speed = 2.0 * context.dt;
                             if v.length() > max_allowed_speed {
+                                info!("lol");
                                 v = v.normalize() * max_allowed_speed;
                             }
 

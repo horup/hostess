@@ -69,7 +69,7 @@ pub struct Input {
 
 
     /// direction of the thing according to what the player believes is true
-    pub dir:Vec2,
+    pub movement_dir:Vec2,
 
     /// position of the thing according to what the player believes is true
     pub pos:Vec2,
@@ -91,13 +91,13 @@ impl State {
         }
     }
 
-    pub fn update(&mut self, input:Option<&mut Input>) {
+    pub fn update(&mut self, input:Option<&mut Input>, dt:f64) {
         if let Some(input) = input {
             if let Some(thing_id) = input.thing_id {
                 if let Some(thing) = self.things.get_mut(thing_id) {
-                    let speed = 0.1;
-                    thing.pos.y += input.dir.y * speed;
-                    thing.pos.x += input.dir.x * speed;
+                    let speed = 1.0 * dt;
+                    thing.pos.y += input.movement_dir.y * speed as f32;
+                    thing.pos.x += input.movement_dir.x * speed as f32;
 
                     input.pos = thing.pos;
                 }

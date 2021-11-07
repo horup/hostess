@@ -9,13 +9,14 @@ mod msg;
 pub use msg::*;
 
 mod platform;
-use hostess::{ServerMsg, log::{error}};
+use hostess::{ServerMsg, log::{error, info}};
 pub use platform::*;
 
 
 use wasm_bindgen::prelude::*;
 
 static mut APP:Option<App> = None;
+static mut last_tick:f64 = 0.0;
 
 #[wasm_bindgen]
 pub fn start() {
@@ -32,7 +33,13 @@ pub fn start() {
 pub fn update() {
     unsafe {
         if let Some(client) = &mut APP {
-            client.update();
+            let mut dt = performance_now() - last_tick;
+            dt /= 1000.0;
+            if dt > 1.0 {
+                dt = 1.0;
+            }
+            last_tick = performance_now();
+            client.update(dt);
             client.server_messages.clear();
 
             for msg in &client.client_messages {

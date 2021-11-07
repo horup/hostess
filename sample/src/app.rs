@@ -56,7 +56,7 @@ impl App {
             state:State::new(),
             input:Input {
                 pos:[0.0, 0.0].into(),
-                dir:[0.0, 0.0].into(),
+                movement_dir:[0.0, 0.0].into(),
                 ability_activated:false,
                 thing_id:None,
                 target_pos:Vec2::new(0.0, 0.0)
@@ -198,7 +198,7 @@ impl App {
         });
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, dt:f64) {
         for msg in &self.server_messages.clone() {
             self.recv(msg);
         }
@@ -211,7 +211,7 @@ impl App {
 
         let mouse_pos = self.canvas.get_mouse_pos();
 
-        self.state.update(Some(&mut self.input));
+        self.state.update(Some(&mut self.input), dt);
         self.send_custom(CustomMsg::ClientInput {
             input:self.input.clone()
         });
@@ -224,17 +224,17 @@ impl App {
         match &self.app_state {
             AppState::InGame {  } => {
                 let i = &mut self.input;
-                if code == 87 && i.dir.y == -1.0 {
-                    i.dir.y = 0.0;
+                if code == 87 && i.movement_dir.y == -1.0 {
+                    i.movement_dir.y = 0.0;
                 }
-                if code == 83 && i.dir.y == 1.0 {
-                    i.dir.y = 0.0;
+                if code == 83 && i.movement_dir.y == 1.0 {
+                    i.movement_dir.y = 0.0;
                 }
-                if code == 65 && i.dir.x == -1.0 {
-                    i.dir.x = 0.0;
+                if code == 65 && i.movement_dir.x == -1.0 {
+                    i.movement_dir.x = 0.0;
                 }
-                if code == 68 && i.dir.x == 1.0 {
-                    i.dir.x = 0.0;
+                if code == 68 && i.movement_dir.x == 1.0 {
+                    i.movement_dir.x = 0.0;
                 }
 
                 if code == 32 {
@@ -265,17 +265,17 @@ impl App {
             AppState::InGame {  } => {
                 let i = &mut self.input;
                 if code == 87 {
-                    i.dir.y = -1.0;
+                    i.movement_dir.y = -1.0;
                 }
                 if code == 83 {
-                    i.dir.y = 1.0;
+                    i.movement_dir.y = 1.0;
                 }
         
                 if code == 65 {
-                    i.dir.x = -1.0;
+                    i.movement_dir.x = -1.0;
                 }
                 if code == 68 {
-                    i.dir.x = 1.0;
+                    i.movement_dir.x = 1.0;
                 }
         
                 if code == 32 {
