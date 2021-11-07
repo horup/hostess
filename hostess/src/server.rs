@@ -31,7 +31,7 @@ pub struct ConnectedClient {
 }
 
 pub struct ClientSink {
-    sink:SplitSink<WebSocket, Message>
+    sink:SplitSink<WebSocket, Message>,
 }
 
 impl ClientSink {

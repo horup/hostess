@@ -13,6 +13,8 @@ pub struct App {
     state:State,
     connection_status:String,
     ping:f64,
+    client_bytes_sec:f32,
+    server_bytes_sec:f32,
     input:Input,
     updates:u64,
     pub server_messages:Vec<ServerMsg>,
@@ -64,6 +66,8 @@ impl App {
             client_messages:Vec::new(),
             id:Uuid::new_v4(),
             ping:0.0,
+            server_bytes_sec:0.0,
+            client_bytes_sec:0.0,
             updates:0
         }
     }
@@ -125,7 +129,9 @@ impl App {
     fn draw_ui_debug(&self, grid_size: f64) {
         if self.debug {
             self.canvas.set_text_style("right", "middle");
-            self.canvas.fill_text(format!("ping:{:0.00}ms", self.ping).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 0.5);
+            self.canvas.fill_text(format!("ping:{:0.00} ms", self.ping).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 0.5);
+            self.canvas.fill_text(format!("send:{:0.00} kb/s", self.client_bytes_sec / 1000.0).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 1.5);
+            self.canvas.fill_text(format!("recv:{:0.00} kb/s", self.server_bytes_sec / 1000.0).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 2.5);
         }
     }
 
@@ -169,10 +175,14 @@ impl App {
                 self.new_app_state(AppState::InGame);
             },
             ServerMsg::Pong {
-                tick
+                tick,
+                client_bytes_sec,
+                server_bytes_sec
             } => {
                 let ping:f64 = performance_now() - tick;
                 self.ping = ping;
+                self.server_bytes_sec = *server_bytes_sec;
+                self.client_bytes_sec = *client_bytes_sec;
             },
             ServerMsg::Custom { msg } => {
                 let msg = CustomMsg::from_bincode(msg).unwrap();

@@ -46,7 +46,15 @@ pub enum ServerMsg {
         host:HostInfo
     },
     Pong {
-        tick:f64
+        tick:f64,
+
+        /// number of bytes send from the server to the client per second
+        /// on the application level only, i.e. does not account for websocket and tcp overhead
+        server_bytes_sec:f32,
+
+        /// number of bytes send from the client to the server per second
+        /// on the application level only, i.e. does not account for websocket and tcp overhead
+        client_bytes_sec:f32
     },
     Custom {
         msg:Vec<u8>
