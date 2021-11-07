@@ -53,7 +53,7 @@ impl App {
             canvas:Canvas::new(),
             state:State::new(),
             input:Input {
-                position:[0.0, 0.0].into(),
+                pos:[0.0, 0.0].into(),
                 dir:[0.0, 0.0].into(),
                 ability_activated:false,
                 thing_id:None,

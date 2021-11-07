@@ -103,7 +103,14 @@ impl Server {
 
                     if let Some(thing_id) = player.thing {
                         if let Some(thing) = self.state.things.get_mut(thing_id) {
-                            thing.pos = input.position;
+                            // update position of thing from player
+                            let mut v = input.pos - thing.pos;
+                            let max_allowed_speed = 2.0 * context.dt;
+                            if v.length() > max_allowed_speed {
+                                v = v.normalize() * max_allowed_speed;
+                            }
+
+                            thing.pos += v;
                         }
                     }
                 }

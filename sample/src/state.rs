@@ -66,15 +66,18 @@ pub struct State {
 pub struct Input {
     /// the id of the thing controlled by a player owning the Input
     pub thing_id:Option<Index>,
+
+
+    /// direction of the thing according to what the player believes is true
     pub dir:Vec2,
 
-    /// position of the players thing according to what he believes the thing should be at
-    pub position:Vec2,
+    /// position of the thing according to what the player believes is true
+    pub pos:Vec2,
 
-    /// true if the player wants to shoot / use an ability
+    /// true if the player wants to use his ability
     pub ability_activated:bool,
 
-    /// where the player is aiming his mouse
+    /// where the player is targeting in the world
     pub target_pos:Vec2
 }
 
@@ -96,7 +99,7 @@ impl State {
                     thing.pos.y += input.dir.y * speed;
                     thing.pos.x += input.dir.x * speed;
 
-                    input.position = thing.pos;
+                    input.pos = thing.pos;
                 }
             }
         }
