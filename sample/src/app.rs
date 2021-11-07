@@ -307,8 +307,6 @@ impl App {
         if button == 0 {
             self.input.ability_activated = true;
         }
-
-        info!("{}", self.input.ability_activated);
     }
 
     pub fn mouseup(&mut self, button:u32, x:f32, y:f32) {

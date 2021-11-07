@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, str::FromStr, sync::Arc};
+use std::{net::SocketAddr, str::FromStr, sync::Arc, time::Instant};
 
 use futures_util::{
     stream::{SplitSink, SplitStream},
@@ -49,6 +49,22 @@ impl From<SplitSink<WebSocket, Message>> for ClientSink {
 }
 pub struct ClientStream {
     stream: SplitStream<WebSocket>
+}
+
+pub struct Measurement {
+    temp:f32,
+    pub per_second:f32,
+    start_time:Instant
+}
+
+impl Measurement {
+    pub fn new() -> Self {
+        Self {
+            temp:0.0,
+            per_second:0.0, 
+            start_time:Instant::now()
+        }
+    }
 }
 
 impl ClientStream {
