@@ -1,7 +1,7 @@
-use std::{collections::{HashMap, VecDeque}, time::Duration};
+use std::{collections::{HashMap, VecDeque}, time::{Duration, Instant}};
 
 use futures_util::{FutureExt, pin_mut};
-use tokio::{sync::{mpsc::channel, mpsc::Sender}, time::{interval}};
+use tokio::{sync::{mpsc::channel, mpsc::Sender}, time::{MissedTickBehavior, interval}};
 use uuid::Uuid;
 use log::{info};
 use tokio::select;
@@ -40,20 +40,26 @@ impl Host {
             let mut g = constructor.construct();
             let period = Duration::from_millis(1000 / g.tick_rate());
             let mut timer = interval(period);
+            timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
 
             let mut context = Context {
                 game_messages:VecDeque::new(),
-                host_messages:VecDeque::with_capacity(buffer_len)
+                host_messages:VecDeque::with_capacity(buffer_len),
+                dt:timer.period().as_secs_f32()
             };
 
             let mut clients:HashMap<Uuid, (ClientSink, tokio::sync::oneshot::Sender<ClientSink>)> = HashMap::new();
 
+            let mut last_tick = Instant::now();
             loop {
                 let timer = timer.tick().fuse();//.await;
                 let recv = receiver.recv().fuse();
                 pin_mut!(timer, recv);
                 select! {
                     _ = timer => {
+                        let now = Instant::now();
+                        let diff = now - last_tick;
+                        context.dt = diff.as_secs_f32();
                         context = g.update(context);
                         for msg in context.game_messages.drain(..) {
                             match msg {
@@ -75,6 +81,8 @@ impl Host {
                         }
 
                         context.host_messages.clear();
+
+                        last_tick = Instant::now();
                     },
                     msg = recv => {
                         match msg {

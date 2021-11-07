@@ -28,7 +28,7 @@ impl Server {
 
 impl GameServer for Server {
     fn tick_rate(&self) -> u64 {
-        3
+        20
     }
 
     fn update(&mut self, mut context:Context) -> Context {
@@ -62,6 +62,8 @@ impl GameServer for Server {
                 state:self.state.clone()
             }
         );
+
+        info!("delta time {}", context.dt);
 
         return context;
     }

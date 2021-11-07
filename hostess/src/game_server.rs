@@ -29,7 +29,13 @@ pub enum GameServerMsg {
 
 pub struct Context {
     pub host_messages:VecDeque<HostMsg>,
-    pub game_messages:VecDeque<GameServerMsg>
+    pub game_messages:VecDeque<GameServerMsg>,
+
+    /// delta time between ticks in seconds between ticks
+    /// this value can go from close zero to many thousands 
+    /// and needs to be truncated or similar by the consumer to avoid
+    /// unintended behavior, e.g. players jumping through walls due to high tick
+    pub dt:f32
 }
 
 impl Context {
