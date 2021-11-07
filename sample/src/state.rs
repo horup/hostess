@@ -72,7 +72,10 @@ pub struct Input {
     pub position:Vec2,
 
     /// true if the player wants to shoot / use an ability
-    pub shoot:bool
+    pub ability_activated:bool,
+
+    /// where the player is aiming his mouse
+    pub target_pos:Vec2
 }
 
 impl State {

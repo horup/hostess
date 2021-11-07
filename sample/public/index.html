@@ -60,7 +60,7 @@
     </canvas>
     <script type="module">
        
-        import init, {message, start, update, keydown, keyup, connected, disconnected} from './pkg/sample_lib.js';
+        import init, {message, start, update, keydown, keyup, connected, disconnected, mousedown, mousemove, mouseup} from './pkg/sample_lib.js';
       
         async function run() {
             let res = await init();
@@ -82,6 +82,22 @@
     
             document.addEventListener('keyup', e=>{
                 keyup(e.keyCode, e.key);
+            });
+
+            let mouseX = 0;
+            let mouseY = 0;
+            document.getElementById("primary").addEventListener("mousemove", (e)=>{
+                mouseX = e.offsetX;
+                mouseY = e.offsetY;
+                mousemove(e.offsetX, e.offsetY);
+            });
+
+            document.getElementById("primary").addEventListener("mousedown", (e)=> {
+                mousedown(e.button, e.offsetX, e.offsetY);
+            });
+
+            document.getElementById("primary").addEventListener("mouseup", (e)=> {
+                mouseup(e.button, e.offsetX, e.offsetY);
             });
 
             let ws = null;

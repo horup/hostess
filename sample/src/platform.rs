@@ -1,5 +1,6 @@
 use std::f64::consts::PI;
 
+use glam::Vec2;
 use wasm_bindgen::{JsCast};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlImageElement, Storage, console::info, window};
 
@@ -14,6 +15,7 @@ pub fn get_item(key:&str) -> Option<String> {
     let item = storage.get_item(key).unwrap();
     return item;
 }
+
 
 pub struct Canvas {
     context:CanvasRenderingContext2d,
@@ -109,5 +111,11 @@ impl Canvas {
         //self.context.set_stroke_style(&JsValue::from_str("red"));
         self.context.set_line_width(1.0 / scale);
         
+    }
+
+    pub fn get_mouse_pos(&self) -> Vec2 {
+        let m = Vec2::new(0.0, 0.0);
+
+        return m;
     }
 }

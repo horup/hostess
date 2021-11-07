@@ -1,5 +1,6 @@
 
-use hostess::{Bincoded, ClientMsg, ServerMsg, uuid::Uuid};
+use glam::Vec2;
+use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
 use crate::{CustomMsg, Input, State, get_item, performance_now, set_item};
 use super::Canvas;
 
@@ -54,8 +55,9 @@ impl App {
             input:Input {
                 position:[0.0, 0.0].into(),
                 dir:[0.0, 0.0].into(),
-                shoot:false,
-                thing_id:None
+                ability_activated:false,
+                thing_id:None,
+                target_pos:Vec2::new(0.0, 0.0)
             },
             server_messages:Vec::new(),
             connection_status:"Not connected!".into(),
@@ -191,13 +193,13 @@ impl App {
             self.recv(msg);
         }
 
-        self.updates += 1; 
-
         if self.updates % 10 == 0 {
             self.send(ClientMsg::Ping {
                 tick:performance_now()
             });
         }
+
+        let mouse_pos = self.canvas.get_mouse_pos();
 
         self.state.update(Some(&mut self.input));
         self.send_custom(CustomMsg::ClientInput {
@@ -205,6 +207,7 @@ impl App {
         });
       
         self.draw();
+        self.updates += 1; 
     }
 
     pub fn keyup(&mut self, code:KeyCode, _key:&str) {
@@ -225,7 +228,7 @@ impl App {
                 }
 
                 if code == 32 {
-                    i.shoot = false;
+                    i.ability_activated = false;
                 }
             },
             _ => {
@@ -266,7 +269,7 @@ impl App {
                 }
         
                 if code == 32 {
-                    i.shoot = true;
+                    i.ability_activated = true;
                 }
             },
             _ => {
@@ -284,6 +287,24 @@ impl App {
         // left = 37
         // right = 39
         // esc = 27
+    }
+
+    pub fn mousemove(&mut self, x:f32, y:f32) {
+
+    }
+
+    pub fn mousedown(&mut self, button:u32, x:f32, y:f32) {
+        if button == 0 {
+            self.input.ability_activated = true;
+        }
+
+        info!("{}", self.input.ability_activated);
+    }
+
+    pub fn mouseup(&mut self, button:u32, x:f32, y:f32) {
+        if button == 0 {
+            self.input.ability_activated = false;
+        }
     }
 
     fn new_app_state(&mut self, new_app_state:AppState) {
