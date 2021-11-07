@@ -121,10 +121,11 @@ impl Host {
                                         tick
                                     } => {
                                         if let Some((tx, _)) = clients.get_mut(&client_id) {
+                                            let server_bytes_sec = tx.bytes_per_second.per_second();
                                             let _ = tx.send(ServerMsg::Pong {
                                                 tick:tick,
-                                                server_bytes_sec:10.0,
-                                                client_bytes_sec:5.0
+                                                server_bytes_sec:server_bytes_sec,
+                                                client_bytes_sec:server_bytes_sec
                                             }).await;
                                         }
                                     }

@@ -32,28 +32,33 @@ pub struct ConnectedClient {
 
 pub struct ClientSink {
     sink:SplitSink<WebSocket, Message>,
+    pub bytes_per_second:Measurement
 }
 
 impl ClientSink {
     pub async fn send(&mut self, msg:ServerMsg) -> Result<(), Error> {
-        self.sink.send(Message::binary(msg.to_bincode())).await
+        let msg = msg.to_bincode();
+        self.bytes_per_second.sample(msg.len() as f32);
+        self.sink.send(Message::binary(msg)).await
     }
 }
 
 impl From<SplitSink<WebSocket, Message>> for ClientSink {
     fn from(sink: SplitSink<WebSocket, Message>) -> Self {
         Self {
-            sink
+            sink,
+            bytes_per_second:Measurement::new()
         }
     }
 }
 pub struct ClientStream {
-    stream: SplitStream<WebSocket>
+    stream: SplitStream<WebSocket>,
+    pub bytes_per_second:Measurement
 }
 
 pub struct Measurement {
     temp:f32,
-    pub per_second:f32,
+    per_second:f32,
     start_time:Instant
 }
 
@@ -65,6 +70,23 @@ impl Measurement {
             start_time:Instant::now()
         }
     }
+
+    pub fn sample(&mut self, value:f32) {
+        self.per_second();
+        self.temp += value;
+    }
+
+    pub fn per_second(&mut self) -> f32 {
+        let now = Instant::now();
+        let diff = Instant::now() - self.start_time;
+        if diff.as_secs_f32() > 1.0 {
+            self.per_second = self.temp;
+            self.temp = 0.0;
+            self.start_time = now;
+        }
+
+        self.per_second
+    }
 }
 
 impl ClientStream {
@@ -73,7 +95,8 @@ impl ClientStream {
             Some(msg) => {
                 match msg {
                     Ok(msg) => {
-                        let bytes = msg.as_bytes();//.as_bytes();
+                        let bytes = msg.as_bytes();
+                        self.bytes_per_second.sample(bytes.len() as f32);
                         match T::from_bincode(bytes) {
                             Some(msg) => {
                                 return Some(Ok(msg));
@@ -99,7 +122,8 @@ impl ClientStream {
 impl From<SplitStream<WebSocket>> for ClientStream {
     fn from(stream: SplitStream<WebSocket>) -> Self {
         Self {
-            stream
+            stream,
+            bytes_per_second:Measurement::new()
         }
     }
 }

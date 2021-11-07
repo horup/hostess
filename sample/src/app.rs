@@ -130,8 +130,8 @@ impl App {
         if self.debug {
             self.canvas.set_text_style("right", "middle");
             self.canvas.fill_text(format!("ping:{:0.00} ms", self.ping).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 0.5);
-            self.canvas.fill_text(format!("send:{:0.00} kb/s", self.client_bytes_sec / 1000.0).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 1.5);
-            self.canvas.fill_text(format!("recv:{:0.00} kb/s", self.server_bytes_sec / 1000.0).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 2.5);
+            self.canvas.fill_text(format!("recv:{:.3} kb/s", self.server_bytes_sec / 1000.0).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 1.5);
+            //self.canvas.fill_text(format!("recv:{:0.00} kb/s", self.server_bytes_sec / 1000.0).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 2.5);
         }
     }
 
