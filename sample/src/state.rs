@@ -95,6 +95,7 @@ pub struct Input {
     /// where the player is targeting in the world
     pub target_pos:Vec2,
 
+    /// changes to gamestate since last recv from server
     pub changes:VecDeque<Change>
 }
 
