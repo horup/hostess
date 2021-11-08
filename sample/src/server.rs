@@ -104,7 +104,7 @@ impl Server {
                             // update position of thing from player
                             let mut v = input.pos - thing.pos;
                             let max_allowed_speed = thing.max_speed * context.dt;
-                            if v.length() > max_allowed_speed {
+                            if v.length() > max_allowed_speed * 2.0 {
                                 v = v.normalize() * max_allowed_speed;
                             }
 

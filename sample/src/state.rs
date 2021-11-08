@@ -99,8 +99,12 @@ impl State {
         if let Some(input) = input {
             if let Some(thing_id) = input.thing_id {
                 if let Some(thing) = self.things.get_mut(thing_id) {
-                    thing.pos.y += input.movement_dir.y * thing.max_speed * dt as f32;
-                    thing.pos.x += input.movement_dir.x * thing.max_speed * dt as f32;
+                    let mut v = Vec2::new(input.movement_dir.x * thing.max_speed * dt as f32, input.movement_dir.y * thing.max_speed * dt as f32);
+                    if v.length() > thing.max_speed {
+                        v = v.normalize() * thing.max_speed;
+                    }
+
+                    thing.pos += v;
                     input.pos = thing.pos;
                 }
             }
