@@ -1,4 +1,6 @@
 
+use std::collections::VecDeque;
+
 use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
 use crate::{CustomMsg, Input, State, get_item, performance_now, set_item};
@@ -55,11 +57,12 @@ impl App {
             canvas:Canvas::new(),
             state:State::new(),
             input:Input {
-                pos:[0.0, 0.0].into(),
+                //pos:[0.0, 0.0].into(),
                 movement_dir:[0.0, 0.0].into(),
                 ability_activated:false,
                 thing_id:None,
-                target_pos:Vec2::new(0.0, 0.0)
+                target_pos:Vec2::new(0.0, 0.0),
+                changes:VecDeque::default()
             },
             server_messages:Vec::new(),
             connection_status:"Not connected!".into(),
@@ -143,6 +146,7 @@ impl App {
         match msg {
             CustomMsg::ServerSnapshotFull { state } => {
                 self.state = state;
+                self.state.reapply_input(&mut self.input);
             },
             CustomMsg::ServerPlayerThing {
                 thing_id

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use generational_arena::Index;
+use glam::Vec2;
 use hostess::{Bincoded, log::info, game_server::{Context, GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
 use sample_lib::{CustomMsg, State, Thing};
 use serde::{Serialize, Deserialize};
@@ -105,8 +106,15 @@ impl Server {
 
                     if let Some(thing_id) = player.thing {
                         if let Some(thing) = self.state.things.get_mut(thing_id) {
+                            
+                            let mut v = Vec2::new(0.0, 0.0);
                             // update position of thing from player
-                            let mut v = input.pos - thing.pos;
+                            for change in input.changes {
+                                if change.timestamp_sec > self.state.timestamp_sec {
+                                    v += change.v;
+                                }
+                            }
+
                             let max_allowed_speed = thing.max_speed * context.dt as f32;
                             if v.length() > max_allowed_speed * 2.0 {
                                 v = v.normalize() * max_allowed_speed;
