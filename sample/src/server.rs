@@ -58,10 +58,14 @@ impl GameServer for Server {
             }
         }
 
+
+        self.state.update(None, context.dt);
+
+        
         push_custom_all(&mut context, CustomMsg::ServerSnapshotFull {
-                state:self.state.clone()
-            }
-        );
+            state:self.state.clone()
+        }
+    );
 
         return context;
     }
@@ -103,7 +107,7 @@ impl Server {
                         if let Some(thing) = self.state.things.get_mut(thing_id) {
                             // update position of thing from player
                             let mut v = input.pos - thing.pos;
-                            let max_allowed_speed = thing.max_speed * context.dt;
+                            let max_allowed_speed = thing.max_speed * context.dt as f32;
                             if v.length() > max_allowed_speed * 2.0 {
                                 v = v.normalize() * max_allowed_speed;
                             }

@@ -59,6 +59,7 @@ impl Thing {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
+    pub server_iteration:u64,
     pub things:Arena<Thing>,
     pub width:f32,
     pub height:f32
@@ -70,7 +71,6 @@ pub struct State {
 pub struct Input {
     /// the id of the thing controlled by a player owning the Input
     pub thing_id:Option<Index>,
-
 
     /// direction of the thing according to what the player believes is true
     pub movement_dir:Vec2,
@@ -89,6 +89,7 @@ impl State {
     pub fn new() -> Self
     {
         Self {
+            server_iteration:0,
             things:Arena::new(),
             width:40.0,
             height:30.0
