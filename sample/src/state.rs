@@ -40,6 +40,27 @@ impl State {
         }
     }
 
+    /// returns tuple if collision occured
+    /// with whom and new position
+    pub fn simple_collision_test(thing_id:&Index, thing:&mut Thing, candidates:&Arena<Thing>) -> Option<(Vec2, Index)> {
+        for (test_id, test) in candidates.iter() {
+            if test_id != *thing_id {
+                let v = thing.pos - test.pos;
+                let l = test.radius + thing.radius;
+                if v.length() < l {
+                    let l = l - v.length();
+                    let mut pos = thing.pos;
+                    let v = v.normalize() * l;
+                    pos += v;
+                    thing.pos = pos;
+                    return Some((pos, test_id));
+                }
+            }
+        }
+
+        None
+    }
+
     pub fn update(&mut self, input: Option<&mut Input>, dt: f64) {
         if let Some(input) = input {
             if let Some(thing_id) = input.thing_id {
@@ -58,11 +79,15 @@ impl State {
                     };
 
                     input.local_changes.push(change);
-
                     thing.pos += v;
                     input.pos = thing.pos;
                 }
             }
+        }
+
+        let candidates = self.things.clone();
+        for (id, thing) in self.things.iter_mut() {
+            Self::simple_collision_test(&id, thing, &candidates);
         }
     }
 }
