@@ -47,7 +47,7 @@ impl State {
             if test_id != *thing_id {
                 let v = thing.pos - test.pos;
                 let l = test.radius + thing.radius;
-                if v.length() < l {
+                if v.length() < l && v.length() != 0.0 {
                     let l = l - v.length();
                     let mut pos = thing.pos;
                     let v = v.normalize() * l;
@@ -83,6 +83,10 @@ impl State {
                     input.pos = thing.pos;
                 }
             }
+        }
+
+        for (id, thing) in self.things.iter_mut() {
+            thing.pos += thing.vel * dt as f32;
         }
 
         let candidates = self.things.clone();

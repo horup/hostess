@@ -122,7 +122,7 @@ impl App {
                 self.canvas.fill_text(&self.connection_status, cx, cy);
             },
             AppState::EnterName { name } => {
-                self.canvas.fill_text(&format!("please enter your name and press enter"), cx, cy);
+                self.canvas.fill_text(&format!("please enter player name:"), cx, cy);
                 let name:String = name.clone() + if self.updates % 60 > 30 {"|".into()} else {" ".into()};
 
                 self.canvas.fill_text(name.as_str(), cx, cy + 1.0);
@@ -350,6 +350,7 @@ impl App {
     }
 
     pub fn connected(&mut self) {
+        self.state = State::new();
         self.connection_status = format!("Connected");
         self.new_app_state(AppState::EnterName {
             name:self.player_name.clone()

@@ -98,7 +98,7 @@ impl Server {
                 if let Some(player) = self.players.get_mut(&client_id) {
                     if player.thing == None {
                         // player has no thing
-                        let mut thing = Thing::random_new(&self.state);
+                        let mut thing = Thing::random_new_player(&self.state);
                         thing.name = player.client_name.clone();
                         player.thing = Some(self.state.things.insert(thing));
 
@@ -122,8 +122,14 @@ impl Server {
                             }
 
                             thing.pos += v;
+
+                            if input.ability_activated {
+                                let p = Thing::new_projectile(thing.pos, Vec2::new(10.0, 0.0));
+                                self.state.things.insert(p);
+                            }
                         }
                     }
+
 
                     // remember last recv input
                     player.input = input;
