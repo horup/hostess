@@ -40,19 +40,7 @@ impl State {
     pub fn reapply_input(&mut self, input:&mut Input) {
         if let Some(thing_id) = input.thing_id {
             if let Some(thing) = self.things.get_mut(thing_id) {
-                while let Some(front) = input.changes.front() {
-                    if front.timestamp_sec < self.timestamp_sec {
-                        input.changes.pop_front();
-                    } else {
-                        break;
-                    }
-                }
-
-                for change in &input.changes {
-                    if change.timestamp_sec > self.timestamp_sec {
-                        thing.pos += change.v;
-                    }
-                }
+               
             }
         }
     }
@@ -67,11 +55,8 @@ impl State {
                         v = v.normalize() * thing.max_speed;
                     }
 
-                    input.changes.push_back(Change {
-                        timestamp_sec: self.timestamp_sec,
-                        v,
-                    });
-                    thing.pos += v;
+                  
+                    //thing.pos += v;
                 }
             }
         }

@@ -56,14 +56,7 @@ impl App {
             app_state:AppState::Initial,
             canvas:Canvas::new(),
             state:State::new(),
-            input:Input {
-                //pos:[0.0, 0.0].into(),
-                movement_dir:[0.0, 0.0].into(),
-                ability_activated:false,
-                thing_id:None,
-                target_pos:Vec2::new(0.0, 0.0),
-                changes:VecDeque::default()
-            },
+            input:Input::default(),
             server_messages:Vec::new(),
             connection_status:"Not connected!".into(),
             client_messages:Vec::new(),
