@@ -1,9 +1,6 @@
 
-use std::collections::VecDeque;
-
-use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
-use crate::{CustomMsg, Input, State, get_item, performance_now, set_item};
+use crate::{CustomMsg, Input, State, get_item, input, performance_now_ms, set_item};
 use super::Canvas;
 
 pub struct App {
@@ -137,14 +134,19 @@ impl App {
 
     pub fn recv_custom(&mut self, msg:CustomMsg) {
         match msg {
-            CustomMsg::ServerSnapshotFull { state } => {
+            CustomMsg::ServerSnapshotFull { state,  input_timestamp_sec } => {
                 self.state = state;
-                self.state.reapply_input(&mut self.input);
+                self.state.reapply_input(&mut self.input, input_timestamp_sec);
             },
             CustomMsg::ServerPlayerThing {
                 thing_id
             } => {
                 self.input.thing_id = thing_id;
+                if let Some(thing_id) = thing_id {
+                    if let Some(thing) = self.state.things.get(thing_id) {
+                        self.input.pos = thing.pos.clone();
+                    }
+                }
             }
             _=> {
                 
@@ -176,7 +178,7 @@ impl App {
                 client_bytes_sec,
                 server_bytes_sec
             } => {
-                let ping:f64 = performance_now() - tick;
+                let ping:f64 = performance_now_ms() - tick;
                 self.ping = ping;
                 self.server_bytes_sec = *server_bytes_sec;
                 self.client_bytes_sec = *client_bytes_sec;
@@ -196,23 +198,30 @@ impl App {
     }
 
     pub fn update(&mut self, dt:f64) {
+        
         for msg in &self.server_messages.clone() {
             self.recv(msg);
         }
 
-        if self.updates % 10 == 0 {
+        // ping server every 60 update
+        if self.updates % 60 == 0 {
             self.send(ClientMsg::Ping {
-                tick:performance_now()
+                tick:performance_now_ms()
             });
         }
 
         let mouse_pos = self.canvas.get_mouse_pos();
 
+        // update state locally
+        self.input.timestamp_sec = performance_now_ms() / 1000.0;
         self.state.update(Some(&mut self.input), dt);
+        
+        // send input to server
         self.send_custom(CustomMsg::ClientInput {
             input:self.input.clone()
         });
       
+        // draw some stuff
         self.draw();
         self.updates += 1; 
     }

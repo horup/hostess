@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use generational_arena::Index;
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
@@ -23,6 +25,15 @@ pub struct Input {
 
     /// where the player is targeting in the world
     pub target_pos:Vec2,
+
+    #[serde(skip)]
+    pub local_changes:Vec<LocalChange>
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct LocalChange {
+    pub timestamp_sec:f64,
+    pub v:Vec2
 }
 
 impl Default for Input {
@@ -33,7 +44,8 @@ impl Default for Input {
             movement_dir: Default::default(), 
             pos: Default::default(), 
             ability_activated: Default::default(), 
-            target_pos: Default::default() 
+            target_pos: Default::default(),
+            local_changes: Default::default()
         }
     }
 }

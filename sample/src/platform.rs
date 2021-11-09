@@ -23,7 +23,7 @@ pub struct Canvas {
     images:[HtmlImageElement;1]
 }
 
-pub fn performance_now() -> f64 {
+pub fn performance_now_ms() -> f64 {
     window().unwrap().performance().unwrap().now()
 }
 

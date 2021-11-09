@@ -45,7 +45,7 @@ impl Host {
             let mut context = Context {
                 game_messages:VecDeque::new(),
                 host_messages:VecDeque::with_capacity(buffer_len),
-                dt:timer.period().as_secs_f64()
+                delta:timer.period().as_secs_f64()
             };
 
             let mut clients:HashMap<Uuid, (ClientSink, tokio::sync::oneshot::Sender<ClientSink>)> = HashMap::new();
@@ -59,7 +59,7 @@ impl Host {
                     _ = timer => {
                         let now = Instant::now();
                         let diff = now - last_tick;
-                        context.dt = diff.as_secs_f64();
+                        context.delta = diff.as_secs_f64();
                         context = g.tick(context);
                         for msg in context.game_messages.drain(..) {
                             match msg {

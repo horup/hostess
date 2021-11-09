@@ -6,6 +6,8 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub enum CustomMsg {
     ServerSnapshotFull {
+        /// the timestamp of the last input recv and processed by the server
+        input_timestamp_sec:f64,
         state:State
     },
     ServerPlayerThing {

@@ -39,12 +39,12 @@ pub fn start() {
 pub fn update() {
     unsafe {
         if let Some(client) = &mut APP {
-            let mut dt = performance_now() - last_tick;
+            let mut dt = performance_now_ms() - last_tick;
             dt /= 1000.0;
             if dt > 1.0 {
                 dt = 1.0;
             }
-            last_tick = performance_now();
+            last_tick = performance_now_ms();
             client.update(dt);
             client.server_messages.clear();
 

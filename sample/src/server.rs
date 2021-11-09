@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use generational_arena::Index;
 use glam::Vec2;
 use hostess::{Bincoded, log::info, game_server::{Context, GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
-use sample_lib::{CustomMsg, State, Thing};
+use sample_lib::{CustomMsg, Input, State, Thing};
 use serde::{Serialize, Deserialize};
 
 
@@ -10,7 +10,8 @@ use serde::{Serialize, Deserialize};
 pub struct Player {
     pub client_id:Uuid,
     pub client_name:String,
-    pub thing:Option<Index>
+    pub thing:Option<Index>,
+    pub input:Input
 }
 
 pub struct Server {
@@ -40,7 +41,8 @@ impl GameServer for Server {
                         self.players.insert(client_id, Player {
                             client_id:client_id,
                             client_name,
-                            thing:None
+                            thing:None,
+                            input:Input::default()
                         });
                     }
                 },
@@ -60,13 +62,15 @@ impl GameServer for Server {
         }
 
 
-        self.state.update(None, context.dt);
+        self.state.update(None, context.delta);
 
         
-        push_custom_all(&mut context, CustomMsg::ServerSnapshotFull {
-            state:self.state.clone()
+        for (client_id, player) in &self.players {
+            push_custom_to(&mut context, *client_id, CustomMsg::ServerSnapshotFull {
+                input_timestamp_sec:player.input.timestamp_sec,
+                state:self.state.clone()
+            });
         }
-    );
 
         return context;
     }
@@ -89,6 +93,7 @@ fn push_custom_to(context:&mut Context, client_id:Uuid, msg:CustomMsg) {
 impl Server {
     /// is called on each custom message received from the clients
     pub fn recv_custom_msg(&mut self, context:&mut Context, client_id:Uuid, msg:CustomMsg) {
+        info!("{:?}", msg);
         match msg {
             CustomMsg::ClientInput { input } => {
                 if let Some(player) = self.players.get_mut(&client_id) {
@@ -98,16 +103,31 @@ impl Server {
                         thing.name = player.client_name.clone();
                         player.thing = Some(self.state.things.insert(thing));
 
-                        // the the player its thing id
+                        // push state update to player
+                        push_custom_to(context, player.client_id, CustomMsg::ServerSnapshotFull {
+                            state:self.state.clone(),
+                            input_timestamp_sec:player.input.timestamp_sec
+                        });
+
+                        // let the player know his thing id
                         push_custom_to(context, player.client_id, CustomMsg::ServerPlayerThing {
-                                thing_id:player.thing
+                            thing_id:player.thing
                         });
                     }
 
                     if let Some(thing_id) = player.thing {
                         if let Some(thing) = self.state.things.get_mut(thing_id) {
+                            let mut v = input.pos - thing.pos;
+                            if v.length() > thing.max_speed * context.delta as f32 {
+                                v = v.normalize() * thing.max_speed * context.delta as f32; 
+                            }
+
+                            thing.pos += v;
                         }
                     }
+
+                    // remember last recv input
+                    player.input = input;
                 }
 
 
