@@ -93,7 +93,6 @@ fn push_custom_to(context:&mut Context, client_id:Uuid, msg:CustomMsg) {
 impl Server {
     /// is called on each custom message received from the clients
     pub fn recv_custom_msg(&mut self, context:&mut Context, client_id:Uuid, msg:CustomMsg) {
-        info!("{:?}", msg);
         match msg {
             CustomMsg::ClientInput { input } => {
                 if let Some(player) = self.players.get_mut(&client_id) {
