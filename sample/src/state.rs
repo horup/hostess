@@ -7,30 +7,17 @@ use serde::{Serialize, Deserialize};
 
 use crate::{Input, Thing};
 
-
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
-    pub timestamp_sec:f64,
     pub things:Arena<Thing>,
     pub width:f32,
     pub height:f32
 }
 
-
-/// struct holding the changes since last state change
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Change {
-    pub timestamp_sec:f64,
-    pub v:Vec2
-}
-
-
 impl State {
     pub fn new() -> Self
     {
         Self {
-            timestamp_sec:0.0,
             things:Arena::new(),
             width:40.0,
             height:30.0
@@ -46,7 +33,6 @@ impl State {
     }
 
     pub fn update(&mut self, input:Option<&mut Input>, dt:f64) {
-        self.timestamp_sec += dt;
         if let Some(input) = input {
             if let Some(thing_id) = input.thing_id {
                 if let Some(thing) = self.things.get_mut(thing_id) {
@@ -55,8 +41,7 @@ impl State {
                         v = v.normalize() * thing.max_speed;
                     }
 
-                  
-                    //thing.pos += v;
+                    thing.pos += v;
                 }
             }
         }
