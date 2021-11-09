@@ -5,8 +5,14 @@ use app::*;
 mod state;
 pub use state::*;
 
+mod thing;
+pub use thing::*;
+
 mod msg;
 pub use msg::*;
+
+mod input;
+pub use input::*;
 
 mod platform;
 use hostess::{ServerMsg, log::{error, info}};
