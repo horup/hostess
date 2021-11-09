@@ -23,7 +23,7 @@ pub struct App {
 pub type KeyCode = u32;
 
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 /// enum holdning the client app state
 enum AppState {
     /// the initial state
@@ -73,15 +73,30 @@ impl App {
         self.canvas.clear();
         let grid_size = 16.0;
         self.canvas.set_scale(grid_size);
- 
-        // draw things circle of things
+
+        if self.app_state == AppState::InGame {
+            self.draw_game();
+        }
+
+        let cx = (self.canvas.width() / grid_size as u32 / 2) as f64;
+        let cy =  (self.canvas.height() / grid_size as u32 / 2) as f64;
+
+      
+        self.draw_ui_gameui();
+        self.draw_ui_debug(grid_size);
+        self.draw_ui_centercontent(cx, cy);
+    }
+
+    fn draw_game(&self) {
+        if self.app_state != AppState::InGame {
+            return;
+        }
+
         for (_, thing) in &self.state.things {
             let x = thing.pos.x as f64;
             let y = thing.pos.y as f64;
             self.canvas.draw_circle(x, y, thing.radius as f64);
         }
- 
-        // draw names of things
         for (_, thing) in &self.state.things {
             let x = thing.pos.x as f64;
             let y = thing.pos.y as f64;
@@ -89,16 +104,13 @@ impl App {
                 self.canvas.fill_text(&thing.name, x, y - 1.0);
             }
         }
-
-        let cx = (self.canvas.width() / grid_size as u32 / 2) as f64;
-        let cy =  (self.canvas.height() / grid_size as u32 / 2) as f64;
-
-        self.draw_ui_gameui();
-        self.draw_ui_debug(grid_size);
-        self.draw_ui_centercontent(cx, cy);
     }
 
     fn draw_ui_gameui(&self) {
+        if self.app_state != AppState::InGame {
+            return;
+        }
+
         self.canvas.set_text_style("left", "middle");
         self.canvas.fill_text("100%", 0.0, 0.5);
     }
@@ -122,8 +134,8 @@ impl App {
     fn draw_ui_debug(&self, grid_size: f64) {
         if self.debug {
             self.canvas.set_text_style("right", "middle");
-            self.canvas.fill_text(format!("ping:{:0.00} ms", self.ping).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 0.5);
-            self.canvas.fill_text(format!("recv:{:.3} kb/s", self.server_bytes_sec / 1000.0).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 1.5);
+            self.canvas.fill_text(format!("{:0.00} ms", self.ping).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 0.5);
+            self.canvas.fill_text(format!("{:.3} KiB/s", self.server_bytes_sec / 1024.0).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 1.5);
             //self.canvas.fill_text(format!("recv:{:0.00} kb/s", self.server_bytes_sec / 1000.0).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 2.5);
         }
     }
