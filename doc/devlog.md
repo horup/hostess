@@ -1,3 +1,4 @@
+- 2021-11-10    15m worked a bit on docker
 - 2021-11-09    135m worked on local changes support, added simple colission detection, changed rendering a bit, worked on bullets
 - 2021-11-08    45m added changes to input
 - 2021-11-07    110m added mouse support, added tick support to server, refactored a bit, things no longer teleport, started working on bytes / second, added max_speed to thing, added delta to app

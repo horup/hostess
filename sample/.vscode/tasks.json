@@ -8,14 +8,14 @@
 				"$rustc"
 			],
 			"group": "build",
-			"label": "sample: server run"
+			"label": "server run"
 		},
 		{
 			"type": "cargo",
 			"command": "watch",
 			"args": ["-i", ".gitignore", "-i", "public/*", "-i", "target/*", "-s", "wasm-pack build --target web --out-dir public/pkg"],
 			"group": "build",
-			"label": "sample: client build"
+			"label": "client watch"
 		},
 		{
 			"type": "cargo",
@@ -24,7 +24,7 @@
 				"$rustc"
 			],
 			"group": "build",
-			"label": "sample: run"
+			"label": "run"
 		},
 		{
 			"type": "cargo",
@@ -36,8 +36,15 @@
 				"kind": "build",
 				"isDefault": true
 			},
-			"dependsOn":["sample: run", "sample: client build"],
-			"label": "sample: all",
-		}
+			"dependsOn":["run", "client watch"],
+			"label": "all",
+		},
+		
+		{
+			"type": "shell",
+			"command":["docker", "build", ".", "-t sample"],
+			"group": "build",
+			"label": "docker build",
+		},
 	]
 }
