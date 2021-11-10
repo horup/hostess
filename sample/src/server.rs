@@ -1,31 +1,50 @@
-use std::collections::HashMap;
-use generational_arena::Index;
-use glam::Vec2;
+use std::collections::{HashMap, VecDeque};
 use hostess::{Bincoded, log::info, game_server::{Context, GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
-use sample_lib::{CustomMsg, Input, Simulator, State, Thing};
+use sample_lib::{CustomMsg, Input, Player, State, Thing, apply_input};
 use serde::{Serialize, Deserialize};
-
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Player {
-    pub client_id:Uuid,
-    pub client_name:String,
-    pub thing:Option<Index>,
-    pub input:Input
-}
 
 pub struct Server {
     state:State,
     players:HashMap<Uuid, Player>,
-    simulator:Simulator
 }
 
 impl Server {
     pub fn new() -> Self {
         Self {
             state:State::new(),
-            players:HashMap::new(),
-            simulator:Simulator::default()
+            players:HashMap::new()
+        }
+    }
+
+    pub fn update(&mut self, context:&mut Context) {
+        // process inputs from players
+        for (_, player) in &mut self.players {
+            // if player has no 'thing'
+            // ensure one is spawned for the player
+            if player.thing == None {
+                let mut thing = Thing::random_new_player(&self.state);
+                thing.name = player.client_name.clone();
+                player.thing = Some(self.state.things.insert(thing));
+
+                // let the player know his thing id
+                push_custom_to(context, player.client_id, CustomMsg::ServerPlayerThing {
+                    thing_id:player.thing
+                });
+            }
+
+            // apply input from players
+            for input in player.inputs.drain(..) {
+                player.latest_input_timestamp_sec = input.timestamp_sec;
+                apply_input(&mut self.state, &input);
+            }
+        }
+
+        // for each player, transmit a snapshot to them
+        for (client_id, player) in &self.players {
+            push_custom_to(context, *client_id, CustomMsg::ServerSnapshotFull {
+                input_timestamp_sec:player.latest_input_timestamp_sec,
+                state:self.state.clone()
+            });
         }
     }
 }
@@ -44,7 +63,8 @@ impl GameServer for Server {
                             client_id:client_id,
                             client_name,
                             thing:None,
-                            input:Input::default()
+                            inputs:VecDeque::default(),
+                            latest_input_timestamp_sec: 0.0,
                         });
                     }
                 },
@@ -63,16 +83,9 @@ impl GameServer for Server {
             }
         }
 
+        self.update(&mut context);
 
-        self.simulator.server_update(&mut self.state, context.delta);
-
-        
-        for (client_id, player) in &self.players {
-            push_custom_to(&mut context, *client_id, CustomMsg::ServerSnapshotFull {
-                input_timestamp_sec:player.input.timestamp_sec,
-                state:self.state.clone()
-            });
-        }
+       
 
         return context;
     }
@@ -98,7 +111,7 @@ impl Server {
         match msg {
             CustomMsg::ClientInput { input } => {
                 if let Some(player) = self.players.get_mut(&client_id) {
-                    if player.thing == None {
+                    /*if player.thing == None {
                         // player has no thing
                         let mut thing = Thing::random_new_player(&self.state);
                         thing.name = player.client_name.clone();
@@ -127,10 +140,10 @@ impl Server {
                             thing.ability_target = input.ability_target;
                             thing.ability_trigger = input.ability_trigger;
                         }
-                    }
+                    }*/
 
                     // remember last recv input
-                    player.input = input;
+                    player.inputs.push_back(input);
                 }
 
 

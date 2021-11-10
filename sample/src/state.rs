@@ -1,8 +1,5 @@
-use std::collections::VecDeque;
 
-use generational_arena::{Arena, Index};
-use glam::Vec2;
-use hostess::log::info;
+use generational_arena::{Arena};
 use serde::{Deserialize, Serialize};
 
 use crate::{Input, LocalChange, Thing};

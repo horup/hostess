@@ -102,7 +102,7 @@
             });
 
             let ws = null;
-
+            let lag_ms = 100;
             let connect = ()=> {
                 ws = new WebSocket("ws://" + location.host);
                 ws.onopen = ()=>{
@@ -111,7 +111,9 @@
                 ws.onmessage = (e)=>{
                     e.data.arrayBuffer().then(buffer => {
                         var buffer = new Uint8Array(buffer);
-                        message(buffer);
+                        setTimeout(()=>{
+                            message(buffer);
+                        }, lag_ms);
                     })
                 }
                 ws.onerror = ()=>{

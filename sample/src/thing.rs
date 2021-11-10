@@ -8,7 +8,7 @@ pub struct Thing {
     /// position of the thing
     pub pos:Vec2,
 
-    /// velocity of the thing
+    /// change of position
     pub vel:Vec2,
 
     /// the radius of the thing

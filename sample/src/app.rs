@@ -1,7 +1,9 @@
 
+use std::collections::VecDeque;
+
 use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
-use crate::{CustomMsg, Input, Simulator, State, get_item, input, performance_now_ms, set_item};
+use crate::{CustomMsg, Input, State, apply_input, get_item, performance_now_ms, player, set_item};
 use super::Canvas;
 
 pub struct App {
@@ -16,8 +18,8 @@ pub struct App {
     client_bytes_sec:f32,
     server_bytes_sec:f32,
     input:Input,
+    input_history:VecDeque<Input>,
     updates:u64,
-    simulator:Simulator,
     pub server_messages:Vec<ServerMsg>,
     pub client_messages:Vec<ClientMsg>
 }
@@ -56,6 +58,7 @@ impl App {
             canvas:Canvas::new(),
             state:State::new(),
             input:Input::default(),
+            input_history:VecDeque::new(),
             server_messages:Vec::new(),
             connection_status:"Not connected!".into(),
             client_messages:Vec::new(),
@@ -64,7 +67,6 @@ impl App {
             server_bytes_sec:0.0,
             client_bytes_sec:0.0,
             updates:0,
-            simulator:Simulator::default()
         }
     }
 
@@ -153,7 +155,15 @@ impl App {
         match msg {
             CustomMsg::ServerSnapshotFull { state,  input_timestamp_sec } => {
                 self.state = state;
-                self.simulator.reapply_input(&mut self.state, &mut self.input, input_timestamp_sec);
+                let inputs = self.input_history.clone();
+                self.input_history.clear();
+
+                for input in inputs { 
+                    if input.timestamp_sec > input_timestamp_sec {
+                        apply_input(&mut self.state, &input);
+                        self.input_history.push_back(input);
+                    }
+                }
             },
             CustomMsg::ServerPlayerThing {
                 thing_id
@@ -161,7 +171,7 @@ impl App {
                 self.input.thing_id = thing_id;
                 if let Some(thing_id) = thing_id {
                     if let Some(thing) = self.state.things.get(thing_id) {
-                        self.input.pos = thing.pos.clone();
+                        self.input.movement = thing.pos.clone();
                     }
                 }
             }
@@ -215,7 +225,6 @@ impl App {
     }
 
     pub fn update(&mut self, dt:f64) {
-        
         for msg in &self.server_messages.clone() {
             self.recv(msg);
         }
@@ -227,10 +236,17 @@ impl App {
             });
         }
 
-        // update state locally
+        // calculate movement and apply to local thing
+        // update input with timestamp and movement data, and send to server
         self.input.timestamp_sec = performance_now_ms() / 1000.0;
-        self.simulator.client_update(&mut self.state, &mut self.input, dt);
-        
+        self.input.movement = self.input.movement_dir * dt as f32;
+
+        // remember input for later processing
+        self.input_history.push_back(self.input.clone());
+
+        // apply input now
+        apply_input(&mut self.state, &self.input);
+
         // send input to server
         self.send_custom(CustomMsg::ClientInput {
             input:self.input.clone()

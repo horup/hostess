@@ -11,8 +11,8 @@ pub use thing::*;
 mod msg;
 pub use msg::*;
 
-mod input;
-pub use input::*;
+mod player;
+pub use player::*;
 
 mod simulation;
 pub use simulation::*;

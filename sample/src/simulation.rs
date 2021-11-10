@@ -1,7 +1,10 @@
+use std::collections::HashMap;
+
 use generational_arena::{Arena, Index};
 use glam::Vec2;
+use hostess::uuid::Uuid;
 
-use crate::{Input, LocalChange, State, Thing};
+use crate::{Input, LocalChange, Player, State, Thing};
 
 
 /// returns tuple if collision occured
@@ -25,7 +28,7 @@ pub fn simple_collision_test(thing_id:&Index, thing:&mut Thing, candidates:&Aren
     None
 }
 
-
+/*
 #[derive(Default)]
 pub struct Simulator {
     spawn:Vec<Thing>,
@@ -33,17 +36,51 @@ pub struct Simulator {
 }
 
 impl Simulator {
-    pub fn server_update(&mut self, state:&mut State, dt: f64) {
-        self.shared_update(state, None, dt);
+    fn clear(&mut self) {
+        self.spawn.clear();
+        self.remove.clear();
+    }
+
+    pub fn server_update(&mut self, state:&mut State, players:&HashMap<Uuid, Player>, dt: f64) {
+        self.clear();
+        
+        self.shared_physics(state, dt);
+        //self.shared_update(state, None, dt);
     }
 
     pub fn client_update(&mut self, state:&mut State, input:&mut Input, dt:f64) {
-        self.shared_update(state, Some(input), dt);
+        self.clear();
+
+        // process input locally
+        if let Some(thing_id) = input.thing_id {
+            if let Some(thing) = state.things.get_mut(thing_id) {
+                let mut v = glam::Vec2::new(
+                    input.movement_dir.x * thing.max_speed * dt as f32,
+                    input.movement_dir.y * thing.max_speed * dt as f32,
+                );
+
+                if v.length() > thing.max_speed {
+                    v = v.normalize() * thing.max_speed;
+                }
+
+                let change = LocalChange {
+                    timestamp_sec: input.timestamp_sec,
+                    v: v,
+                };
+
+                thing.vel += v;
+                input.pos = thing.pos;
+            }
+        }
+        
+
+
+        self.shared_physics(state, dt);
+        //self.shared_update(state, Some(input), dt);
     }
 
-    
     pub fn reapply_input(&mut self, state:&mut State, input: &mut Input, timestamp_sec: f64) {
-        let iter = input
+      /*  let iter = input
             .local_changes
             .drain(..)
             .filter(|x| x.timestamp_sec > timestamp_sec);
@@ -56,10 +93,43 @@ impl Simulator {
                     thing.pos += c.v;
                 }
             }
-        }
+        }*/
     }
 
-    pub fn shared_update(&mut self, state:&mut State, input: Option<&mut Input>, dt: f64) {
+    pub fn shared_physics(&mut self, state:&mut State, dt:f64) {
+        for (thing_id, thing) in &mut state.things {
+            
+            // do movement and collision detection
+            thing.pos += thing.vel * dt as f32;
+
+             // bounds check
+          /*  let mut outta_bounds = false;
+            if thing.pos.x < 0.0 + thing.radius {
+                thing.pos.x = 0.0 + thing.radius;
+                outta_bounds = true;
+            } else if thing.pos.x > state.width - thing.radius {
+                thing.pos.x = state.width - thing.radius;
+                outta_bounds = true;
+            }
+
+            if thing.pos.y < 0.0 + thing.radius {
+                thing.pos.y = 0.0 + thing.radius;
+                outta_bounds = true;
+            } else if thing.pos.y > state.height - thing.radius {
+                thing.pos.y = state.height - thing.radius;
+                outta_bounds = true;
+            }
+
+            if outta_bounds && thing.is_projectile {
+                //thing.health = 0.0;
+                self.remove.push(id);
+            }*/
+        }
+
+       
+    }
+
+    pub fn shared_update2(&mut self, state:&mut State, input: Option<&mut Input>, dt: f64) {
         if let Some(input) = input {
             if let Some(thing_id) = input.thing_id {
                 if let Some(thing) = state.things.get_mut(thing_id) {
@@ -76,7 +146,7 @@ impl Simulator {
                         v: v,
                     };
 
-                    input.local_changes.push(change);
+                    //input.local_changes.push(change);
                     thing.pos += v;
                     input.pos = thing.pos;
                 }
@@ -141,3 +211,14 @@ impl Simulator {
     }
 }
 
+
+*/
+
+
+pub fn apply_input(state:&mut State, input:&Input) {
+    if let Some(thing_id) = input.thing_id {
+        if let Some(thing) = state.things.get_mut(thing_id) {
+            thing.pos += input.movement * thing.max_speed as f32;
+        }
+    }
+}
