@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use generational_arena::Index;
 use glam::Vec2;
 use hostess::{Bincoded, log::info, game_server::{Context, GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
-use sample_lib::{CustomMsg, Input, State, Thing};
+use sample_lib::{CustomMsg, Input, Simulator, State, Thing};
 use serde::{Serialize, Deserialize};
 
 
@@ -16,14 +16,16 @@ pub struct Player {
 
 pub struct Server {
     state:State,
-    players:HashMap<Uuid, Player>
+    players:HashMap<Uuid, Player>,
+    simulator:Simulator
 }
 
 impl Server {
     pub fn new() -> Self {
         Self {
             state:State::new(),
-            players:HashMap::new()
+            players:HashMap::new(),
+            simulator:Simulator::default()
         }
     }
 }
@@ -62,7 +64,7 @@ impl GameServer for Server {
         }
 
 
-        self.state.update(None, context.delta);
+        self.simulator.server_update(&mut self.state, context.delta);
 
         
         for (client_id, player) in &self.players {

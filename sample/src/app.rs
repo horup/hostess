@@ -1,7 +1,7 @@
 
 use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
-use crate::{CustomMsg, Input, State, get_item, input, performance_now_ms, set_item};
+use crate::{CustomMsg, Input, Simulator, State, get_item, input, performance_now_ms, set_item};
 use super::Canvas;
 
 pub struct App {
@@ -17,6 +17,7 @@ pub struct App {
     server_bytes_sec:f32,
     input:Input,
     updates:u64,
+    simulator:Simulator,
     pub server_messages:Vec<ServerMsg>,
     pub client_messages:Vec<ClientMsg>
 }
@@ -62,7 +63,8 @@ impl App {
             ping:0.0,
             server_bytes_sec:0.0,
             client_bytes_sec:0.0,
-            updates:0
+            updates:0,
+            simulator:Simulator::default()
         }
     }
 
@@ -151,7 +153,7 @@ impl App {
         match msg {
             CustomMsg::ServerSnapshotFull { state,  input_timestamp_sec } => {
                 self.state = state;
-                self.state.reapply_input(&mut self.input, input_timestamp_sec);
+                self.simulator.reapply_input(&mut self.state, &mut self.input, input_timestamp_sec);
             },
             CustomMsg::ServerPlayerThing {
                 thing_id
@@ -225,11 +227,9 @@ impl App {
             });
         }
 
-        info!("mouse {}", self.input.ability_target);
-
         // update state locally
         self.input.timestamp_sec = performance_now_ms() / 1000.0;
-        self.state.update(Some(&mut self.input), dt);
+        self.simulator.client_update(&mut self.state, &mut self.input, dt);
         
         // send input to server
         self.send_custom(CustomMsg::ClientInput {

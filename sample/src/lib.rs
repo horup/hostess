@@ -14,6 +14,9 @@ pub use msg::*;
 mod input;
 pub use input::*;
 
+mod simulation;
+pub use simulation::*;
+
 mod platform;
 use hostess::{ServerMsg, log::{error, info}};
 pub use platform::*;
