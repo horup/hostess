@@ -65,11 +65,14 @@
       
         async function run() {
             let res = await init();
+            let lag_ms = 100;
+
 
             window.send = (msg) => {
             };
            
             start();
+
             let _update = () => {
                 update();
                 requestAnimationFrame(_update);
@@ -102,7 +105,6 @@
             });
 
             let ws = null;
-            let lag_ms = 100;
             let connect = ()=> {
                 ws = new WebSocket("ws://" + location.host);
                 ws.onopen = ()=>{
@@ -116,11 +118,13 @@
                         }, lag_ms);
                     })
                 }
-                ws.onerror = ()=>{
+                ws.onerror = (e)=>{
+              
+
                     ws.close();
                 }
 
-                ws.onclose = ()=>{
+                ws.onclose = (e)=>{
                     disconnected();
                     connect();
                 }
@@ -133,6 +137,8 @@
             };
 
             connect();
+
+
         }
 
         run();
