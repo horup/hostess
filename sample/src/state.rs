@@ -62,6 +62,7 @@ impl State {
     }
 
     pub fn update(&mut self, input: Option<&mut Input>, dt: f64) {
+        
         if let Some(input) = input {
             if let Some(thing_id) = input.thing_id {
                 if let Some(thing) = self.things.get_mut(thing_id) {
@@ -87,11 +88,35 @@ impl State {
 
         for (id, thing) in self.things.iter_mut() {
             thing.pos += thing.vel * dt as f32;
+
+            let mut outta_bounds = false;
+            if thing.pos.x < 0.0 + thing.radius {
+                thing.pos.x = 0.0 + thing.radius;
+                outta_bounds = true;
+            } else if thing.pos.x > self.width - thing.radius {
+                thing.pos.x = self.width - thing.radius;
+                outta_bounds = true;
+            }
+
+            if thing.pos.y < 0.0 + thing.radius {
+                thing.pos.y = 0.0 + thing.radius;
+                outta_bounds = true;
+            } else if thing.pos.y > self.height - thing.radius {
+                thing.pos.y = self.height - thing.radius;
+                outta_bounds = true;
+            }
+
+            if outta_bounds && thing.is_projectile {
+                //thing.health = 0.0;
+            }
         }
 
         let candidates = self.things.clone();
         for (id, thing) in self.things.iter_mut() {
             Self::simple_collision_test(&id, thing, &candidates);
         }
+
+
+
     }
 }
