@@ -51,7 +51,7 @@ impl Canvas {
         Canvas {
             context,
             canvas,
-            images:[HtmlImageElement::new().unwrap()]
+            images:[HtmlImageElement::new().unwrap()],
         }
     }
 
@@ -111,11 +111,5 @@ impl Canvas {
         //self.context.set_stroke_style(&JsValue::from_str("red"));
         self.context.set_line_width(1.0 / scale);
         
-    }
-
-    pub fn get_mouse_pos(&self) -> Vec2 {
-        let m = Vec2::new(0.0, 0.0);
-
-        return m;
     }
 }

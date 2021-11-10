@@ -1,4 +1,5 @@
 
+use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
 use crate::{CustomMsg, Input, State, get_item, input, performance_now_ms, set_item};
 use super::Canvas;
@@ -224,7 +225,7 @@ impl App {
             });
         }
 
-        let mouse_pos = self.canvas.get_mouse_pos();
+        info!("mouse {}", self.input.ability_target);
 
         // update state locally
         self.input.timestamp_sec = performance_now_ms() / 1000.0;
@@ -258,7 +259,7 @@ impl App {
                 }
 
                 if code == 32 {
-                    i.ability_activated = false;
+                    i.ability_trigger = false;
                 }
             },
             _ => {
@@ -299,7 +300,7 @@ impl App {
                 }
         
                 if code == 32 {
-                    i.ability_activated = true;
+                    i.ability_trigger = true;
                 }
             },
             _ => {
@@ -320,18 +321,20 @@ impl App {
     }
 
     pub fn mousemove(&mut self, x:f32, y:f32) {
-
+        self.input.ability_target = Vec2::new(x / 16.0, y / 16.0);
     }
 
     pub fn mousedown(&mut self, button:u32, x:f32, y:f32) {
+        self.input.ability_target = Vec2::new(x / 16.0, y / 16.0);
         if button == 0 {
-            self.input.ability_activated = true;
+            self.input.ability_trigger = true;
         }
     }
 
     pub fn mouseup(&mut self, button:u32, x:f32, y:f32) {
+        self.input.ability_target = Vec2::new(x, y);
         if button == 0 {
-            self.input.ability_activated = false;
+            self.input.ability_trigger = false;
         }
     }
 

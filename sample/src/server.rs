@@ -122,14 +122,10 @@ impl Server {
                             }
 
                             thing.pos += v;
-
-                            if input.ability_activated {
-                                let p = Thing::new_projectile(thing.pos, Vec2::new(10.0, 0.0));
-                                self.state.things.insert(p);
-                            }
+                            thing.ability_target = input.ability_target;
+                            thing.ability_trigger = input.ability_trigger;
                         }
                     }
-
 
                     // remember last recv input
                     player.input = input;

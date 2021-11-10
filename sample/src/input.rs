@@ -21,10 +21,10 @@ pub struct Input {
     pub pos:Vec2,
 
     /// true if the player wants to use his ability
-    pub ability_activated:bool,
+    pub ability_trigger:bool,
 
     /// where the player is targeting in the world
-    pub target_pos:Vec2,
+    pub ability_target:Vec2,
 
     #[serde(skip)]
     pub local_changes:Vec<LocalChange>
@@ -43,8 +43,8 @@ impl Default for Input {
             thing_id: Default::default(), 
             movement_dir: Default::default(), 
             pos: Default::default(), 
-            ability_activated: Default::default(), 
-            target_pos: Default::default(),
+            ability_trigger: Default::default(), 
+            ability_target: Default::default(),
             local_changes: Default::default()
         }
     }

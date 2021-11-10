@@ -25,6 +25,12 @@ pub struct Thing {
     /// zero indicates the ability is ready
     pub ability_cooldown:f32,
 
+    /// true if the thing is trying to use ability
+    pub ability_trigger:bool,
+
+    /// where the thing is targeting its ability
+    pub ability_target:Vec2,
+
     /// true if this is a player
     pub is_player:bool,
 
