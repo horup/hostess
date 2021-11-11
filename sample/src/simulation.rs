@@ -218,12 +218,37 @@ impl Simulator {
 
 
 pub fn apply_input(state:&mut State, input:&Input) {
+    let mut spawn = Vec::new();
     // how to avoid clone?
     let cloned = state.clone();
     if let Some(thing_id) = input.thing_id {
         if let Some(thing) = state.things.get_mut(thing_id) {
             let new_pos = thing.pos + input.movement * thing.max_speed as f32;
             move_thing_y_then_x((thing_id, thing), new_pos, &cloned);
+
+            if input.ability_trigger && thing.ability_cooldown <= 0.0 {
+                info!("abc");
+                thing.ability_cooldown = 0.25;
+                let dir = input.ability_target - thing.pos;
+                if dir.length() > 0.0 {
+                    let dir = dir.normalize();
+                    let p = Thing::new_projectile(thing.pos, dir * 10.0);
+                    spawn.push(p);
+                }
+            }
+        }
+    }
+
+    for thing in spawn.drain(..) {
+        state.things.insert(thing);
+    }
+}
+
+pub fn update_cooldown(state:&mut State, dt:f64) {
+    for thing in state.things.iter_mut() {
+        thing.1.ability_cooldown -= dt as f32;
+        if thing.1.ability_cooldown < 0.0 {
+            thing.1.ability_cooldown = 0.0;
         }
     }
 }
@@ -248,6 +273,12 @@ fn collision_test_circle_circle(circle1:Circle, circle2:Circle) -> bool {
     false
 }
 
+#[derive(PartialEq, Eq)]
+pub enum CollisionResult {
+    None,
+    Thing(Index)
+}
+
 /// move the thing while avoiding collisions, first in y then x
 pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) {
     let (thing_id, thing1) = thing;
@@ -258,9 +289,9 @@ pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State
 }
 
 /// move the thing while avoiding collisions
-fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) {
+fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) -> CollisionResult {
     let (thing_id, thing1) = thing;
-    let mut hit = false;
+    let mut result = CollisionResult::None;
     for (thing_id2, thing2) in state.things.iter() {
         if thing_id != thing_id2 {
             let dir = new_pos - thing1.pos;
@@ -269,7 +300,7 @@ fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) {
             let n = n.normalize();
 
             if dir.dot(n) < 0.0 {
-                hit = collision_test_circle_circle(Circle {
+                let hit = collision_test_circle_circle(Circle {
                     c:new_pos,
                     r:thing1.radius
                 }, Circle {
@@ -277,13 +308,16 @@ fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) {
                     r:thing2.radius
                 });
                 if hit {
+                    result = CollisionResult::Thing(thing_id2);
                     break;
                 }
             }
         }
     }
 
-    if hit == false {
+    if result == CollisionResult::None {
         thing1.pos = new_pos;
     }
+
+    return result;
 }

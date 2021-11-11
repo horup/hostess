@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 
 use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
-use crate::{CustomMsg, Input, State, apply_input, get_item, performance_now_ms, player, set_item};
+use crate::{CustomMsg, Input, State, apply_input, get_item, performance_now_ms, player, set_item, update_cooldown};
 use super::Canvas;
 
 pub struct App {

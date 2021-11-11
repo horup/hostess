@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use hostess::{Bincoded, log::info, game_server::{Context, GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
-use sample_lib::{CustomMsg, Input, Player, State, Thing, apply_input};
+use sample_lib::{CustomMsg, Input, Player, State, Thing, apply_input, update_cooldown};
 use serde::{Serialize, Deserialize};
 
 pub struct Server {
@@ -38,6 +38,8 @@ impl Server {
                 apply_input(&mut self.state, &input);
             }
         }
+
+        update_cooldown(&mut self.state, context.delta);
 
         // for each player, transmit a snapshot to them
         for (client_id, player) in &self.players {
