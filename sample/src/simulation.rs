@@ -217,7 +217,7 @@ impl Simulator {
 */
 
 
-pub fn apply_input(state:&mut State, input:&Input) {
+pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
     let mut spawn = Vec::new();
     // how to avoid clone?
     let cloned = state.clone();
@@ -226,14 +226,16 @@ pub fn apply_input(state:&mut State, input:&Input) {
             let new_pos = thing.pos + input.movement * thing.max_speed as f32;
             move_thing_y_then_x((thing_id, thing), new_pos, &cloned);
 
-            if input.ability_trigger && thing.ability_cooldown <= 0.0 {
-                info!("abc");
-                thing.ability_cooldown = 0.25;
-                let dir = input.ability_target - thing.pos;
-                if dir.length() > 0.0 {
-                    let dir = dir.normalize();
-                    let p = Thing::new_projectile(thing.pos, dir * 10.0);
-                    spawn.push(p);
+            if authorative {
+                if input.ability_trigger && thing.ability_cooldown <= 0.0 {
+                    thing.ability_cooldown = 0.25;
+                    let dir = input.ability_target - thing.pos;
+                    if dir.length() > 0.0 {
+                        let dir = dir.normalize();
+                        let v = dir * 20.0;
+                        let p = Thing::new_projectile(thing.pos + dir, v);
+                        spawn.push(p);
+                    }
                 }
             }
         }
@@ -244,11 +246,18 @@ pub fn apply_input(state:&mut State, input:&Input) {
     }
 }
 
-pub fn update_cooldown(state:&mut State, dt:f64) {
+pub fn update_things(state:&mut State, dt:f64) {
+    // how to avoid
+    let cloned = state.clone();
     for thing in state.things.iter_mut() {
         thing.1.ability_cooldown -= dt as f32;
         if thing.1.ability_cooldown < 0.0 {
             thing.1.ability_cooldown = 0.0;
+        }
+
+        if thing.1.vel.length_squared() > 0.0 {
+            let new_pos = thing.1.pos + thing.1.vel * dt as f32;
+            move_thing_y_then_x(thing, new_pos, &cloned);
         }
     }
 }

@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 
 use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
-use crate::{CustomMsg, Input, State, apply_input, get_item, performance_now_ms, player, set_item, update_cooldown};
+use crate::{CustomMsg, Input, State, apply_input, get_item, performance_now_ms, player, set_item, update_things};
 use super::Canvas;
 
 pub struct App {
@@ -160,7 +160,7 @@ impl App {
 
                 for input in inputs { 
                     if input.timestamp_sec > input_timestamp_sec {
-                        apply_input(&mut self.state, &input);
+                        apply_input(&mut self.state, &input, false);
                         self.input_history.push_back(input);
                     }
                 }
@@ -245,7 +245,10 @@ impl App {
         self.input_history.push_back(self.input.clone());
 
         // apply input now
-        apply_input(&mut self.state, &self.input);
+        apply_input(&mut self.state, &self.input, false);
+
+        // update things
+        update_things(&mut self.state, dt);
 
         // send input to server
         self.send_custom(CustomMsg::ClientInput {

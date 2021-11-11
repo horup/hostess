@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use hostess::{Bincoded, log::info, game_server::{Context, GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
-use sample_lib::{CustomMsg, Input, Player, State, Thing, apply_input, update_cooldown};
+use sample_lib::{CustomMsg, Input, Player, State, Thing, apply_input, update_things};
 use serde::{Serialize, Deserialize};
 
 pub struct Server {
@@ -35,11 +35,11 @@ impl Server {
             // apply input from players
             for input in player.inputs.drain(..) {
                 player.latest_input_timestamp_sec = input.timestamp_sec;
-                apply_input(&mut self.state, &input);
+                apply_input(&mut self.state, &input, true);
             }
         }
 
-        update_cooldown(&mut self.state, context.delta);
+        update_things(&mut self.state, context.delta);
 
         // for each player, transmit a snapshot to them
         for (client_id, player) in &self.players {
