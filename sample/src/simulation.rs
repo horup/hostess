@@ -223,7 +223,7 @@ pub fn apply_input(state:&mut State, input:&Input) {
     if let Some(thing_id) = input.thing_id {
         if let Some(thing) = state.things.get_mut(thing_id) {
             let new_pos = thing.pos + input.movement * thing.max_speed as f32;
-            move_thing((thing_id, thing), new_pos, &cloned);
+            move_thing_y_then_x((thing_id, thing), new_pos, &cloned);
         }
     }
 }
@@ -248,23 +248,37 @@ fn collision_test_circle_circle(circle1:Circle, circle2:Circle) -> bool {
     false
 }
 
-
+/// move the thing while avoiding collisions, first in y then x
+pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) {
+    let (thing_id, thing1) = thing;
+    let pos = Vec2::new(thing1.pos.x, new_pos.y);
+    move_thing_direct((thing_id, thing1), pos, state);
+    let pos = Vec2::new(new_pos.x, thing1.pos.y);
+    move_thing_direct((thing_id, thing1), pos, state);
+}
 
 /// move the thing while avoiding collisions
-pub fn move_thing(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) {
+fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) {
     let (thing_id, thing1) = thing;
     let mut hit = false;
     for (thing_id2, thing2) in state.things.iter() {
         if thing_id != thing_id2 {
-            hit = collision_test_circle_circle(Circle {
-                c:new_pos,
-                r:thing1.radius
-            }, Circle {
-                c:thing2.pos,
-                r:thing2.radius
-            });
-            if hit {
-                break;
+            let dir = new_pos - thing1.pos;
+            let n = thing1.pos - thing2.pos;
+            let dir = dir.normalize();
+            let n = n.normalize();
+
+            if dir.dot(n) < 0.0 {
+                hit = collision_test_circle_circle(Circle {
+                    c:new_pos,
+                    r:thing1.radius
+                }, Circle {
+                    c:thing2.pos,
+                    r:thing2.radius
+                });
+                if hit {
+                    break;
+                }
             }
         }
     }
