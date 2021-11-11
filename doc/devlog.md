@@ -1,4 +1,4 @@
-- 2021-11-11    25m+ worked on collision handling
+- 2021-11-11    35m worked on collision handling, got move thing routine to work
 - 2021-11-10    150m worked a bit on docker, added bounds check, added targeting shooting, reworked input handling a lot broke some stuff also
 - 2021-11-09    135m worked on local changes support, added simple colission detection, changed rendering a bit, worked on bullets
 - 2021-11-08    45m added changes to input

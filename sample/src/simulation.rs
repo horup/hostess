@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use generational_arena::{Arena, Index};
 use glam::Vec2;
 use hostess::uuid::Uuid;
+use hostess::{log::info};
+use web_sys::console::info;
 
 use crate::{Input, LocalChange, Player, State, Thing};
 
@@ -220,7 +222,7 @@ pub fn apply_input(state:&mut State, input:&Input) {
     let cloned = state.clone();
     if let Some(thing_id) = input.thing_id {
         if let Some(thing) = state.things.get_mut(thing_id) {
-            let new_pos = input.movement * thing.max_speed as f32;
+            let new_pos = thing.pos + input.movement * thing.max_speed as f32;
             move_thing((thing_id, thing), new_pos, &cloned);
         }
     }
