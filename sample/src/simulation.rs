@@ -216,9 +216,58 @@ impl Simulator {
 
 
 pub fn apply_input(state:&mut State, input:&Input) {
+    // how to avoid clone?
+    let cloned = state.clone();
     if let Some(thing_id) = input.thing_id {
         if let Some(thing) = state.things.get_mut(thing_id) {
-            thing.pos += input.movement * thing.max_speed as f32;
+            let new_pos = input.movement * thing.max_speed as f32;
+            move_thing((thing_id, thing), new_pos, &cloned);
         }
+    }
+}
+
+pub struct Circle {
+    pub c:Vec2,
+    pub r:f32
+}
+
+
+/// performs a test between two circles
+fn collision_test_circle_circle(circle1:Circle, circle2:Circle) -> bool {
+    let d = circle1.c - circle2.c;
+    if d.length() > 0.0 {
+        let l = circle1.r + circle2.r;
+        let l = d.length() - l;
+        if l < 0.0 {
+            return true;
+        }
+    }
+    
+    false
+}
+
+
+
+/// move the thing while avoiding collisions
+pub fn move_thing(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) {
+    let (thing_id, thing1) = thing;
+    let mut hit = false;
+    for (thing_id2, thing2) in state.things.iter() {
+        if thing_id != thing_id2 {
+            hit = collision_test_circle_circle(Circle {
+                c:new_pos,
+                r:thing1.radius
+            }, Circle {
+                c:thing2.pos,
+                r:thing2.radius
+            });
+            if hit {
+                break;
+            }
+        }
+    }
+
+    if hit == false {
+        thing1.pos = new_pos;
     }
 }
