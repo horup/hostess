@@ -4,27 +4,6 @@ use glam::Vec2;
 
 use crate::{Input, Player, State, Thing};
 
-/// returns tuple if collision occured
-/// with whom and new position
-pub fn simple_collision_test(thing_id:&Index, thing:&mut Thing, candidates:&Arena<Thing>) -> Option<(Vec2, Index)> {
-    for (test_id, test) in candidates.iter() {
-        if test_id != *thing_id {
-            let v = thing.pos - test.pos;
-            let l = test.radius + thing.radius;
-            if v.length() < l && v.length() != 0.0 {
-                let l = l - v.length();
-                let mut pos = thing.pos;
-                let v = v.normalize() * l;
-                pos += v;
-                thing.pos = pos;
-                return Some((pos, test_id));
-            }
-        }
-    }
-
-    None
-}
-
 pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
     let mut spawn = Vec::new();
     // how to avoid clone?
@@ -55,17 +34,37 @@ pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
 }
 
 pub fn update_things(state:&mut State, dt:f64) {
-    // how to avoid
+    // how to avoid clone
     let cloned = state.clone();
-    for thing in state.things.iter_mut() {
-        thing.1.ability_cooldown -= dt as f32;
-        if thing.1.ability_cooldown < 0.0 {
-            thing.1.ability_cooldown = 0.0;
+
+    let mut remove = Vec::new();
+    let mut hits = Vec::new();
+
+    for (id, thing)  in state.things.iter_mut() {
+        thing.ability_cooldown -= dt as f32;
+        if thing.ability_cooldown < 0.0 {
+            thing.ability_cooldown = 0.0;
         }
 
-        if thing.1.vel.length_squared() > 0.0 {
-            let new_pos = thing.1.pos + thing.1.vel * dt as f32;
-            move_thing_y_then_x(thing, new_pos, &cloned);
+        if thing.vel.length_squared() > 0.0 {
+            let new_pos = thing.pos + thing.vel * dt as f32;
+            let res = move_thing_y_then_x((id, thing), new_pos, &cloned);
+            if let CollisionResult::Thing(hit_id) = res {
+                if thing.is_projectile {
+                    remove.push(id);
+                    hits.push(hit_id);
+                }
+            }
+        }
+    }
+
+    for id in remove.drain(..) {
+        state.things.remove(id);
+    }
+
+    for id in hits.drain(..) {
+        if let Some(thing) = state.things.get_mut(id) {
+            thing.health -= 1.0;
         }
     }
 }
@@ -97,12 +96,19 @@ pub enum CollisionResult {
 }
 
 /// move the thing while avoiding collisions, first in y then x
-pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) {
+pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) -> CollisionResult {
     let (thing_id, thing1) = thing;
     let pos = Vec2::new(thing1.pos.x, new_pos.y);
-    move_thing_direct((thing_id, thing1), pos, state);
+    
+    let res1 = move_thing_direct((thing_id, thing1), pos, state);
     let pos = Vec2::new(new_pos.x, thing1.pos.y);
-    move_thing_direct((thing_id, thing1), pos, state);
+    let res2 = move_thing_direct((thing_id, thing1), pos, state);
+
+    if res1 != CollisionResult::None {
+        return res1;
+    } else {
+        return res2;
+    }
 }
 
 /// move the thing while avoiding collisions

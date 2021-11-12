@@ -117,7 +117,13 @@ impl App {
         }
 
         self.canvas.set_text_style("left", "middle");
-        self.canvas.fill_text("100%", 0.0, 0.5);
+
+        if let Some(thing_id) = self.input.thing_id {
+            if let Some(thing) = self.state.things.get(thing_id) {
+                self.canvas.fill_text(format!("{:0.00}%", thing.health).as_str(), 0.0, 0.5);
+            }
+        }
+
     }
 
     fn draw_ui_centercontent(&self, cx: f64, cy: f64) {
