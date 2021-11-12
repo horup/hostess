@@ -45,9 +45,3 @@ impl Player {
         self.inputs.clear();
     }
 }
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct LocalChange {
-    pub timestamp_sec:f64,
-    pub v:Vec2
-}

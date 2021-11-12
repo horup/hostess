@@ -1,5 +1,6 @@
 use hostess::{log::LevelFilter, server::Server, tokio, game_server::{GameServerConstructor, GameServer}, uuid::Uuid};
 mod server;
+mod bot;
 
 #[tokio::main]
 async fn main() {

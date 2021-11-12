@@ -35,7 +35,7 @@ pub struct Thing {
     pub name:String,
 
     /// max speed of thing
-    pub max_speed:f32
+    pub speed:f32
 }
 
 
@@ -52,7 +52,7 @@ impl Thing {
             ability_cooldown:0.0,
             name:"".into(),
             is_player:true,
-            max_speed:5.0,
+            speed:5.0,
             ..Default::default()
         }
     }
@@ -65,7 +65,7 @@ impl Thing {
             dir:0.0,
             health:100.0,
             is_projectile:true,
-            max_speed:10.0,
+            speed:10.0,
             ..Default::default()
         }
     }

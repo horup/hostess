@@ -1,3 +1,4 @@
+- 2021-11-12    20m worked on introduction of simple bots
 - 2021-11-11    70m worked on collision handling, got move thing routine to work, re-added shooting on server
 - 2021-11-10    150m worked a bit on docker, added bounds check, added targeting shooting, reworked input handling a lot broke some stuff also
 - 2021-11-09    135m worked on local changes support, added simple colission detection, changed rendering a bit, worked on bullets

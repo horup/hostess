@@ -1,8 +1,7 @@
-
 use generational_arena::{Arena};
 use serde::{Deserialize, Serialize};
 
-use crate::{Input, LocalChange, Thing};
+use crate::{Thing};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {

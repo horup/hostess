@@ -2,21 +2,46 @@ use std::collections::{HashMap, VecDeque};
 use hostess::{Bincoded, log::info, game_server::{Context, GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
 use sample_lib::{CustomMsg, Input, Player, State, Thing, apply_input, update_things};
 use serde::{Serialize, Deserialize};
+use crate::bot::*;
 
 pub struct Server {
     state:State,
     players:HashMap<Uuid, Player>,
+    bots:Vec<Bot>
 }
 
 impl Server {
     pub fn new() -> Self {
+       
         Self {
             state:State::new(),
-            players:HashMap::new()
+            players:HashMap::new(),
+            bots:Vec::new()
         }
     }
 
     pub fn update(&mut self, context:&mut Context) {
+        if self.players.len() < 2 {
+            // less than two players and no bots, ensure 10 bots are spawned
+            if self.bots.len() == 0 {
+                while self.bots.len() < 10 {
+                    let mut thing = Thing::random_new_player(&self.state);
+                    thing.name = "bot".into();
+                    let index = self.state.things.insert(thing);
+                    let bot = Bot {
+                        thing_id:index
+                    };
+    
+                    self.bots.push(bot);
+                }
+            }
+        } else {
+            // more than two players, remove bots and their things
+            for bot in self.bots.drain(..) {
+                self.state.things.remove(bot.thing_id);
+            }
+        }
+
         // process inputs from players
         for (_, player) in &mut self.players {
             // if player has no 'thing'
@@ -37,6 +62,11 @@ impl Server {
                 player.latest_input_timestamp_sec = input.timestamp_sec;
                 apply_input(&mut self.state, &input, true);
             }
+        }
+
+        // process bots
+        for bot in self.bots.iter_mut() {
+            bot.tick(&mut self.state, context.delta);
         }
 
         update_things(&mut self.state, context.delta);
