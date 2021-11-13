@@ -1,4 +1,4 @@
-- 2021-11-13    45m started working on command pattern introduction, not there yet.
+- 2021-11-13    120m played with command pattern, but decided to revert, implemented rle of state, seems to work ok
 - 2021-11-12    40m worked on introduction of simple bots, worked on shooting hit, added shot actually hit
 - 2021-11-11    70m worked on collision handling, got move thing routine to work, re-added shooting on server
 - 2021-11-10    150m worked a bit on docker, added bounds check, added targeting shooting, reworked input handling a lot broke some stuff also

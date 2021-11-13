@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 
 use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
-use crate::{Commands, CustomMsg, Input, State, apply_input2, get_item, performance_now_ms, player, set_item, update_things};
+use crate::{CustomMsg, Input, State, StateHistory, apply_input, get_item, performance_now_ms, player, set_item, update_things};
 use super::Canvas;
 
 pub struct App {
@@ -12,7 +12,8 @@ pub struct App {
     app_state:AppState,
     id:Uuid,
     canvas:Canvas,
-    state:State,
+    current:State,
+    history:StateHistory,
     connection_status:String,
     ping:f64,
     client_bytes_sec:f32,
@@ -56,7 +57,7 @@ impl App {
             debug:true,
             app_state:AppState::Initial,
             canvas:Canvas::new(),
-            state:State::new(),
+            current:State::new(),
             input:Input::default(),
             input_history:VecDeque::new(),
             server_messages:Vec::new(),
@@ -67,6 +68,7 @@ impl App {
             server_bytes_sec:0.0,
             client_bytes_sec:0.0,
             updates:0,
+            history:StateHistory::new()
         }
     }
 
@@ -97,12 +99,12 @@ impl App {
             return;
         }
 
-        for (_, thing) in &self.state.things {
+        for (_, thing) in &self.current.things {
             let x = thing.pos.x as f64;
             let y = thing.pos.y as f64;
             self.canvas.draw_circle(x, y, thing.radius as f64);
         }
-        for (_, thing) in &self.state.things {
+        for (_, thing) in &self.current.things {
             let x = thing.pos.x as f64;
             let y = thing.pos.y as f64;
             if thing.name.len() > 0 {
@@ -119,7 +121,7 @@ impl App {
         self.canvas.set_text_style("left", "middle");
 
         if let Some(thing_id) = self.input.thing_id {
-            if let Some(thing) = self.state.things.get(thing_id) {
+            if let Some(thing) = self.current.things.get(thing_id) {
                 self.canvas.fill_text(format!("{:0.00}%", thing.health).as_str(), 0.0, 0.5);
             }
         }
@@ -160,46 +162,40 @@ impl App {
     pub fn recv_custom(&mut self, msg:CustomMsg) {
         match msg {
             CustomMsg::ServerSnapshotFull { state,  input_timestamp_sec } => {
-                self.state = state;
+                self.history.remember(state.clone());
+                self.current = state;
                 let inputs = self.input_history.clone();
                 self.input_history.clear();
-
-               
                 for input in inputs { 
                     if input.timestamp_sec > input_timestamp_sec {
-                        let mut commands = Commands::new();
-                        apply_input2(&mut self.state, &mut commands, &input, false);
-                        self.state.mutate(&commands);
-
+                        apply_input(&mut self.current, &input, false);
                         self.input_history.push_back(input);
                     }
                 }
 
+            },
+            CustomMsg::ServerSnapshotDelta {
+                delta,
+                input_timestamp_sec
+            } => {
+                let state = State::from_delta_bincode(self.history.last(), &delta);
+                let state = state.expect("Failed to deserialize from delta!");
+                self.recv_custom(CustomMsg::ServerSnapshotFull {
+                        input_timestamp_sec,
+                        state
+                    }
+                );
             },
             CustomMsg::ServerPlayerThing {
                 thing_id
             } => {
                 self.input.thing_id = thing_id;
                 if let Some(thing_id) = thing_id {
-                    if let Some(thing) = self.state.things.get(thing_id) {
+                    if let Some(thing) = self.current.things.get(thing_id) {
                         self.input.movement = thing.pos.clone();
                     }
                 }
             }
-            CustomMsg::ServerCommands { input_timestamp_sec, commands } => {
-                self.state.mutate(&commands);
-
-                let inputs = self.input_history.clone();
-                self.input_history.clear();
-                for input in inputs { 
-                    if input.timestamp_sec > input_timestamp_sec {
-                        let mut commands = Commands::new();
-                        apply_input2(&mut self.state, &mut commands, &input, false);
-                        self.state.mutate(&commands);
-                        self.input_history.push_back(input);
-                    }
-                }
-            },
             _ => {}
         }
     }
@@ -248,8 +244,6 @@ impl App {
     }
 
     pub fn update(&mut self, dt:f64) {
-        //let mut commands = 
-        let mut commands = Commands::new();
         for msg in &self.server_messages.clone() {
             self.recv(msg);
         }
@@ -270,7 +264,7 @@ impl App {
         self.input_history.push_back(self.input.clone());
 
         // apply input now
-        apply_input2(&mut self.state, &mut commands, &self.input, false);
+        apply_input(&mut self.current, &self.input, false);
 
         // update things
         //update_things(&mut self.state, dt);
@@ -280,9 +274,6 @@ impl App {
             input:self.input.clone()
         });
 
-        // update state
-        self.state.mutate(&commands);
-      
         // draw some stuff
         self.draw();
         self.updates += 1; 
@@ -400,7 +391,8 @@ impl App {
     }
 
     pub fn connected(&mut self) {
-        self.state = State::new();
+        self.history.clear();
+        self.current = State::new();
         self.connection_status = format!("Connected");
         self.new_app_state(AppState::EnterName {
             name:self.player_name.clone()

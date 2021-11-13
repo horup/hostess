@@ -5,6 +5,8 @@ use glam::Vec2;
 use hostess::uuid::Uuid;
 use serde::{Deserialize, Serialize};
 
+use crate::State;
+
 /// struct holding Input for a player
 /// send by clients to the server
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -36,7 +38,9 @@ pub struct Player {
     pub client_name:String,
     pub thing:Option<Index>,
     pub latest_input_timestamp_sec:f64,
-    pub inputs:VecDeque<Input>
+    pub inputs:VecDeque<Input>,
+    /// last state transmitted to player
+    pub state:State
 }
 
 impl Player {

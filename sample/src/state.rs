@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 
 use generational_arena::{Arena, Index};
 use glam::Vec2;
+use hostess::Bincoded;
 use serde::{Deserialize, Serialize};
 
 use crate::Thing;
@@ -13,6 +14,9 @@ pub struct State {
     pub height: f32,
 }
 
+impl Bincoded for State {
+}
+
 impl State {
     pub fn new() -> Self {
         Self {
@@ -21,7 +25,7 @@ impl State {
             height: 30.0,
         }
     }
-
+/*
     pub fn mutate(&mut self, commands:&Commands) {
         for command in commands.iter() {
             match command {
@@ -46,9 +50,46 @@ impl State {
                 }
             }
         }
+    }*/
+}
+
+
+pub struct StateHistory {
+    history:VecDeque<State>,
+    empty_state:State
+}
+
+impl StateHistory {
+    pub fn new() -> Self {
+        StateHistory {
+            history:VecDeque::with_capacity(10),
+            empty_state:State::new()
+        }
+    }
+
+    pub fn remember(&mut self, state:State) {
+        if self.history.len() > 20 {
+            self.history.pop_front();
+        }
+
+        self.history.push_back(state);
+    }
+
+    pub fn last(&self) -> &State {
+        if let Some(last) = self.history.back() {
+            return last;
+        }
+            
+        &self.empty_state
+    }
+
+    pub fn clear(&mut self) {
+        self.history.clear();
     }
 }
 
+
+/*
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Command {
     SetThings {
@@ -96,3 +137,4 @@ impl Commands {
     }
 }
 
+*/

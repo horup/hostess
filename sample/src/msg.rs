@@ -1,4 +1,4 @@
-use crate::{Commands, Input, State};
+use crate::{Input, State};
 use generational_arena::Index;
 use hostess::{Bincoded};
 use serde::{Serialize, Deserialize};
@@ -10,9 +10,10 @@ pub enum CustomMsg {
         input_timestamp_sec:f64,
         state:State
     },
-    ServerCommands {
+    ServerSnapshotDelta {
+        /// the timestamp of the last input recv and processed by the server
         input_timestamp_sec:f64,
-        commands:Commands
+        delta:Vec<u8>
     },
     ServerPlayerThing {
         thing_id:Option<Index>

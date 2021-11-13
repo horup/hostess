@@ -1,11 +1,12 @@
 use std::{collections::{HashMap, VecDeque}, ops::IndexMut};
 use hostess::{Bincoded, log::info, game_server::{Context, GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
-use sample_lib::{Command, Commands, CustomMsg, Input, Player, State, Thing, apply_input2, update_things};
+use sample_lib::{CustomMsg, Input, Player, State, StateHistory, Thing, apply_input, update_things};
 use serde::{Serialize, Deserialize};
 use crate::bot::*;
 
 pub struct Server {
-    state:State,
+    current:State,
+    history:StateHistory,
     players:HashMap<Uuid, Player>,
     bots:Vec<Bot>
 }
@@ -14,40 +15,32 @@ impl Server {
     pub fn new() -> Self {
        
         Self {
-            state:State::new(),
+            current:State::new(),
             players:HashMap::new(),
-            bots:Vec::new()
+            bots:Vec::new(),
+            history:StateHistory::new()
         }
     }
 
     pub fn update(&mut self, context:&mut Context) {
-        let mut commands = Commands::new();
         if self.players.len() < 2 {
             // less than two players and no bots, ensure 10 bots are spawned
             if self.bots.len() == 0 {
                 while self.bots.len() < 10 {
-                    let mut thing = Thing::random_new_player(&self.state);
+                    let mut thing = Thing::random_new_player(&self.current);
                     thing.name = "bot".into();
-                    let index = self.state.things.insert(thing);
+                    let index = self.current.things.insert(thing);
                     let bot = Bot {
                         thing_id:index
                     };
     
                     self.bots.push(bot);
                 }
-
-                // fix dont allow mutation above directly
-                commands.push(Command::SetThings {
-                    things:self.state.things.clone()
-                });
             }
         } else {
             // more than two players, remove bots and their things
             for bot in self.bots.drain(..) {
-                //self.state.things.remove(bot.thing_id);
-                commands.push(Command::RemoveThing {
-                    thing_id:bot.thing_id
-                });
+                self.current.things.remove(bot.thing_id);
             }
         }
 
@@ -56,45 +49,42 @@ impl Server {
             // if player has no 'thing'
             // ensure one is spawned for the player
             if player.thing == None {
-                let mut thing = Thing::random_new_player(&self.state);
+                let mut thing = Thing::random_new_player(&self.current);
                 thing.name = player.client_name.clone();
-                player.thing = Some(self.state.things.insert(thing));
+                player.thing = Some(self.current.things.insert(thing));
 
                 // let the player know his thing id
                 push_custom_to(context, player.client_id, CustomMsg::ServerPlayerThing {
                     thing_id:player.thing
-                });
-
-                // fix dont allow mutation above
-                commands.push(Command::SetThings {
-                    things:self.state.things.clone()
                 });
             }
 
             // apply input from players
             for input in player.inputs.drain(..) {
                 player.latest_input_timestamp_sec = input.timestamp_sec;
-                apply_input2(&self.state, &mut commands, &input, true);
+                apply_input(&mut self.current, &input, true);
             }
         }
 
         // process bots
-      /*  for bot in self.bots.iter_mut() {
-            bot.tick(&mut self.state, context.delta);
+        for bot in self.bots.iter_mut() {
+            bot.tick(&mut self.current, context.delta);
         }
 
-        update_things(&mut self.state, context.delta);
-*/
-        // update state
-        self.state.mutate(&commands);
+        update_things(&mut self.current, context.delta);
 
-        // for each player, transmit Commands to them
-        for (client_id, player) in &self.players {
-            push_custom_to(context, *client_id, CustomMsg::ServerCommands {
+        // for each player, transmit state diff
+        for (client_id, player) in &mut self.players {
+            let delta = self.current.to_delta_bincode(&player.state);
+            push_custom_to(context, *client_id, CustomMsg::ServerSnapshotDelta {
                 input_timestamp_sec:player.latest_input_timestamp_sec,
-                commands:commands.clone()
+                delta
             });
+
+            player.state = self.current.clone()
         }
+
+        self.history.remember(self.current.clone());
     }
 }
 
@@ -114,18 +104,19 @@ impl GameServer for Server {
                             thing:None,
                             inputs:VecDeque::default(),
                             latest_input_timestamp_sec: 0.0,
+                            state:self.current.clone()
                         });
                     }
 
                     push_custom_to(&mut context, client_id, CustomMsg::ServerSnapshotFull {
                         input_timestamp_sec:0.0,
-                        state:self.state.clone()
+                        state:self.current.clone()
                     });
                 },
                 HostMsg::ClientLeft { client_id } => {
                     if let Some(player) = self.players.remove(&client_id) {
                         if let Some(thing_id) = player.thing {
-                            self.state.things.remove(thing_id);
+                            self.current.things.remove(thing_id);
                         }
                     }
                 },
