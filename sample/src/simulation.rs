@@ -2,8 +2,8 @@
 use generational_arena::{Arena, Index};
 use glam::Vec2;
 
-use crate::{Input, Player, State, Thing};
-
+use crate::{Command, Commands, Input, Player, State, Thing};
+/*
 pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
     let mut spawn = Vec::new();
     // how to avoid clone?
@@ -31,6 +31,40 @@ pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
     for thing in spawn.drain(..) {
         state.things.insert(thing);
     }
+}*/
+
+pub fn apply_input2(state:&State, commands:&mut Commands, input:&Input, authorative:bool) {
+    //let mut spawn = Vec::new();
+    // how to avoid clone?
+    let cloned = state.clone();
+    if let Some(thing_id) = input.thing_id {
+        if let Some(thing) = state.things.get(thing_id) {
+            let new_pos = thing.pos + input.movement * thing.speed as f32;
+
+            commands.push(Command::MoveThing {
+                pos:new_pos,
+                thing_id:thing_id
+            });
+           //move_thing_y_then_x((thing_id, thing), new_pos, &cloned);
+
+           /* if authorative {
+                if input.ability_trigger && thing.ability_cooldown <= 0.0 {
+                    thing.ability_cooldown = 0.25;
+                    let dir = input.ability_target - thing.pos;
+                    if dir.length() > 0.0 {
+                        let dir = dir.normalize();
+                        let v = dir * 20.0;
+                        let p = Thing::new_projectile(thing.pos + dir, v);
+                        spawn.push(p);
+                    }
+                }
+            }*/
+        }
+    }
+
+   /* for thing in spawn.drain(..) {
+        state.things.insert(thing);
+    }*/
 }
 
 pub fn update_things(state:&mut State, dt:f64) {

@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 
 use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
-use crate::{CustomMsg, Input, State, apply_input, get_item, performance_now_ms, player, set_item, update_things};
+use crate::{Commands, CustomMsg, Input, State, apply_input2, get_item, performance_now_ms, player, set_item, update_things};
 use super::Canvas;
 
 pub struct App {
@@ -164,12 +164,17 @@ impl App {
                 let inputs = self.input_history.clone();
                 self.input_history.clear();
 
+               
                 for input in inputs { 
                     if input.timestamp_sec > input_timestamp_sec {
-                        apply_input(&mut self.state, &input, false);
+                        let mut commands = Commands::new();
+                        apply_input2(&mut self.state, &mut commands, &input, false);
+                        self.state.mutate(&commands);
+
                         self.input_history.push_back(input);
                     }
                 }
+
             },
             CustomMsg::ServerPlayerThing {
                 thing_id
@@ -181,9 +186,21 @@ impl App {
                     }
                 }
             }
-            _=> {
-                
+            CustomMsg::ServerCommands { input_timestamp_sec, commands } => {
+                self.state.mutate(&commands);
+
+                let inputs = self.input_history.clone();
+                self.input_history.clear();
+                for input in inputs { 
+                    if input.timestamp_sec > input_timestamp_sec {
+                        let mut commands = Commands::new();
+                        apply_input2(&mut self.state, &mut commands, &input, false);
+                        self.state.mutate(&commands);
+                        self.input_history.push_back(input);
+                    }
+                }
             },
+            _ => {}
         }
     }
 
@@ -231,6 +248,8 @@ impl App {
     }
 
     pub fn update(&mut self, dt:f64) {
+        //let mut commands = 
+        let mut commands = Commands::new();
         for msg in &self.server_messages.clone() {
             self.recv(msg);
         }
@@ -251,15 +270,18 @@ impl App {
         self.input_history.push_back(self.input.clone());
 
         // apply input now
-        apply_input(&mut self.state, &self.input, false);
+        apply_input2(&mut self.state, &mut commands, &self.input, false);
 
         // update things
-        update_things(&mut self.state, dt);
+        //update_things(&mut self.state, dt);
 
         // send input to server
         self.send_custom(CustomMsg::ClientInput {
             input:self.input.clone()
         });
+
+        // update state
+        self.state.mutate(&commands);
       
         // draw some stuff
         self.draw();
