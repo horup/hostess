@@ -35,7 +35,8 @@ pub struct Context {
     /// this value can go from close zero to many thousands 
     /// and needs to be truncated or similar by the consumer to avoid
     /// unintended behavior, e.g. players jumping through walls due to high tick
-    pub delta:f64
+    pub delta:f64,
+    pub time:f64
 }
 
 impl Context {

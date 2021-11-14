@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, VecDeque}, ops::IndexMut};
+use std::{collections::{HashMap, VecDeque}, ops::IndexMut, time::Instant};
 use hostess::{Bincoded, log::info, game_server::{Context, GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
 use sample_lib::{CustomMsg, Input, Player, State, StateHistory, Thing, apply_input, update_things};
 use serde::{Serialize, Deserialize};
@@ -23,6 +23,8 @@ impl Server {
     }
 
     pub fn update(&mut self, context:&mut Context) {
+        
+        self.current.timestamp = context.time;
         if self.players.len() < 2 {
             // less than two players and no bots, ensure 10 bots are spawned
             if self.bots.len() == 0 {
@@ -44,6 +46,7 @@ impl Server {
             }
         }
 
+        let tick_rate = self.tick_rate() as u8;
         // process inputs from players
         for (_, player) in &mut self.players {
             // if player has no 'thing'
@@ -52,10 +55,10 @@ impl Server {
                 let mut thing = Thing::random_new_player(&self.current);
                 thing.name = player.client_name.clone();
                 player.thing = Some(self.current.things.insert(thing));
-
-                // let the player know his thing id
-                push_custom_to(context, player.client_id, CustomMsg::ServerPlayerThing {
-                    thing_id:player.thing
+                // let the player know his thing id and tick_rate
+                push_custom_to(context, player.client_id, CustomMsg::ServerPlayerInfo {
+                    thing_id:player.thing,
+                    tick_rate:tick_rate
                 });
             }
 
@@ -111,6 +114,11 @@ impl GameServer for Server {
                     push_custom_to(&mut context, client_id, CustomMsg::ServerSnapshotFull {
                         input_timestamp_sec:0.0,
                         state:self.current.clone()
+                    });
+
+                    push_custom_to(&mut context, client_id, CustomMsg::ServerPlayerInfo {
+                        thing_id:None,
+                        tick_rate:self.tick_rate() as u8
                     });
                 },
                 HostMsg::ClientLeft { client_id } => {

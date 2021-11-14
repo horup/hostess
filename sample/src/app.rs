@@ -21,6 +21,8 @@ pub struct App {
     input:Input,
     input_history:VecDeque<Input>,
     updates:u64,
+    server_tick_rate:u8,
+    since_last_snapshot_sec:f32,
     pub server_messages:Vec<ServerMsg>,
     pub client_messages:Vec<ClientMsg>
 }
@@ -68,7 +70,9 @@ impl App {
             server_bytes_sec:0.0,
             client_bytes_sec:0.0,
             updates:0,
-            history:StateHistory::new()
+            history:StateHistory::new(),
+            server_tick_rate:64,
+            since_last_snapshot_sec:0.0
         }
     }
 
@@ -170,6 +174,7 @@ impl App {
     pub fn recv_custom(&mut self, msg:CustomMsg) {
         match msg {
             CustomMsg::ServerSnapshotFull { state,  input_timestamp_sec } => {
+                self.since_last_snapshot_sec = 0.0;
                 self.history.remember(state.clone());
                 self.current = state;
                 let inputs = self.input_history.clone();
@@ -180,7 +185,6 @@ impl App {
                         self.input_history.push_back(input);
                     }
                 }
-
             },
             CustomMsg::ServerSnapshotDelta {
                 delta,
@@ -194,9 +198,11 @@ impl App {
                     }
                 );
             },
-            CustomMsg::ServerPlayerThing {
-                thing_id
+            CustomMsg::ServerPlayerInfo {
+                thing_id,
+                tick_rate
             } => {
+                self.server_tick_rate = tick_rate;
                 self.input.thing_id = thing_id;
                 if let Some(thing_id) = thing_id {
                     if let Some(thing) = self.current.things.get(thing_id) {
@@ -252,9 +258,14 @@ impl App {
     }
 
     pub fn update(&mut self, dt:f64) {
+        // process messages
+        self.since_last_snapshot_sec += dt as f32;
         for msg in &self.server_messages.clone() {
             self.recv(msg);
         }
+
+        // calculate lerp which is used to do smooth linear interpolation between things
+        let lerp_alpha = self.since_last_snapshot_sec / (1.0 / self.server_tick_rate as f32);
 
         // ping server every 60 update
         if self.updates % 60 == 0 {
@@ -274,8 +285,6 @@ impl App {
         // apply input now
         apply_input(&mut self.current, &self.input, false);
 
-        // update things
-        //update_things(&mut self.state, dt);
 
         // send input to server
         self.send_custom(CustomMsg::ClientInput {

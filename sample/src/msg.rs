@@ -15,8 +15,9 @@ pub enum CustomMsg {
         input_timestamp_sec:f64,
         delta:Vec<u8>
     },
-    ServerPlayerThing {
-        thing_id:Option<Index>
+    ServerPlayerInfo {
+        thing_id:Option<Index>,
+        tick_rate:u8
     },
 
     /// input from a client, such as position, ability usage, e.g.

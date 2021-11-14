@@ -41,11 +41,11 @@ impl Host {
             let period = Duration::from_millis(1000 / g.tick_rate());
             let mut timer = interval(period);
             timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
-
             let mut context = Context {
                 game_messages:VecDeque::new(),
                 host_messages:VecDeque::with_capacity(buffer_len),
-                delta:timer.period().as_secs_f64()
+                delta:timer.period().as_secs_f64(),
+                time:0.0
             };
 
             let mut clients:HashMap<Uuid, (ClientSink, tokio::sync::oneshot::Sender<ClientSink>)> = HashMap::new();
@@ -60,6 +60,7 @@ impl Host {
                         let now = Instant::now();
                         let diff = now - last_tick;
                         context.delta = diff.as_secs_f64();
+                        context.time += context.delta;
                         context = g.tick(context);
                         for msg in context.game_messages.drain(..) {
                             match msg {

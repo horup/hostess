@@ -1,4 +1,4 @@
-- 2021-11-14    30m added respawning
+- 2021-11-14    55m added respawning, worked on lerp by transmitting tickrate to client
 - 2021-11-13    120m played with command pattern, but decided to revert, implemented rle of state, seems to work ok
 - 2021-11-12    40m worked on introduction of simple bots, worked on shooting hit, added shot actually hit
 - 2021-11-11    70m worked on collision handling, got move thing routine to work, re-added shooting on server
