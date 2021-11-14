@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 
 use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
-use crate::{CustomMsg, Input, State, StateHistory, apply_input, get_item, performance_now_ms, player, set_item, update_things};
+use crate::{CustomMsg, Input, State, StateHistory, Thing, apply_input, get_item, performance_now_ms, player, set_item, update_things};
 use super::Canvas;
 
 pub struct App {
@@ -98,24 +98,34 @@ impl App {
         self.draw_ui_centercontent(cx, cy);
     }
 
+    fn draw_thing(&self, thing:&Thing, pos:Vec2) {
+        if thing.is_alive() == true {
+            let x = pos.x as f64;
+            let y = pos.y as f64;
+            self.canvas.draw_circle(x, y, thing.radius as f64);
+        }
+    }
+
+    fn draw_thing_name(&self, thing:&Thing, pos:Vec2) {
+        if thing.is_alive() {
+            let x = pos.x as f64;
+            let y = pos.y as f64;
+            if thing.name.len() > 0 {
+                self.canvas.fill_text(&thing.name, x, y - 1.0);
+            }
+        }
+    }
+
     fn draw_game(&self) {
         if self.app_state != AppState::InGame {
             return;
         }
 
         for (_, thing) in &self.current.things {
-            if thing.is_alive() == false { continue };
-            let x = thing.pos.x as f64;
-            let y = thing.pos.y as f64;
-            self.canvas.draw_circle(x, y, thing.radius as f64);
+            self.draw_thing(thing, thing.pos);
         }
         for (_, thing) in &self.current.things {
-            if thing.is_alive() == false { continue };
-            let x = thing.pos.x as f64;
-            let y = thing.pos.y as f64;
-            if thing.name.len() > 0 {
-                self.canvas.fill_text(&thing.name, x, y - 1.0);
-            }
+            self.draw_thing_name(thing, thing.pos);
         }
     }
 
