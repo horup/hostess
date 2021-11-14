@@ -100,11 +100,13 @@ impl App {
         }
 
         for (_, thing) in &self.current.things {
+            if thing.is_alive() == false { continue };
             let x = thing.pos.x as f64;
             let y = thing.pos.y as f64;
             self.canvas.draw_circle(x, y, thing.radius as f64);
         }
         for (_, thing) in &self.current.things {
+            if thing.is_alive() == false { continue };
             let x = thing.pos.x as f64;
             let y = thing.pos.y as f64;
             if thing.name.len() > 0 {
@@ -141,7 +143,13 @@ impl App {
                 self.canvas.fill_text(name.as_str(), cx, cy + 1.0);
             },
             AppState::InGame {  } => {
-
+                if let Some(thing_id) = self.input.thing_id {
+                    if let Some(thing) = self.current.things.get(thing_id) {
+                        if thing.is_alive() == false {
+                            self.canvas.fill_text(&format!("You are dead! Respawning... {:0.00}", thing.respawn_timer), cx, cy);
+                        }
+                    }
+                }
             },
         };
     }

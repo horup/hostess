@@ -2,7 +2,7 @@
 use generational_arena::{Arena, Index};
 use glam::Vec2;
 
-use crate::{Input, Player, State, Thing};
+use crate::{Input, Player, Solid, State, Thing};
 
 pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
     let mut spawn = Vec::new();
@@ -10,18 +10,19 @@ pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
     let cloned = state.clone();
     if let Some(thing_id) = input.thing_id {
         if let Some(thing) = state.things.get_mut(thing_id) {
-            let new_pos = thing.pos + input.movement * thing.speed as f32;
-            move_thing_y_then_x((thing_id, thing), new_pos, &cloned);
-
-            if authorative {
-                if input.ability_trigger && thing.ability_cooldown <= 0.0 {
-                    thing.ability_cooldown = 0.25;
-                    let dir = input.ability_target - thing.pos;
-                    if dir.length() > 0.0 {
-                        let dir = dir.normalize();
-                        let v = dir * 20.0;
-                        let p = Thing::new_projectile(thing.pos + dir, v);
-                        spawn.push(p);
+            if thing.health > 0.0 {
+                let new_pos = thing.pos + input.movement * thing.speed as f32;
+                move_thing_y_then_x((thing_id, thing), new_pos, &cloned);
+                if authorative {
+                    if input.ability_trigger && thing.ability_cooldown <= 0.0 {
+                        thing.ability_cooldown = 0.25;
+                        let dir = input.ability_target - thing.pos;
+                        if dir.length() > 0.0 {
+                            let dir = dir.normalize();
+                            let v = dir * 20.0;
+                            let p = Thing::new_projectile(thing.pos + dir, v);
+                            spawn.push(p);
+                        }
                     }
                 }
             }
@@ -40,6 +41,7 @@ pub fn update_things(state:&mut State, dt:f64) {
     let mut remove = Vec::new();
     let mut hits = Vec::new();
 
+    // movement and collision handling
     for (id, thing)  in state.things.iter_mut() {
         thing.ability_cooldown -= dt as f32;
         if thing.ability_cooldown < 0.0 {
@@ -58,14 +60,37 @@ pub fn update_things(state:&mut State, dt:f64) {
         }
     }
 
-    for id in remove.drain(..) {
-        state.things.remove(id);
-    }
-
+    // hit / damage handling
     for id in hits.drain(..) {
         if let Some(thing) = state.things.get_mut(id) {
-            thing.health -= 1.0;
+            if thing.health > 0.0 {
+                thing.health -= 1.0;
+
+                if thing.health <= 0.0 {
+                    // thing diead.
+                    if thing.is_player {
+                        thing.solid = Solid::None;
+                        thing.respawn_timer = 3.0;
+                    }
+                }
+            }
         }
+    }
+
+    // player respawn handling
+    for (id, thing) in state.things.iter_mut() {
+        if thing.is_player && thing.is_alive() == false {
+           thing.respawn_timer -= dt as f32;
+           if thing.respawn_timer <= 0.0 {
+               thing.respawn_timer = 0.0;
+               thing.respawn(rand::random::<f32>() * state.width, rand::random::<f32>() * state.height);
+           }
+        }
+    }
+    
+    // removal of entities who needs removed
+    for id in remove.drain(..) {
+        state.things.remove(id);
     }
 }
 
@@ -115,24 +140,29 @@ pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State
 fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) -> CollisionResult {
     let (thing_id, thing1) = thing;
     let mut result = CollisionResult::None;
-    for (thing_id2, thing2) in state.things.iter() {
-        if thing_id != thing_id2 {
-            let dir = new_pos - thing1.pos;
-            let n = thing1.pos - thing2.pos;
-            let dir = dir.normalize();
-            let n = n.normalize();
 
-            if dir.dot(n) < 0.0 {
-                let hit = collision_test_circle_circle(Circle {
-                    c:new_pos,
-                    r:thing1.radius
-                }, Circle {
-                    c:thing2.pos,
-                    r:thing2.radius
-                });
-                if hit {
-                    result = CollisionResult::Thing(thing_id2);
-                    break;
+    if thing1.solid != Solid::None {
+        for (thing_id2, thing2) in state.things.iter() {
+            if thing2.solid == Solid::Solid {
+                if thing_id != thing_id2 {
+                    let dir = new_pos - thing1.pos;
+                    let n = thing1.pos - thing2.pos;
+                    let dir = dir.normalize();
+                    let n = n.normalize();
+
+                    if dir.dot(n) < 0.0 {
+                        let hit = collision_test_circle_circle(Circle {
+                            c:new_pos,
+                            r:thing1.radius
+                        }, Circle {
+                            c:thing2.pos,
+                            r:thing2.radius
+                        });
+                        if hit {
+                            result = CollisionResult::Thing(thing_id2);
+                            break;
+                        }
+                    }
                 }
             }
         }

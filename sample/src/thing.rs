@@ -3,6 +3,24 @@ use serde::{Deserialize, Serialize};
 
 use crate::State;
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum Solid {
+    /// not solid, does not influence its own movement nor others
+    None,
+
+    /// solid, but influences only its own movement, not others, i.e. others ignore it
+    Partial,
+
+    /// solid, all movement is influenced by this
+    Solid
+}
+
+impl Default for Solid {
+    fn default() -> Self {
+        Self::Solid
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Thing {
     /// position of the thing
@@ -21,6 +39,8 @@ pub struct Thing {
     /// health of the thing, zero or less equals dead
     pub health:f32,
 
+    pub solid:Solid,
+
     /// cooldown of ability
     /// zero indicates the ability is ready
     pub ability_cooldown:f32,
@@ -35,7 +55,9 @@ pub struct Thing {
     pub name:String,
 
     /// max speed of thing
-    pub speed:f32
+    pub speed:f32,
+
+    pub respawn_timer:f32
 }
 
 
@@ -48,13 +70,23 @@ impl Thing {
             vel:[0.0, 0.0].into(),
             radius:0.5,
             dir:0.0,
-            health:100.0,
+            health:1.0,
             ability_cooldown:0.0,
             name:"".into(),
             is_player:true,
             speed:5.0,
             ..Default::default()
         }
+    }
+
+    pub fn respawn(&mut self, x:f32, y:f32) {
+        self.pos = Vec2::new(x, y);
+        self.solid = Solid::Solid;
+        self.health = 1.0;
+    }
+
+    pub fn is_alive(&self) -> bool {
+        self.health > 0.0
     }
 
     pub fn new_projectile(pos:Vec2, vel:Vec2) -> Self {
@@ -66,6 +98,7 @@ impl Thing {
             health:100.0,
             is_projectile:true,
             speed:10.0,
+            solid:Solid::Partial,
             ..Default::default()
         }
     }

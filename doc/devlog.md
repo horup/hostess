@@ -1,3 +1,4 @@
+- 2021-11-14    30m added respawning
 - 2021-11-13    120m played with command pattern, but decided to revert, implemented rle of state, seems to work ok
 - 2021-11-12    40m worked on introduction of simple bots, worked on shooting hit, added shot actually hit
 - 2021-11-11    70m worked on collision handling, got move thing routine to work, re-added shooting on server
@@ -21,3 +22,4 @@
 - 2021-10-11    90m worked on lobby abstraction, added support for host creation message, worked on host creation
 - 2021-10-10    20m created devlog, started masterserv migration
 - 2021-10-09    30m initival created. 
+

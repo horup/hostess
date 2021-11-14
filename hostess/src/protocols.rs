@@ -132,7 +132,7 @@ pub trait Bincoded : Sized + DeserializeOwned + 'static + Serialize {
                 }
             }
         }
-
+       
         rle
     } 
 
