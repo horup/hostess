@@ -23,7 +23,6 @@ impl Server {
     }
 
     pub fn update(&mut self, context:&mut Context) {
-        
         self.current.timestamp = context.time;
         if self.players.len() < 2 {
             // less than two players and no bots, ensure 10 bots are spawned
@@ -47,6 +46,7 @@ impl Server {
         }
 
         let tick_rate = self.tick_rate() as u8;
+        
         // process inputs from players
         for (_, player) in &mut self.players {
             // if player has no 'thing'
@@ -74,6 +74,7 @@ impl Server {
             bot.tick(&mut self.current, context.delta);
         }
 
+        // do generic update of things, such as moving projectiles
         update_things(&mut self.current, context.delta);
 
         // for each player, transmit state diff
@@ -87,6 +88,7 @@ impl Server {
             player.state = self.current.clone()
         }
 
+        // remember current state
         self.history.remember(self.current.clone());
     }
 }
@@ -164,42 +166,9 @@ impl Server {
         match msg {
             CustomMsg::ClientInput { input } => {
                 if let Some(player) = self.players.get_mut(&client_id) {
-                    /*if player.thing == None {
-                        // player has no thing
-                        let mut thing = Thing::random_new_player(&self.state);
-                        thing.name = player.client_name.clone();
-                        player.thing = Some(self.state.things.insert(thing));
-
-                        // push state update to player
-                        push_custom_to(context, player.client_id, CustomMsg::ServerSnapshotFull {
-                            state:self.state.clone(),
-                            input_timestamp_sec:player.input.timestamp_sec
-                        });
-
-                        // let the player know his thing id
-                        push_custom_to(context, player.client_id, CustomMsg::ServerPlayerThing {
-                            thing_id:player.thing
-                        });
-                    }
-
-                    if let Some(thing_id) = player.thing {
-                        if let Some(thing) = self.state.things.get_mut(thing_id) {
-                            let mut v = input.pos - thing.pos;
-                            if v.length() > thing.max_speed * context.delta as f32 {
-                                v = v.normalize() * thing.max_speed * context.delta as f32; 
-                            }
-
-                            thing.pos += v;
-                            thing.ability_target = input.ability_target;
-                            thing.ability_trigger = input.ability_trigger;
-                        }
-                    }*/
-
-                    // remember last recv input
+                    // remember input for later processing
                     player.inputs.push_back(input);
                 }
-
-
             },
             _ => {}
         }

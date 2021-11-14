@@ -87,6 +87,18 @@ pub fn update_things(state:&mut State, dt:f64) {
            }
         }
     }
+
+    // ensuring things stay within bounds
+    // and remove projectiles that venture out of bounds
+    let w = state.width;
+    let h = state.height;
+    for (id, thing) in state.things.iter_mut() {
+        let pos = thing.pos;
+        thing.pos = pos.clamp(Vec2::new(0.0, 0.0), Vec2::new(w,h));
+        if thing.pos != pos && thing.is_projectile {
+            remove.push(id);
+        }
+    }
     
     // removal of entities who needs removed
     for id in remove.drain(..) {
