@@ -57,7 +57,10 @@ pub struct Thing {
     /// max speed of thing
     pub speed:f32,
 
-    pub respawn_timer:f32
+    pub respawn_timer:f32,
+
+    #[serde(skip)]
+    pub no_interpolate:bool
 }
 
 
@@ -111,7 +114,11 @@ impl Thing {
     pub fn lerp_pos(&self, prev:&Thing, alpha:f32) -> Vec2 {
         let pos = self.pos;
         let v = pos - prev.pos;
-        let v = v * alpha;
-        pos + v
+        if v.length() < 2.0 {
+            let v = v * alpha;
+            return pos + v;
+        }
+
+        return pos;
     }
 }

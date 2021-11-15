@@ -5,7 +5,6 @@ use glam::Vec2;
 use crate::{Input, Player, Solid, State, Thing};
 
 pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
-    let mut spawn = Vec::new();
     // how to avoid clone?
     let cloned = state.clone();
     if let Some(thing_id) = input.thing_id {
@@ -13,24 +12,8 @@ pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
             if thing.health > 0.0 {
                 let new_pos = thing.pos + input.movement * thing.speed as f32;
                 move_thing_y_then_x((thing_id, thing), new_pos, &cloned);
-                if authorative {
-                    if input.ability_trigger && thing.ability_cooldown <= 0.0 {
-                        thing.ability_cooldown = 0.25;
-                        let dir = input.ability_target - thing.pos;
-                        if dir.length() > 0.0 {
-                            let dir = dir.normalize();
-                            let v = dir * 20.0;
-                            let p = Thing::new_projectile(thing.pos + dir, v);
-                            spawn.push(p);
-                        }
-                    }
-                }
             }
         }
-    }
-
-    for thing in spawn.drain(..) {
-        state.things.insert(thing);
     }
 }
 

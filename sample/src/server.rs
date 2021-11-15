@@ -1,4 +1,5 @@
 use std::{collections::{HashMap, VecDeque}, ops::IndexMut, time::Instant};
+use glam::Vec2;
 use hostess::{Bincoded, log::info, game_server::{Context, GameServer, GameServerMsg, HostMsg}, uuid::Uuid};
 use sample_lib::{CustomMsg, Input, Player, State, StateHistory, Thing, apply_input, update_things};
 use serde::{Serialize, Deserialize};
@@ -46,6 +47,9 @@ impl Server {
         }
 
         let tick_rate = self.tick_rate() as u8;
+
+        // do generic update of things, such as moving projectiles
+        update_things(&mut self.current, context.delta);
         
         // process inputs from players
         for (_, player) in &mut self.players {
@@ -63,9 +67,41 @@ impl Server {
             }
 
             // apply input from players
+            let mut trigger = false;
+            let mut ability_target = Vec2::new(0.0, 0.0);
             for input in player.inputs.drain(..) {
                 player.latest_input_timestamp_sec = input.timestamp_sec;
+                ability_target = input.ability_target;
+                if input.ability_trigger {
+                    trigger = true;
+                }
+
                 apply_input(&mut self.current, &input, true);
+            }
+
+            // spawn projectiles based upon trigger
+            let mut spawn = Vec::new();
+            if let Some(thing_id) = player.thing {
+                if let Some(thing) = self.current.things.get_mut(thing_id) {
+                    if trigger && thing.ability_cooldown <= 0.0 {
+                        thing.ability_cooldown = 0.25;
+                        let dir = ability_target - thing.pos;
+                        if dir.length() > 0.0 {
+                            let dir = dir.normalize();
+                            let mut v = dir * 20.0;
+                            if let Some(old) = self.history.prev().things.get(thing_id) {
+                                info!("{:?}", old.pos);
+                                v += thing.pos - old.pos;
+                            }
+                            let p = Thing::new_projectile(thing.pos, v);
+                            spawn.push(p);
+                        }
+                    }
+                }
+            }
+
+            for thing in spawn.drain(..) {
+                self.current.things.insert(thing);
             }
         }
 
@@ -74,8 +110,7 @@ impl Server {
             bot.tick(&mut self.current, context.delta);
         }
 
-        // do generic update of things, such as moving projectiles
-        update_things(&mut self.current, context.delta);
+     
 
         // for each player, transmit state diff
         for (client_id, player) in &mut self.players {

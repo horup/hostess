@@ -124,11 +124,9 @@ impl App {
         }
 
         for (id, thing) in &self.current.things {
-            if let Some(my_thing) = self.input.thing_id {
-                if my_thing == id {
-                    self.draw_thing(thing, thing.pos);
-                    continue;
-                }
+            if thing.no_interpolate {
+                self.draw_thing(thing, thing.pos);
+                continue;
             }
 
             if let Some(prev) = self.history.prev().things.get(id) {
@@ -136,11 +134,9 @@ impl App {
             }
         }
         for (id, thing) in &self.current.things {
-            if let Some(my_thing) = self.input.thing_id {
-                if my_thing == id {
-                    self.draw_thing_name(thing, thing.pos);
-                    continue;
-                }
+            if thing.no_interpolate {
+                self.draw_thing_name(thing, thing.pos);
+                continue;
             }
             
             if let Some(prev) = self.history.prev().things.get(id) {
@@ -322,6 +318,13 @@ impl App {
         self.send_custom(CustomMsg::ClientInput {
             input:self.input.clone()
         });
+
+        // ensure player is not interpolated
+        if let Some(thing_id) = self.input.thing_id {
+            if let Some(thing) = self.current.things.get_mut(thing_id) {
+                thing.no_interpolate = true;
+            }
+        }
 
         // draw some stuff
         self.draw();

@@ -1,4 +1,4 @@
-- 2021-11-15    20m worked on position lerp
+- 2021-11-15    60m worked on position lerp, worked on spawnign projectiles - not awesome but OK
 - 2021-11-14    60m added respawning, worked on lerp by transmitting tickrate to client, re-added out of bounds check
 - 2021-11-13    120m played with command pattern, but decided to revert, implemented rle of state, seems to work ok
 - 2021-11-12    40m worked on introduction of simple bots, worked on shooting hit, added shot actually hit
