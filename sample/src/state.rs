@@ -31,14 +31,14 @@ impl State {
 
 pub struct StateHistory {
     history:VecDeque<State>,
-    empty_state:State
+    default_state:State
 }
 
 impl StateHistory {
     pub fn new() -> Self {
         StateHistory {
             history:VecDeque::with_capacity(10),
-            empty_state:State::new()
+            default_state:State::new()
         }
     }
 
@@ -53,12 +53,20 @@ impl StateHistory {
     pub fn len(&self) -> usize {
         return self.history.len();
     }
-    pub fn last(&self) -> &State {
-        if let Some(last) = self.history.back() {
-            return last;
+    pub fn current(&self) -> &State {
+        if let Some(newest) = self.history.back() {
+            return newest;
         }
             
-        &self.empty_state
+        &self.default_state
+    }
+
+    pub fn prev(&self) -> &State {
+        if let Some(s) = self.history.get(self.len() - 2) {
+            return s;
+        }
+
+        &self.default_state
     }
 
     pub fn clear(&mut self) {

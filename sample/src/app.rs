@@ -23,6 +23,7 @@ pub struct App {
     updates:u64,
     server_tick_rate:u8,
     since_last_snapshot_sec:f32,
+    lerp_alpha:f32,
     pub server_messages:Vec<ServerMsg>,
     pub client_messages:Vec<ClientMsg>
 }
@@ -72,7 +73,8 @@ impl App {
             updates:0,
             history:StateHistory::new(),
             server_tick_rate:64,
-            since_last_snapshot_sec:0.0
+            since_last_snapshot_sec:0.0,
+            lerp_alpha:0.0
         }
     }
 
@@ -121,11 +123,29 @@ impl App {
             return;
         }
 
-        for (_, thing) in &self.current.things {
-            self.draw_thing(thing, thing.pos);
+        for (id, thing) in &self.current.things {
+            if let Some(my_thing) = self.input.thing_id {
+                if my_thing == id {
+                    self.draw_thing(thing, thing.pos);
+                    continue;
+                }
+            }
+
+            if let Some(prev) = self.history.prev().things.get(id) {
+                self.draw_thing(thing, thing.lerp_pos(prev, self.lerp_alpha));
+            }
         }
-        for (_, thing) in &self.current.things {
-            self.draw_thing_name(thing, thing.pos);
+        for (id, thing) in &self.current.things {
+            if let Some(my_thing) = self.input.thing_id {
+                if my_thing == id {
+                    self.draw_thing_name(thing, thing.pos);
+                    continue;
+                }
+            }
+            
+            if let Some(prev) = self.history.prev().things.get(id) {
+                self.draw_thing_name(thing, thing.lerp_pos(prev, self.lerp_alpha));
+            }
         }
     }
 
@@ -200,7 +220,7 @@ impl App {
                 delta,
                 input_timestamp_sec
             } => {
-                let state = State::from_delta_bincode(self.history.last(), &delta);
+                let state = State::from_delta_bincode(self.history.current(), &delta);
                 let state = state.expect("Failed to deserialize from delta!");
                 self.recv_custom(CustomMsg::ServerSnapshotFull {
                         input_timestamp_sec,
@@ -275,7 +295,9 @@ impl App {
         }
 
         // calculate lerp which is used to do smooth linear interpolation between things
-        let lerp_alpha = self.since_last_snapshot_sec / (1.0 / self.server_tick_rate as f32);
+        self.lerp_alpha = self.since_last_snapshot_sec / (1.0 / self.server_tick_rate as f32);
+
+      
 
         // ping server every 60 update
         if self.updates % 60 == 0 {

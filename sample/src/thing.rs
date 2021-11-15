@@ -107,4 +107,11 @@ impl Thing {
         let thing = Thing::new_player(rand::random::<f32>() * state.width, rand::random::<f32>() * state.height);
         thing
     }
+
+    pub fn lerp_pos(&self, prev:&Thing, alpha:f32) -> Vec2 {
+        let pos = self.pos;
+        let v = pos - prev.pos;
+        let v = v * alpha;
+        pos + v
+    }
 }
