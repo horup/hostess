@@ -1,4 +1,4 @@
-- 2021-11-16    improved bots a bit,  
+- 2021-11-16    30m improved bots a bit,  
 - 2021-11-15    60m worked on position lerp, worked on spawnign projectiles - not awesome but OK
 - 2021-11-14    60m added respawning, worked on lerp by transmitting tickrate to client, re-added out of bounds check
 - 2021-11-13    120m played with command pattern, but decided to revert, implemented rle of state, seems to work ok
