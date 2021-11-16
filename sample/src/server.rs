@@ -32,9 +32,7 @@ impl Server {
                     let mut thing = Thing::random_new_player(&self.current);
                     thing.name = "bot".into();
                     let index = self.current.things.insert(thing);
-                    let bot = Bot {
-                        thing_id:index
-                    };
+                    let bot = Bot::new(index);
     
                     self.bots.push(bot);
                 }
@@ -77,31 +75,31 @@ impl Server {
                 }
 
                 apply_input(&mut self.current, &input, true);
-            }
 
-            // spawn projectiles based upon trigger
-            let mut spawn = Vec::new();
-            if let Some(thing_id) = player.thing {
-                if let Some(thing) = self.current.things.get_mut(thing_id) {
-                    if trigger && thing.ability_cooldown <= 0.0 {
-                        thing.ability_cooldown = 0.25;
-                        let dir = ability_target - thing.pos;
-                        if dir.length() > 0.0 {
-                            let dir = dir.normalize();
-                            let mut v = dir * 20.0;
-                            if let Some(old) = self.history.prev().things.get(thing_id) {
-                                info!("{:?}", old.pos);
-                                v += thing.pos - old.pos;
+                 // spawn projectiles based upon trigger
+               /* */ let mut spawn = Vec::new();
+                if let Some(thing_id) = player.thing {
+                    if let Some(thing) = self.current.things.get_mut(thing_id) {
+                        if trigger && thing.ability_cooldown <= 0.0 {
+                            thing.ability_cooldown = 0.25;
+                            let dir = ability_target - thing.pos;
+                            if dir.length() > 0.0 {
+                                let dir = dir.normalize();
+                                let mut v = dir * 20.0;
+                                if let Some(old) = self.history.prev().things.get(thing_id) {
+                                    info!("{:?}", old.pos);
+                                    v += thing.pos - old.pos;
+                                }
+                                let p = Thing::new_projectile(thing.pos, v);
+                                spawn.push(p);
                             }
-                            let p = Thing::new_projectile(thing.pos, v);
-                            spawn.push(p);
                         }
                     }
                 }
-            }
-
-            for thing in spawn.drain(..) {
-                self.current.things.insert(thing);
+                
+                for thing in spawn.drain(..) {
+                    self.current.things.insert(thing);
+                }
             }
         }
 
