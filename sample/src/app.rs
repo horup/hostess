@@ -1,6 +1,7 @@
 
 use std::collections::VecDeque;
 
+use generational_arena::Arena;
 use glam::Vec2;
 use hostess::{Bincoded, ClientMsg, ServerMsg, log::info, uuid::Uuid};
 use crate::{CustomMsg, Input, State, StateHistory, Thing, apply_input, get_item, performance_now_ms, player, set_item, update_things};
@@ -24,6 +25,7 @@ pub struct App {
     server_tick_rate:u8,
     since_last_snapshot_sec:f32,
     lerp_alpha:f32,
+    effects:Arena<Effect>,
     pub server_messages:Vec<ServerMsg>,
     pub client_messages:Vec<ClientMsg>
 }
@@ -52,6 +54,15 @@ enum AppState {
     InGame
 }
 
+#[derive(Clone)]
+struct Effect {
+    pub pos:Vec2,
+    pub time:f32,
+    pub vel:Vec2,
+    pub radius:f32,
+}
+
+
 
 impl App {
     pub fn new() -> Self {
@@ -74,7 +85,8 @@ impl App {
             history:StateHistory::new(),
             server_tick_rate:64,
             since_last_snapshot_sec:0.0,
-            lerp_alpha:0.0
+            lerp_alpha:0.0,
+            effects:Arena::new()
         }
     }
 
@@ -98,6 +110,10 @@ impl App {
         self.draw_ui_gameui();
         self.draw_ui_debug(grid_size);
         self.draw_ui_centercontent(cx, cy);
+    }
+
+    fn draw_effect(&self, effect:&Effect) {
+        self.canvas.draw_circle(effect.pos.x as f64, effect.pos.y as f64, effect.radius as f64);
     }
 
     fn draw_thing(&self, thing:&Thing, pos:Vec2) {
@@ -149,6 +165,10 @@ impl App {
             if let Some(prev) = self.history.prev().things.get(id) {
                 self.draw_thing_name(thing, thing.lerp_pos(prev, self.lerp_alpha));
             }
+        }
+
+        for (id, effect) in self.effects.iter() {
+            self.draw_effect(effect);
         }
     }
 
@@ -339,6 +359,28 @@ impl App {
         // process events
         for e in self.current.events.drain(..) {
             info!("{:?}", e);
+        }
+
+
+        let mut clean = Vec::new();
+        // update effects
+        for (id, effect) in self.effects.iter_mut() {
+            effect.time -= dt as f32;
+            if effect.time < 0.0 {
+                clean.push(id);
+            }
+        }
+        clean.drain(..).for_each(|id| {self.effects.remove(id);});
+        
+        for (id, thing) in self.current.things.iter() {
+            if let Some(projectile) = thing.as_projectile() {
+                self.effects.insert(Effect {
+                    pos: thing.pos,
+                    time: 1.0,
+                    vel: Vec2::new(0.0, 0.0),
+                    radius: thing.radius,
+                });
+            }
         }
 
         // draw some stuff
