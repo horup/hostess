@@ -103,12 +103,23 @@ impl App {
     fn draw_thing(&self, thing:&Thing, pos:Vec2) {
         let x = pos.x as f64;
         let y = pos.y as f64;
+        if let Some(player) = thing.as_player() {
+            if player.health <= 0.0 {
+                return;
+            }
+        } 
+        
         self.canvas.draw_circle(x, y, thing.radius as f64);
     }
 
     fn draw_thing_name(&self, thing:&Thing, pos:Vec2) {
         let x = pos.x as f64;
         let y = pos.y as f64;
+        if let Some(player) = thing.as_player() {
+            if player.health <= 0.0 {
+                return;
+            }
+        } 
         if thing.name.len() > 0 {
             self.canvas.fill_text(&thing.name, x, y - 1.0);
         }
@@ -294,8 +305,6 @@ impl App {
         // calculate lerp which is used to do smooth linear interpolation between things
         self.lerp_alpha = self.since_last_snapshot_sec / (1.0 / self.server_tick_rate as f32);
 
-      
-
         // ping server every 60 update
         if self.updates % 60 == 0 {
             self.send(ClientMsg::Ping {
@@ -325,6 +334,11 @@ impl App {
             if let Some(thing) = self.current.things.get_mut(thing_id) {
                 thing.no_interpolate = true;
             }
+        }
+
+        // process events
+        for e in self.current.events.drain(..) {
+            info!("{:?}", e);
         }
 
         // draw some stuff

@@ -8,9 +8,18 @@ use serde::{Deserialize, Serialize};
 use crate::Thing;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum Event {
+    PlayerDied {
+        thing_id:Index,
+        pos:Vec2
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
     pub timestamp:f64,
     pub things: Arena<Thing>,
+    pub events:Vec<Event>,
     pub width: f32,
     pub height: f32,
 }
@@ -25,6 +34,7 @@ impl State {
             things: Arena::new(),
             width: 40.0,
             height: 30.0,
+            events:Vec::new()
         }
     }
 }

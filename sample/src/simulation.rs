@@ -3,7 +3,7 @@ use generational_arena::{Arena, Index};
 use glam::Vec2;
 use hostess::log::info;
 
-use crate::{Input, Player, Solid, State, Thing};
+use crate::{Event, Input, Player, Solid, State, Thing};
 
 pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
     // how to avoid clone?
@@ -60,6 +60,11 @@ pub fn update_things(state:&mut State, dt:f64) {
                     if player.health <= 0.0 {
                         player.respawn_timer = 3.0;
                         thing.solid = Solid::None;
+
+                        state.events.push(Event::PlayerDied {
+                            thing_id:id,
+                            pos:thing.pos
+                        });
                     }
                 }
             }
@@ -75,6 +80,7 @@ pub fn update_things(state:&mut State, dt:f64) {
                     player.respawn_timer = 0.0;
                     thing.respawn(rand::random::<f32>() * state.width, rand::random::<f32>() * state.height);
                 }
+
             }
         }
     }

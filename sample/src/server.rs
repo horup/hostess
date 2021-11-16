@@ -24,6 +24,8 @@ impl Server {
     }
 
     pub fn update(&mut self, context:&mut Context) {
+        // clear events 
+        self.current.events.clear();
         self.current.timestamp = context.time;
         if self.players.len() < 2 {
             // less than two players and no bots, ensure 10 bots are spawned
@@ -80,7 +82,7 @@ impl Server {
                 if let Some(thing_id) = player.thing {
                     if let Some(thing) = self.current.things.get_mut(thing_id) {
                         if let Some(player) = thing.as_player_mut() {
-                            if trigger && player.ability_cooldown <= 0.0 {
+                            if player.health > 0.0 && trigger && player.ability_cooldown <= 0.0 {
                                 player.ability_cooldown = 0.25;
                                 let dir = ability_target - thing.pos;
                                 if dir.length() > 0.0 {
@@ -108,8 +110,6 @@ impl Server {
         for bot in self.bots.iter_mut() {
             bot.tick(&mut self.current, context.delta);
         }
-
-     
 
         // for each player, transmit state diff
         for (client_id, player) in &mut self.players {
