@@ -1,6 +1,7 @@
 
 use generational_arena::{Arena, Index};
 use glam::Vec2;
+use hostess::log::info;
 
 use crate::{Input, Player, Solid, State, Thing};
 
@@ -9,9 +10,12 @@ pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
     let cloned = state.clone();
     if let Some(thing_id) = input.thing_id {
         if let Some(thing) = state.things.get_mut(thing_id) {
-            if thing.health > 0.0 {
-                let new_pos = thing.pos + input.movement * thing.speed as f32;
-                move_thing_y_then_x((thing_id, thing), new_pos, &cloned);
+            let mut new_pos = thing.pos;
+            if let Some(player) = thing.as_player_mut() {
+                if player.health > 0.0 {
+                    new_pos = input.movement * player.speed as f32 + thing.pos;
+                    move_thing_y_then_x((thing_id, thing), new_pos, &cloned);
+                }
             }
         }
     }
@@ -26,34 +30,36 @@ pub fn update_things(state:&mut State, dt:f64) {
 
     // movement and collision handling
     for (id, thing)  in state.things.iter_mut() {
-        thing.ability_cooldown -= dt as f32;
-        if thing.ability_cooldown < 0.0 {
-            thing.ability_cooldown = 0.0;
+        if let Some(player) = thing.as_player_mut() {
+            player.ability_cooldown -= dt as f32;
+            if player.ability_cooldown < 0.0 {
+                player.ability_cooldown = 0.0;
+            }
         }
 
-        if thing.vel.length_squared() > 0.0 {
-            let new_pos = thing.pos + thing.vel * dt as f32;
-            let res = move_thing_y_then_x((id, thing), new_pos, &cloned);
-            if let CollisionResult::Thing(hit_id) = res {
-                if thing.is_projectile {
+        if let Some(projectile) = thing.as_projectile_mut() {
+            if projectile.vel.length_squared() > 0.0 {
+                let new_pos = projectile.vel * dt as f32 + thing.pos;
+                let res = move_thing_y_then_x((id, thing), new_pos, &cloned);
+                if let CollisionResult::Thing(hit_id) = res {
                     remove.push(id);
                     hits.push(hit_id);
                 }
             }
         }
+       
     }
 
     // hit / damage handling
     for id in hits.drain(..) {
         if let Some(thing) = state.things.get_mut(id) {
-            if thing.health > 0.0 {
-                thing.health -= 1.0;
-
-                if thing.health <= 0.0 {
-                    // thing diead.
-                    if thing.is_player {
+            if let Some(player) = thing.as_player_mut() {
+                if player.health > 0.0 {
+                    player.health -= 1.0;
+    
+                    if player.health <= 0.0 {
+                        player.respawn_timer = 3.0;
                         thing.solid = Solid::None;
-                        thing.respawn_timer = 3.0;
                     }
                 }
             }
@@ -62,12 +68,14 @@ pub fn update_things(state:&mut State, dt:f64) {
 
     // player respawn handling
     for (id, thing) in state.things.iter_mut() {
-        if thing.is_player && thing.is_alive() == false {
-           thing.respawn_timer -= dt as f32;
-           if thing.respawn_timer <= 0.0 {
-               thing.respawn_timer = 0.0;
-               thing.respawn(rand::random::<f32>() * state.width, rand::random::<f32>() * state.height);
-           }
+        if let Some(player) = thing.as_player_mut() {
+            if player.health <= 0.0 {
+                player.respawn_timer -= dt as f32;
+                if player.respawn_timer <= 0.0 {
+                    player.respawn_timer = 0.0;
+                    thing.respawn(rand::random::<f32>() * state.width, rand::random::<f32>() * state.height);
+                }
+            }
         }
     }
 
@@ -78,8 +86,12 @@ pub fn update_things(state:&mut State, dt:f64) {
     for (id, thing) in state.things.iter_mut() {
         let pos = thing.pos;
         thing.pos = pos.clamp(Vec2::new(0.0, 0.0), Vec2::new(w,h));
-        if thing.pos != pos && thing.is_projectile {
-            remove.push(id);
+        
+        if let Some(projectile) = thing.as_projectile_mut() {
+            if pos != thing.pos {
+                remove.push(id);
+
+            }
         }
     }
     

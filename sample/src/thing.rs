@@ -22,42 +22,45 @@ impl Default for Solid {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct PlayerThing {
+    pub health:f32,
+    pub respawn_timer:f32,
+    pub ability_cooldown:f32,
+    pub speed:f32
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ProjectileThing {
+    pub vel:Vec2
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum Specialization {
+    None,
+    Player(PlayerThing),
+    Projectile(ProjectileThing)
+}
+
+impl Default for Specialization {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Thing {
     /// position of the thing
     pub pos:Vec2,
 
-    /// change of position
-    pub vel:Vec2,
-
     /// the radius of the thing
     pub radius:f32,
 
-    /// direction where the thing points
-    /// not neccesarily equal to the velocity
-    pub dir:f32,
-
-    /// health of the thing, zero or less equals dead
-    pub health:f32,
-
     pub solid:Solid,
-
-    /// cooldown of ability
-    /// zero indicates the ability is ready
-    pub ability_cooldown:f32,
-
-    /// true if this is a player
-    pub is_player:bool,
-
-    /// true if this is a projectile
-    pub is_projectile:bool,
 
     /// name of the thing
     pub name:String,
 
-    /// max speed of thing
-    pub speed:f32,
-
-    pub respawn_timer:f32,
+    pub specialization:Specialization,
 
     #[serde(skip)]
     pub no_interpolate:bool
@@ -70,38 +73,61 @@ impl Thing {
     pub fn new_player(x:f32, y:f32) -> Self {
         Self {
             pos:[x, y].into(),
-            vel:[0.0, 0.0].into(),
             radius:0.5,
-            dir:0.0,
-            health:1.0,
-            ability_cooldown:0.0,
-            name:"".into(),
-            is_player:true,
-            speed:5.0,
+            specialization:Specialization::Player(PlayerThing {
+                health:1.0,
+                speed:5.0,
+                ..Default::default()
+            }),
             ..Default::default()
         }
+    }
+
+    pub fn as_player_mut(&mut self) -> Option<&mut PlayerThing> {
+        if let Specialization::Player(player) = &mut self.specialization {
+            return Some(player);
+        }
+        None
+    }
+
+    pub fn as_player(&self) -> Option<&PlayerThing> {
+        if let Specialization::Player(player) = &self.specialization {
+            return Some(player);
+        }
+        None
+    }
+
+    pub fn as_projectile_mut(&mut self) -> Option<&mut ProjectileThing> {
+        if let Specialization::Projectile(projectile) = &mut self.specialization {
+            return Some(projectile);
+        }
+        None
+    }
+
+    pub fn as_projectile(&self) -> Option<&ProjectileThing> {
+        if let Specialization::Projectile(projectile) = &self.specialization {
+            return Some(projectile);
+        }
+        None
     }
 
     pub fn respawn(&mut self, x:f32, y:f32) {
         self.pos = Vec2::new(x, y);
         self.solid = Solid::Solid;
-        self.health = 1.0;
-    }
-
-    pub fn is_alive(&self) -> bool {
-        self.health > 0.0
+        if let Some(player) = self.as_player_mut() {
+            player.health = 1.0;
+            player.respawn_timer = 0.0;
+        }
     }
 
     pub fn new_projectile(pos:Vec2, vel:Vec2) -> Self {
         Self {
             pos,
-            vel,
             radius:0.25,
-            dir:0.0,
-            health:100.0,
-            is_projectile:true,
-            speed:10.0,
             solid:Solid::Partial,
+            specialization:Specialization::Projectile(ProjectileThing {
+                vel
+            }),
             ..Default::default()
         }
     }

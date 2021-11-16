@@ -101,20 +101,16 @@ impl App {
     }
 
     fn draw_thing(&self, thing:&Thing, pos:Vec2) {
-        if thing.is_alive() == true {
-            let x = pos.x as f64;
-            let y = pos.y as f64;
-            self.canvas.draw_circle(x, y, thing.radius as f64);
-        }
+        let x = pos.x as f64;
+        let y = pos.y as f64;
+        self.canvas.draw_circle(x, y, thing.radius as f64);
     }
 
     fn draw_thing_name(&self, thing:&Thing, pos:Vec2) {
-        if thing.is_alive() {
-            let x = pos.x as f64;
-            let y = pos.y as f64;
-            if thing.name.len() > 0 {
-                self.canvas.fill_text(&thing.name, x, y - 1.0);
-            }
+        let x = pos.x as f64;
+        let y = pos.y as f64;
+        if thing.name.len() > 0 {
+            self.canvas.fill_text(&thing.name, x, y - 1.0);
         }
     }
 
@@ -154,7 +150,9 @@ impl App {
 
         if let Some(thing_id) = self.input.thing_id {
             if let Some(thing) = self.current.things.get(thing_id) {
-                self.canvas.fill_text(format!("{:0.00}%", thing.health).as_str(), 0.0, 0.5);
+                if let Some(player) = thing.as_player() {
+                    self.canvas.fill_text(format!("{:0.00}%", player.health).as_str(), 0.0, 0.5);
+                }
             }
         }
 
@@ -175,9 +173,12 @@ impl App {
             AppState::InGame {  } => {
                 if let Some(thing_id) = self.input.thing_id {
                     if let Some(thing) = self.current.things.get(thing_id) {
-                        if thing.is_alive() == false {
-                            self.canvas.fill_text(&format!("You are dead! Respawning... {:0.00}", thing.respawn_timer), cx, cy);
+                        if let Some(player) = thing.as_player() {
+                            if player.health <= 0.0 {
+                                self.canvas.fill_text(&format!("You are dead! Respawning... {:0.00}", player.respawn_timer), cx, cy);
+                            }
                         }
+                       
                     }
                 }
             },

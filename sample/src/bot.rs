@@ -29,12 +29,15 @@ impl Bot {
         // how to avoid clone?
         let cloned = state.clone();
         if let Some(thing) = state.things.get_mut(self.thing_id) {
-            if thing.health > 0.0 {
-                let v = self.dir;
-                let v = v * thing.speed * delta as f32;
-                let new_pos = thing.pos + v;
-                move_thing_y_then_x((self.thing_id, thing), new_pos, &cloned);
+            if let Some(player) = thing.as_player_mut() {
+                if player.health > 0.0 {
+                    let v = self.dir;
+                    let v = v * player.speed * delta as f32;
+                    let new_pos = thing.pos + v;
+                    move_thing_y_then_x((self.thing_id, thing), new_pos, &cloned);
+                }
             }
+           
         }
 
         self.think -= delta;
