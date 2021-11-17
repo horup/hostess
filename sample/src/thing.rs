@@ -27,7 +27,9 @@ pub struct PlayerThing {
     pub health:f32,
     pub respawn_timer:f32,
     pub ability_cooldown:f32,
-    pub speed:f32
+    pub speed:f32,
+    pub deaths:i32,
+    pub kills:i32
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

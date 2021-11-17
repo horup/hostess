@@ -37,13 +37,13 @@ pub fn update_things(state:&mut State, dt:f64) {
         }
 
         if let Some(projectile) = thing.as_projectile_mut() {
-            let ignore = Some(projectile.owner);
+            let owner = projectile.owner;
             if projectile.vel.length_squared() > 0.0 {
                 let new_pos = projectile.vel * dt as f32 + thing.pos;
-                let res = move_thing_y_then_x((id, thing), new_pos, &cloned, ignore);
-                if let CollisionResult::Thing(hit_id) = res {
+                let res = move_thing_y_then_x((id, thing), new_pos, &cloned, Some(owner));
+                if let CollisionResult::Thing(target) = res {
                     remove.push(id);
-                    hits.push(hit_id);
+                    hits.push((owner, target));
                 }
             }
         }
@@ -51,20 +51,27 @@ pub fn update_things(state:&mut State, dt:f64) {
     }
 
     // hit / damage handling
-    for id in hits.drain(..) {
-        if let Some(thing) = state.things.get_mut(id) {
+    for (owner, target) in hits.drain(..) {
+        if let Some(thing) = state.things.get_mut(target) {
             if let Some(player) = thing.as_player_mut() {
                 if player.health > 0.0 {
                     player.health -= 1.0;
     
                     if player.health <= 0.0 {
                         player.respawn_timer = 3.0;
+                        player.deaths += 1;
                         thing.solid = Solid::None;
 
                         state.events.push(Event::PlayerDied {
-                            thing_id:id,
+                            thing_id:target,
                             pos:thing.pos
                         });
+
+                        if let Some(thing) = state.things.get_mut(owner) {
+                            if let Some(player) = thing.as_player_mut() {
+                                player.kills += 1;
+                            }
+                        }
                     }
                 }
             }

@@ -247,16 +247,38 @@ impl App {
             self.canvas.set_text_style("center", "middle");
             self.canvas.fill_text("Score", cx as f64, y);
             y += 2.0;
+            let mut scores = Vec::new();
             for (_, thing) in self.current.things.iter() {
                 if let Some(player) = thing.as_player() {
-                    let space = 2.0;
+                    scores.push((thing.name.clone(), player.kills.clone()));
+                    /*let space = 1.0;
                     self.canvas.set_text_style("right", "middle");
                     self.canvas.fill_text(&thing.name, cx as f64 - space, y);
 
+                    self.canvas.set_text_style("right", "middle");
+                    self.canvas.fill_text(format!("{}", player.kills).as_str(), cx + space, y);
+
                     self.canvas.set_text_style("left", "middle");
-                    self.canvas.fill_text("0 kills", cx + space, y);
-                    y += 1.0;
+                    self.canvas.fill_text("kills", cx + space + 0.25, y);
+                    y += 1.0;*/
                 }
+            }
+
+            scores.sort_by(|a, b| {
+                b.1.cmp(&a.1)
+            });
+
+            for (name, kills) in scores {
+                let space = 1.0;
+                self.canvas.set_text_style("right", "middle");
+                self.canvas.fill_text(&name, cx as f64 - space, y);
+
+                self.canvas.set_text_style("right", "middle");
+                self.canvas.fill_text(format!("{}", kills).as_str(), cx + space, y);
+
+                self.canvas.set_text_style("left", "middle");
+                self.canvas.fill_text("kills", cx + space + 0.25, y);
+                y += 1.0;
             }
 
             self.canvas.restore();
