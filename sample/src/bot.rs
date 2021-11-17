@@ -34,7 +34,7 @@ impl Bot {
                     let v = self.dir;
                     let v = v * player.speed * delta as f32;
                     let new_pos = thing.pos + v;
-                    move_thing_y_then_x((self.thing_id, thing), new_pos, &cloned);
+                    move_thing_y_then_x((self.thing_id, thing), new_pos, &cloned, None);
                 }
             }
            

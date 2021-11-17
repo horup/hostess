@@ -92,7 +92,7 @@ impl Server {
                                         info!("{:?}", old.pos);
                                         v += thing.pos - old.pos;
                                     }
-                                    let p = Thing::new_projectile(thing.pos, v);
+                                    let p = Thing::new_projectile(thing.pos, v, thing_id);
                                     spawn.push(p);
                                 }
                             }

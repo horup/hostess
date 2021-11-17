@@ -1,3 +1,4 @@
+use generational_arena::Index;
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
@@ -31,7 +32,8 @@ pub struct PlayerThing {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ProjectileThing {
-    pub vel:Vec2
+    pub vel:Vec2,
+    pub owner:Index
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -120,13 +122,14 @@ impl Thing {
         }
     }
 
-    pub fn new_projectile(pos:Vec2, vel:Vec2) -> Self {
+    pub fn new_projectile(pos:Vec2, vel:Vec2, owner:Index) -> Self {
         Self {
             pos,
             radius:0.25,
             solid:Solid::Partial,
             specialization:Specialization::Projectile(ProjectileThing {
-                vel
+                vel,
+                owner
             }),
             ..Default::default()
         }

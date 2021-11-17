@@ -1,5 +1,5 @@
 
-use std::collections::VecDeque;
+use std::{collections::VecDeque, f32::consts::PI};
 
 use generational_arena::Arena;
 use glam::Vec2;
@@ -54,12 +54,37 @@ enum AppState {
     InGame
 }
 
+/* 
 #[derive(Clone)]
 struct Effect {
     pub pos:Vec2,
     pub time:f32,
     pub vel:Vec2,
     pub radius:f32,
+}
+*/
+struct Smoke {
+    pos:Vec2,
+    time:f32,
+    end_time:f32,
+    vel:Vec2,
+    radius:f32,
+}
+
+impl Smoke {
+    pub fn alpha(&self) -> f32 {
+        let a = self.time / self.end_time;
+        let a = a.clamp(0.0, 1.0);
+        return 1.0 - a;
+    }
+
+    pub fn growth_speed(&self) -> f32 {
+        return 1.0;
+    }
+}
+
+enum Effect {
+    Smoke(Smoke)
 }
 
 
@@ -113,7 +138,14 @@ impl App {
     }
 
     fn draw_effect(&self, effect:&Effect) {
-        self.canvas.draw_circle(effect.pos.x as f64, effect.pos.y as f64, effect.radius as f64);
+        match effect {
+            Effect::Smoke(smoke) => {
+                self.canvas.save();
+                self.canvas.set_stroke_style(format!("rgba(0,0,0,{})", smoke.alpha()).as_str());
+                self.canvas.draw_circle(smoke.pos.x as f64, smoke.pos.y as f64, smoke.radius as f64);
+                self.canvas.restore();
+            },
+        }
     }
 
     fn draw_thing(&self, thing:&Thing, pos:Vec2) {
@@ -358,28 +390,56 @@ impl App {
 
         // process events
         for e in self.current.events.drain(..) {
-            info!("{:?}", e);
+            match e {
+                crate::Event::PlayerDied { 
+                    thing_id, 
+                    pos } => {
+                        // spawn smokes at location
+                        let max = 4;
+                        for i in 0..max {
+                            let a = i as f32 / max as f32;
+                            let a = a * PI * 2.0;
+                            let smoke = Smoke {
+                                pos,
+                                time: 0.0,
+                                end_time: 0.5,
+                                vel: Vec2::new(a.cos(), a.sin()),
+                                radius: 1.0,
+                            };
+
+                            self.effects.insert(Effect::Smoke(smoke));
+                        }
+                    },
+            }
         }
 
 
         let mut clean = Vec::new();
         // update effects
         for (id, effect) in self.effects.iter_mut() {
-            effect.time -= dt as f32;
-            if effect.time < 0.0 {
-                clean.push(id);
+            match effect {
+                Effect::Smoke(smoke) => {
+                    smoke.time += dt as f32;
+                    smoke.pos += smoke.vel * dt as f32;
+                    smoke.radius += dt as f32 * smoke.growth_speed();
+                    if smoke.time > smoke.end_time {
+                        clean.push(id);
+                    }
+                },
             }
+           
         }
         clean.drain(..).for_each(|id| {self.effects.remove(id);});
         
         for (id, thing) in self.current.things.iter() {
-            if let Some(projectile) = thing.as_projectile() {
-                self.effects.insert(Effect {
+            if let Some(_) = thing.as_projectile() {
+                self.effects.insert(Effect::Smoke(Smoke {
                     pos: thing.pos,
-                    time: 1.0,
+                    time:0.0,
+                    end_time:0.5,
                     vel: Vec2::new(0.0, 0.0),
-                    radius: thing.radius,
-                });
+                    radius:0.05
+                }));
             }
         }
 

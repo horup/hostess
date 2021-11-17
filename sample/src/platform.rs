@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 
 use glam::Vec2;
-use wasm_bindgen::{JsCast};
+use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlImageElement, Storage, console::info, window};
 
 
@@ -67,6 +67,14 @@ impl Canvas {
         self.context.clear_rect(0.0, 0.0, self.width() as f64, self.height() as f64);
     }
 
+    pub fn set_fille_style(&self, value:&str) {
+        self.context.set_fill_style(&JsValue::from_str(value));
+    }
+
+    pub fn set_stroke_style(&self, value:&str) {
+        self.context.set_stroke_style(&JsValue::from_str(value));
+    }
+
     pub fn draw_circle(&self, x:f64, y:f64, r:f64) {
         self.context.begin_path();
         let _ = self.context.arc(x, y, r, 0.0, 2.0 * PI);
@@ -84,6 +92,14 @@ impl Canvas {
 
     pub fn fill_text(&self, text:&str, x:f64, y:f64) {
         let _ = self.context.fill_text(text, x, y);
+    }
+
+    pub fn save(&self) {
+        self.context.save();
+    }
+
+    pub fn restore(&self) {
+        self.context.restore();
     }
 
     pub fn set_image_src(&self, img:usize, src:&str) {

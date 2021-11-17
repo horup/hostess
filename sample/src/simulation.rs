@@ -1,7 +1,6 @@
 
 use generational_arena::{Arena, Index};
 use glam::Vec2;
-use hostess::log::info;
 
 use crate::{Event, Input, Player, Solid, State, Thing};
 
@@ -14,7 +13,7 @@ pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
             if let Some(player) = thing.as_player_mut() {
                 if player.health > 0.0 {
                     new_pos = input.movement * player.speed as f32 + thing.pos;
-                    move_thing_y_then_x((thing_id, thing), new_pos, &cloned);
+                    move_thing_y_then_x((thing_id, thing), new_pos, &cloned, None);
                 }
             }
         }
@@ -38,9 +37,10 @@ pub fn update_things(state:&mut State, dt:f64) {
         }
 
         if let Some(projectile) = thing.as_projectile_mut() {
+            let ignore = Some(projectile.owner);
             if projectile.vel.length_squared() > 0.0 {
                 let new_pos = projectile.vel * dt as f32 + thing.pos;
-                let res = move_thing_y_then_x((id, thing), new_pos, &cloned);
+                let res = move_thing_y_then_x((id, thing), new_pos, &cloned, ignore);
                 if let CollisionResult::Thing(hit_id) = res {
                     remove.push(id);
                     hits.push(hit_id);
@@ -134,13 +134,13 @@ pub enum CollisionResult {
 }
 
 /// move the thing while avoiding collisions, first in y then x
-pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) -> CollisionResult {
+pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State, ignore:Option<Index>) -> CollisionResult {
     let (thing_id, thing1) = thing;
     let pos = Vec2::new(thing1.pos.x, new_pos.y);
     
-    let res1 = move_thing_direct((thing_id, thing1), pos, state);
+    let res1 = move_thing_direct((thing_id, thing1), pos, state, ignore);
     let pos = Vec2::new(new_pos.x, thing1.pos.y);
-    let res2 = move_thing_direct((thing_id, thing1), pos, state);
+    let res2 = move_thing_direct((thing_id, thing1), pos, state, ignore);
 
     if res1 != CollisionResult::None {
         return res1;
@@ -150,12 +150,17 @@ pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State
 }
 
 /// move the thing while avoiding collisions
-fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State) -> CollisionResult {
+fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State, ignore:Option<Index>) -> CollisionResult {
     let (thing_id, thing1) = thing;
     let mut result = CollisionResult::None;
 
     if thing1.solid != Solid::None {
         for (thing_id2, thing2) in state.things.iter() {
+            if let Some(ignore) = ignore {
+                if thing_id2 == ignore {
+                    continue;
+                }
+            }
             if thing2.solid == Solid::Solid {
                 if thing_id != thing_id2 {
                     let dir = new_pos - thing1.pos;
