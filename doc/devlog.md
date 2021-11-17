@@ -1,4 +1,4 @@
-- 2021-11-17    110m worked on effects, added preventdefault
+- 2021-11-17    120m worked on effects, added preventdefault, added scoring
 - 2021-11-16    75m improved bots a bit,  refactored things, started working on event system, added simple shooting effect
 - 2021-11-15    60m worked on position lerp, worked on spawnign projectiles - not awesome but OK
 - 2021-11-14    60m added respawning, worked on lerp by transmitting tickrate to client, re-added out of bounds check
