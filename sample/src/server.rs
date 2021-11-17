@@ -89,7 +89,6 @@ impl Server {
                                     let dir = dir.normalize();
                                     let mut v = dir * 20.0;
                                     if let Some(old) = self.history.prev().things.get(thing_id) {
-                                        info!("{:?}", old.pos);
                                         v += thing.pos - old.pos;
                                     }
                                     let p = Thing::new_projectile(thing.pos, v, thing_id);

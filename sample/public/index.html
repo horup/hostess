@@ -82,6 +82,7 @@
     
             document.addEventListener('keydown', e=>{
                 keydown(e.keyCode, e.key);
+                e.preventDefault();
             });
     
             document.addEventListener('keyup', e=>{
