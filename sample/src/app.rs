@@ -156,7 +156,7 @@ impl App {
         let x = pos.x as f64;
         let y = pos.y as f64;
         if let Thing::Player(player) = thing {
-            if player.health <= 0.0 {
+            if !player.is_alive() {
                 return;
             }
         }
@@ -168,7 +168,7 @@ impl App {
         let x = pos.x as f64;
         let y = pos.y as f64;
         if let Thing::Player(player) = thing {
-            if player.health <= 0.0 {
+            if !player.is_alive() {
                 return;
             }
         
@@ -216,7 +216,7 @@ impl App {
         if let Some(thing_id) = self.input.thing_id {
             for (id, thing) in self.current.things.iter() {
                 if let Thing::Player(player) = thing {
-                    if thing_id == id && player.health > 0.0 {
+                    if thing_id == id && player.is_alive() {
                         return true;
                     }
                 }
@@ -236,8 +236,12 @@ impl App {
         if let Some(thing_id) = self.input.thing_id {
             if let Some(thing) = self.current.things.get(thing_id) {
                 if let Thing::Player(player) = thing {
+                    let mut hearts = String::new();
+                    for _ in 0..player.hearts {
+                        hearts += "❤";
+                    }
                     self.canvas
-                        .fill_text(format!("{:0.00}%", player.health).as_str(), 0.0, 0.5);
+                        .fill_text(hearts.as_str(), 0.5, 1.0);
                 }
             }
         }
@@ -256,16 +260,6 @@ impl App {
             for (_, thing) in self.current.things.iter() {
                 if let Thing::Player(player) = thing {
                     scores.push((thing.name().clone(), player.kills.clone()));
-                    /*let space = 1.0;
-                    self.canvas.set_text_style("right", "middle");
-                    self.canvas.fill_text(&thing.name, cx as f64 - space, y);
-
-                    self.canvas.set_text_style("right", "middle");
-                    self.canvas.fill_text(format!("{}", player.kills).as_str(), cx + space, y);
-
-                    self.canvas.set_text_style("left", "middle");
-                    self.canvas.fill_text("kills", cx + space + 0.25, y);
-                    y += 1.0;*/
                 }
             }
 
@@ -312,7 +306,7 @@ impl App {
                 if let Some(thing_id) = self.input.thing_id {
                     if let Some(thing) = self.current.things.get(thing_id) {
                         if let Thing::Player(player) = thing {
-                            if player.health <= 0.0 {
+                            if !player.is_alive() {
                                 self.canvas.fill_text(
                                     &format!(
                                         "You are dead! Respawning... {:0.00}",
@@ -497,6 +491,15 @@ impl App {
                         self.effects.insert(Effect::Smoke(smoke));
                     }
                 }
+                crate::Event::ProjectileHit { pos } => {
+                    self.effects.insert(Effect::Smoke(Smoke {
+                        pos,
+                        time: 0.0,
+                        end_time: 0.25,
+                        vel: Vec2::default(),
+                        radius: 0.25,
+                    }));
+                },
             }
         }
 

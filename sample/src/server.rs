@@ -80,7 +80,7 @@ impl Server {
                 if let Some(thing_id) = player.thing {
                     if let Some(thing) = self.current.things.get_mut(thing_id) {
                         if let Thing::Player(player) = thing {
-                            if player.health > 0.0 && trigger && player.ability_cooldown <= 0.0 {
+                            if player.is_alive() && trigger && player.ability_cooldown <= 0.0 {
                                 player.ability_cooldown = 0.25;
                                 let dir = ability_target - player.pos;
                                 if dir.length() > 0.0 {

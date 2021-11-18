@@ -12,6 +12,9 @@ pub enum Event {
     PlayerDied {
         thing_id:Index,
         pos:Vec2
+    },
+    ProjectileHit {
+        pos:Vec2
     }
 }
 

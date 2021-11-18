@@ -37,7 +37,7 @@ pub struct PlayerThing {
     pub pos:Vec2,
     pub radius:f32,
     pub solid:Solid,
-    pub health:f32,
+    pub hearts:i8,
     pub respawn_timer:f32,
     pub ability_cooldown:f32,
     pub speed:f32,
@@ -45,6 +45,12 @@ pub struct PlayerThing {
     pub kills:i32,
     pub no_interpolation:bool,
     pub name:String
+}
+
+impl PlayerThing {
+    pub fn is_alive(&self) -> bool {
+        self.hearts > 0
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -70,7 +76,7 @@ impl Thing {
         if let Thing::Player(player) = self {
             player.pos = Vec2::new(x, y);
             player.solid = Solid::Solid;
-            player.health = 1.0;
+            player.hearts = 3;
             player.respawn_timer = 0.0;
         }
         

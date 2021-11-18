@@ -32,7 +32,7 @@ impl Bot {
         if let Some(thing) = state.things.get_mut(self.thing_id) {
             if let Thing::Player(player) = thing {
 
-                if player.health > 0.0 {
+                if player.is_alive() {
                     let v = self.dir;
                     let v = v * player.speed * delta as f32;
                     let new_pos = player.pos + v;

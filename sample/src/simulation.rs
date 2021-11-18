@@ -12,7 +12,7 @@ pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
         if let Some(thing) = state.things.get_mut(thing_id) {
             if let Thing::Player(player) = thing {
                 let mut new_pos = player.pos;
-                if player.health > 0.0 {
+                if player.is_alive() {
                     new_pos = input.movement * player.speed as f32 + *thing.pos();
                     move_thing_y_then_x((thing_id, thing), new_pos, &cloned, None);
                 }
@@ -55,10 +55,10 @@ pub fn update_things(state:&mut State, dt:f64) {
     for (owner, target) in hits.drain(..) {
         if let Some(thing) = state.things.get_mut(target) {
             if let Thing::Player(player) = thing {
-                if player.health > 0.0 {
-                    player.health -= 1.0;
+                if player.is_alive() {
+                    player.hearts -= 1;
     
-                    if player.health <= 0.0 {
+                    if !player.is_alive() {
                         player.respawn_timer = 3.0;
                         player.deaths += 1;
                         player.solid = Solid::None;
@@ -82,7 +82,7 @@ pub fn update_things(state:&mut State, dt:f64) {
     // player respawn handling
     for (id, thing) in state.things.iter_mut() {
         if let Thing::Player(player) = thing {
-            if player.health <= 0.0 {
+            if !player.is_alive() {
                 player.respawn_timer -= dt as f32;
                 if player.respawn_timer <= 0.0 {
                     player.respawn_timer = 0.0;
@@ -111,7 +111,13 @@ pub fn update_things(state:&mut State, dt:f64) {
     
     // removal of entities who needs removed
     for id in remove.drain(..) {
-        state.things.remove(id);
+        if let Some(thing) = state.things.remove(id) {
+            if let Thing::Projectile(projectile) = thing {
+                state.events.push(Event::ProjectileHit{
+                    pos: projectile.pos,
+                })
+            }
+        }
     }
 }
 
