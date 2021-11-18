@@ -1,6 +1,7 @@
 
 use generational_arena::{Arena, Index};
 use glam::Vec2;
+use hostess::log::info;
 
 use crate::{Event, Input, Player, Solid, State, Thing};
 
@@ -9,10 +10,10 @@ pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
     let cloned = state.clone();
     if let Some(thing_id) = input.thing_id {
         if let Some(thing) = state.things.get_mut(thing_id) {
-            let mut new_pos = thing.pos;
-            if let Some(player) = thing.as_player_mut() {
+            if let Thing::Player(player) = thing {
+                let mut new_pos = player.pos;
                 if player.health > 0.0 {
-                    new_pos = input.movement * player.speed as f32 + thing.pos;
+                    new_pos = input.movement * player.speed as f32 + *thing.pos();
                     move_thing_y_then_x((thing_id, thing), new_pos, &cloned, None);
                 }
             }
@@ -29,17 +30,17 @@ pub fn update_things(state:&mut State, dt:f64) {
 
     // movement and collision handling
     for (id, thing)  in state.things.iter_mut() {
-        if let Some(player) = thing.as_player_mut() {
+        if let Thing::Player(player) = thing {
             player.ability_cooldown -= dt as f32;
             if player.ability_cooldown < 0.0 {
                 player.ability_cooldown = 0.0;
             }
         }
 
-        if let Some(projectile) = thing.as_projectile_mut() {
+        if let Thing::Projectile(projectile) = thing {
             let owner = projectile.owner;
             if projectile.vel.length_squared() > 0.0 {
-                let new_pos = projectile.vel * dt as f32 + thing.pos;
+                let new_pos = projectile.vel * dt as f32 + *thing.pos();
                 let res = move_thing_y_then_x((id, thing), new_pos, &cloned, Some(owner));
                 if let CollisionResult::Thing(target) = res {
                     remove.push(id);
@@ -53,23 +54,23 @@ pub fn update_things(state:&mut State, dt:f64) {
     // hit / damage handling
     for (owner, target) in hits.drain(..) {
         if let Some(thing) = state.things.get_mut(target) {
-            if let Some(player) = thing.as_player_mut() {
+            if let Thing::Player(player) = thing {
                 if player.health > 0.0 {
                     player.health -= 1.0;
     
                     if player.health <= 0.0 {
                         player.respawn_timer = 3.0;
                         player.deaths += 1;
-                        thing.solid = Solid::None;
+                        player.solid = Solid::None;
 
                         state.events.push(Event::PlayerDied {
                             thing_id:target,
-                            pos:thing.pos
+                            pos:player.pos
                         });
 
                         if let Some(thing) = state.things.get_mut(owner) {
-                            if let Some(player) = thing.as_player_mut() {
-                                player.kills += 1;
+                            if let Thing::Player(owner) = thing {
+                                owner.kills += 1;
                             }
                         }
                     }
@@ -80,7 +81,7 @@ pub fn update_things(state:&mut State, dt:f64) {
 
     // player respawn handling
     for (id, thing) in state.things.iter_mut() {
-        if let Some(player) = thing.as_player_mut() {
+        if let Thing::Player(player) = thing {
             if player.health <= 0.0 {
                 player.respawn_timer -= dt as f32;
                 if player.respawn_timer <= 0.0 {
@@ -97,11 +98,11 @@ pub fn update_things(state:&mut State, dt:f64) {
     let w = state.width;
     let h = state.height;
     for (id, thing) in state.things.iter_mut() {
-        let pos = thing.pos;
-        thing.pos = pos.clamp(Vec2::new(0.0, 0.0), Vec2::new(w,h));
+        let pos = *thing.pos();
+        *thing.pos_mut() = pos.clamp(Vec2::new(0.0, 0.0), Vec2::new(w,h));
         
-        if let Some(projectile) = thing.as_projectile_mut() {
-            if pos != thing.pos {
+        if let Thing::Projectile(projectile) = thing {
+            if pos != projectile.pos {
                 remove.push(id);
 
             }
@@ -143,10 +144,9 @@ pub enum CollisionResult {
 /// move the thing while avoiding collisions, first in y then x
 pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State, ignore:Option<Index>) -> CollisionResult {
     let (thing_id, thing1) = thing;
-    let pos = Vec2::new(thing1.pos.x, new_pos.y);
-    
+    let pos = Vec2::new(thing1.pos().x, new_pos.y);
     let res1 = move_thing_direct((thing_id, thing1), pos, state, ignore);
-    let pos = Vec2::new(new_pos.x, thing1.pos.y);
+    let pos = Vec2::new(new_pos.x, thing1.pos().y);
     let res2 = move_thing_direct((thing_id, thing1), pos, state, ignore);
 
     if res1 != CollisionResult::None {
@@ -161,27 +161,27 @@ fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State, igno
     let (thing_id, thing1) = thing;
     let mut result = CollisionResult::None;
 
-    if thing1.solid != Solid::None {
+    if *thing1.solid() != Solid::None {
         for (thing_id2, thing2) in state.things.iter() {
             if let Some(ignore) = ignore {
                 if thing_id2 == ignore {
                     continue;
                 }
             }
-            if thing2.solid == Solid::Solid {
+            if *thing2.solid() == Solid::Solid {
                 if thing_id != thing_id2 {
-                    let dir = new_pos - thing1.pos;
-                    let n = thing1.pos - thing2.pos;
+                    let dir = new_pos - *thing1.pos();
+                    let n = *thing1.pos() - *thing2.pos();
                     let dir = dir.normalize();
                     let n = n.normalize();
 
                     if dir.dot(n) < 0.0 {
                         let hit = collision_test_circle_circle(Circle {
                             c:new_pos,
-                            r:thing1.radius
+                            r:*thing1.radius()
                         }, Circle {
-                            c:thing2.pos,
-                            r:thing2.radius
+                            c:*thing2.pos(),
+                            r:*thing2.radius()
                         });
                         if hit {
                             result = CollisionResult::Thing(thing_id2);
@@ -194,7 +194,7 @@ fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State, igno
     }
 
     if result == CollisionResult::None {
-        thing1.pos = new_pos;
+        *thing1.pos_mut() = new_pos;
     }
 
     return result;

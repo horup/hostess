@@ -8,6 +8,7 @@ use crate::{
 use generational_arena::Arena;
 use glam::Vec2;
 use hostess::{log::info, uuid::Uuid, Bincoded, ClientMsg, ServerMsg};
+use web_sys::console::info;
 
 pub struct App {
     player_name: String,
@@ -154,25 +155,26 @@ impl App {
     fn draw_thing(&self, thing: &Thing, pos: Vec2) {
         let x = pos.x as f64;
         let y = pos.y as f64;
-        if let Some(player) = thing.as_player() {
+        if let Thing::Player(player) = thing {
             if player.health <= 0.0 {
                 return;
             }
         }
 
-        self.canvas.draw_circle(x, y, thing.radius as f64);
+        self.canvas.draw_circle(x, y, *thing.radius() as f64);
     }
 
     fn draw_thing_name(&self, thing: &Thing, pos: Vec2) {
         let x = pos.x as f64;
         let y = pos.y as f64;
-        if let Some(player) = thing.as_player() {
+        if let Thing::Player(player) = thing {
             if player.health <= 0.0 {
                 return;
             }
-        }
-        if thing.name.len() > 0 {
-            self.canvas.fill_text(&thing.name, x, y - 1.0);
+        
+            if thing.name().len() > 0 {
+                self.canvas.fill_text(thing.name(), x, y - 1.0);
+            }
         }
     }
 
@@ -182,18 +184,21 @@ impl App {
         }
 
         for (id, thing) in &self.current.things {
-            if thing.no_interpolate {
-                self.draw_thing(thing, thing.pos);
+
+            if thing.no_interpolate() {
+                self.draw_thing(thing, *thing.pos());
                 continue;
             }
+
 
             if let Some(prev) = self.history.prev().things.get(id) {
                 self.draw_thing(thing, thing.lerp_pos(prev, self.lerp_alpha));
             }
+
         }
         for (id, thing) in &self.current.things {
-            if thing.no_interpolate {
-                self.draw_thing_name(thing, thing.pos);
+            if thing.no_interpolate() {
+                self.draw_thing_name(thing, *thing.pos());
                 continue;
             }
 
@@ -210,7 +215,7 @@ impl App {
     fn is_my_thing_alive(&self) -> bool {
         if let Some(thing_id) = self.input.thing_id {
             for (id, thing) in self.current.things.iter() {
-                if let Some(player) = thing.as_player() {
+                if let Thing::Player(player) = thing {
                     if thing_id == id && player.health > 0.0 {
                         return true;
                     }
@@ -230,7 +235,7 @@ impl App {
 
         if let Some(thing_id) = self.input.thing_id {
             if let Some(thing) = self.current.things.get(thing_id) {
-                if let Some(player) = thing.as_player() {
+                if let Thing::Player(player) = thing {
                     self.canvas
                         .fill_text(format!("{:0.00}%", player.health).as_str(), 0.0, 0.5);
                 }
@@ -249,8 +254,8 @@ impl App {
             y += 2.0;
             let mut scores = Vec::new();
             for (_, thing) in self.current.things.iter() {
-                if let Some(player) = thing.as_player() {
-                    scores.push((thing.name.clone(), player.kills.clone()));
+                if let Thing::Player(player) = thing {
+                    scores.push((thing.name().clone(), player.kills.clone()));
                     /*let space = 1.0;
                     self.canvas.set_text_style("right", "middle");
                     self.canvas.fill_text(&thing.name, cx as f64 - space, y);
@@ -306,7 +311,7 @@ impl App {
             AppState::InGame {} => {
                 if let Some(thing_id) = self.input.thing_id {
                     if let Some(thing) = self.current.things.get(thing_id) {
-                        if let Some(player) = thing.as_player() {
+                        if let Thing::Player(player) = thing {
                             if player.health <= 0.0 {
                                 self.canvas.fill_text(
                                     &format!(
@@ -382,7 +387,7 @@ impl App {
                 self.input.thing_id = thing_id;
                 if let Some(thing_id) = thing_id {
                     if let Some(thing) = self.current.things.get(thing_id) {
-                        self.input.movement = thing.pos.clone();
+                        self.input.movement = thing.pos().clone();
                     }
                 }
             }
@@ -466,7 +471,9 @@ impl App {
         // ensure player is not interpolated
         if let Some(thing_id) = self.input.thing_id {
             if let Some(thing) = self.current.things.get_mut(thing_id) {
-                thing.no_interpolate = true;
+                if let Thing::Player(player) = thing {
+                    player.no_interpolation = true;
+                }
             }
         }
 
@@ -512,7 +519,7 @@ impl App {
         });
 
         for (id, thing) in self.current.things.iter() {
-            if let Some(_) = thing.as_projectile() {
+            if let Thing::Projectile(thing) = thing {
                 self.effects.insert(Effect::Smoke(Smoke {
                     pos: thing.pos,
                     time: 0.0,

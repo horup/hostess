@@ -22,134 +22,132 @@ impl Default for Solid {
     }
 }
 
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ProjectileThing {
+    pub pos:Vec2,
+    pub radius:f32,
+    pub solid:Solid,
+    pub vel:Vec2,
+    pub owner:Index,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct PlayerThing {
+    pub pos:Vec2,
+    pub radius:f32,
+    pub solid:Solid,
     pub health:f32,
     pub respawn_timer:f32,
     pub ability_cooldown:f32,
     pub speed:f32,
     pub deaths:i32,
-    pub kills:i32
+    pub kills:i32,
+    pub no_interpolation:bool,
+    pub name:String
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ProjectileThing {
-    pub vel:Vec2,
-    pub owner:Index
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum Specialization {
-    None,
+pub enum Thing {
     Player(PlayerThing),
     Projectile(ProjectileThing)
 }
 
-impl Default for Specialization {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct Thing {
-    /// position of the thing
-    pub pos:Vec2,
-
-    /// the radius of the thing
-    pub radius:f32,
-
-    pub solid:Solid,
-
-    /// name of the thing
-    pub name:String,
-
-    pub specialization:Specialization,
-
-    #[serde(skip)]
-    pub no_interpolate:bool
-}
-
-
 
 
 impl Thing {
-    pub fn new_player(x:f32, y:f32) -> Self {
-        Self {
+    pub fn new_player(x:f32, y:f32, name:&str) -> Self {
+        Self::Player(PlayerThing {
             pos:[x, y].into(),
             radius:0.5,
-            specialization:Specialization::Player(PlayerThing {
-                health:1.0,
-                speed:5.0,
-                ..Default::default()
-            }),
+            speed:5.0,
+            name:name.into(),
             ..Default::default()
-        }
-    }
-
-    pub fn as_player_mut(&mut self) -> Option<&mut PlayerThing> {
-        if let Specialization::Player(player) = &mut self.specialization {
-            return Some(player);
-        }
-        None
-    }
-
-    pub fn as_player(&self) -> Option<&PlayerThing> {
-        if let Specialization::Player(player) = &self.specialization {
-            return Some(player);
-        }
-        None
-    }
-
-    pub fn as_projectile_mut(&mut self) -> Option<&mut ProjectileThing> {
-        if let Specialization::Projectile(projectile) = &mut self.specialization {
-            return Some(projectile);
-        }
-        None
-    }
-
-    pub fn as_projectile(&self) -> Option<&ProjectileThing> {
-        if let Specialization::Projectile(projectile) = &self.specialization {
-            return Some(projectile);
-        }
-        None
+        })
     }
 
     pub fn respawn(&mut self, x:f32, y:f32) {
-        self.pos = Vec2::new(x, y);
-        self.solid = Solid::Solid;
-        if let Some(player) = self.as_player_mut() {
+        if let Thing::Player(player) = self {
+            player.pos = Vec2::new(x, y);
+            player.solid = Solid::Solid;
             player.health = 1.0;
             player.respawn_timer = 0.0;
         }
+        
     }
 
     pub fn new_projectile(pos:Vec2, vel:Vec2, owner:Index) -> Self {
-        Self {
+        Self::Projectile(ProjectileThing {
             pos,
             radius:0.25,
             solid:Solid::Partial,
-            specialization:Specialization::Projectile(ProjectileThing {
-                vel,
-                owner
-            }),
-            ..Default::default()
-        }
+            owner,
+            vel
+        })
     }
 
-    pub fn random_new_player(state:&State) -> Self {
-        let thing = Thing::new_player(rand::random::<f32>() * state.width, rand::random::<f32>() * state.height);
+    pub fn random_new_player(state:&State, name:&str) -> Self {
+        let thing = Thing::new_player(rand::random::<f32>() * state.width, rand::random::<f32>() * state.height, name);
         thing
     }
 
+    pub fn pos(&self) -> &Vec2 {
+        match self {
+            Thing::Player(t) => &t.pos,
+            Thing::Projectile(t) => &t.pos,
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        match self {
+            Thing::Player(t) => t.name.as_str(),
+            Thing::Projectile(_) => "",
+        }
+    }
+
+    pub fn radius(&self) -> &f32 {
+        match self {
+            Thing::Player(t) => &t.radius,
+            Thing::Projectile(t) => &t.radius,
+        }
+    }
+
+    pub fn solid(&self) -> &Solid {
+        match self {
+            Thing::Player(t) => &t.solid,
+            Thing::Projectile(t) => &t.solid,
+        }
+    }
+
+    pub fn solid_mut(&mut self) -> &mut Solid {
+        match self {
+            Thing::Player(t) => &mut t.solid,
+            Thing::Projectile(t) => &mut t.solid,
+        }
+    }
+
+    pub fn pos_mut(&mut self) -> &mut Vec2 {
+        match self {
+            Thing::Player(t) => &mut t.pos,
+            Thing::Projectile(t) => &mut t.pos,
+        }
+    }
+
     pub fn lerp_pos(&self, prev:&Thing, alpha:f32) -> Vec2 {
-        let pos = self.pos;
-        let v = pos - prev.pos;
+        let pos = *self.pos();
+        let v = pos - *prev.pos();
         if v.length() < 2.0 {
             let v = v * alpha;
             return pos + v;
         }
 
         return pos;
+    }
+
+    pub fn no_interpolate(&self) -> bool {
+        match self {
+            Thing::Player(p) => p.no_interpolation,
+            Thing::Projectile(_) => false,
+        }
     }
 }

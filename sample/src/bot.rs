@@ -1,6 +1,7 @@
 use generational_arena::Index;
 use glam::Vec2;
-use sample_lib::{move_thing_y_then_x, State};
+use hostess::log::info;
+use sample_lib::{State, Thing, move_thing_y_then_x};
 
 pub struct Bot {
     pub thing_id: Index,
@@ -29,11 +30,12 @@ impl Bot {
         // how to avoid clone?
         let cloned = state.clone();
         if let Some(thing) = state.things.get_mut(self.thing_id) {
-            if let Some(player) = thing.as_player_mut() {
+            if let Thing::Player(player) = thing {
+
                 if player.health > 0.0 {
                     let v = self.dir;
                     let v = v * player.speed * delta as f32;
-                    let new_pos = thing.pos + v;
+                    let new_pos = player.pos + v;
                     move_thing_y_then_x((self.thing_id, thing), new_pos, &cloned, None);
                 }
             }

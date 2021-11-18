@@ -31,8 +31,7 @@ impl Server {
             // less than two players and no bots, ensure 10 bots are spawned
             if self.bots.len() == 0 {
                 while self.bots.len() < 10 {
-                    let mut thing = Thing::random_new_player(&self.current);
-                    thing.name = "bot".into();
+                    let thing = Thing::random_new_player(&self.current, "bot");
                     let index = self.current.things.insert(thing);
                     let bot = Bot::new(index);
     
@@ -56,8 +55,7 @@ impl Server {
             // if player has no 'thing'
             // ensure one is spawned for the player
             if player.thing == None {
-                let mut thing = Thing::random_new_player(&self.current);
-                thing.name = player.client_name.clone();
+                let mut thing = Thing::random_new_player(&self.current, &player.client_name);
                 player.thing = Some(self.current.things.insert(thing));
                 // let the player know his thing id and tick_rate
                 push_custom_to(context, player.client_id, CustomMsg::ServerPlayerInfo {
@@ -81,17 +79,17 @@ impl Server {
                 let mut spawn = Vec::new();
                 if let Some(thing_id) = player.thing {
                     if let Some(thing) = self.current.things.get_mut(thing_id) {
-                        if let Some(player) = thing.as_player_mut() {
+                        if let Thing::Player(player) = thing {
                             if player.health > 0.0 && trigger && player.ability_cooldown <= 0.0 {
                                 player.ability_cooldown = 0.25;
-                                let dir = ability_target - thing.pos;
+                                let dir = ability_target - player.pos;
                                 if dir.length() > 0.0 {
                                     let dir = dir.normalize();
                                     let mut v = dir * 20.0;
-                                    if let Some(old) = self.history.prev().things.get(thing_id) {
-                                        v += thing.pos - old.pos;
-                                    }
-                                    let p = Thing::new_projectile(thing.pos, v, thing_id);
+                                  /*   if let Some(old) = self.history.prev().things.get(thing_id) {
+                                        v += player.pos - old.pos;
+                                    }*/
+                                    let p = Thing::new_projectile(player.pos, v, thing_id);
                                     spawn.push(p);
                                 }
                             }
