@@ -2,6 +2,7 @@
 use generational_arena::{Arena, Index};
 use glam::Vec2;
 use hostess::log::info;
+use parry2d::{math::Isometry, query::{contact, details::contact_ball_ball}, shape::Ball};
 
 use crate::{Event, Input, Player, Solid, State, Thing};
 
@@ -14,7 +15,7 @@ pub fn apply_input(state:&mut State, input:&Input, authorative:bool) {
                 let mut new_pos = player.pos;
                 if player.is_alive() {
                     new_pos = input.movement * player.speed as f32 + *thing.pos();
-                    move_thing_y_then_x((thing_id, thing), new_pos, &cloned, None);
+                    move_thing_direct((thing_id, thing), new_pos, &cloned, None);
                 }
             }
         }
@@ -41,7 +42,7 @@ pub fn update_things(state:&mut State, dt:f64) {
             let owner = projectile.owner;
             if projectile.vel.length_squared() > 0.0 {
                 let new_pos = projectile.vel * dt as f32 + *thing.pos();
-                let res = move_thing_y_then_x((id, thing), new_pos, &cloned, Some(owner));
+                let res = move_thing_direct((id, thing), new_pos, &cloned, Some(owner));
                 if let CollisionResult::Thing(target) = res {
                     remove.push(id);
                     hits.push((owner, target));
@@ -146,10 +147,10 @@ pub enum CollisionResult {
     None,
     Thing(Index)
 }
-
+/*
 /// move the thing while avoiding collisions, first in y then x
 pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State, ignore:Option<Index>) -> CollisionResult {
-    let (thing_id, thing1) = thing;
+  /*  let (thing_id, thing1) = thing;
     let pos = Vec2::new(thing1.pos().x, new_pos.y);
     let res1 = move_thing_direct((thing_id, thing1), pos, state, ignore);
     let pos = Vec2::new(new_pos.x, thing1.pos().y);
@@ -159,49 +160,61 @@ pub fn move_thing_y_then_x(thing:(Index, &mut Thing), new_pos:Vec2, state:&State
         return res1;
     } else {
         return res2;
-    }
-}
+    }*/
+
+    move_thing_direct(thing, new_pos, state, ignore)
+}*/
 
 /// move the thing while avoiding collisions
-fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State, ignore:Option<Index>) -> CollisionResult {
-    let (thing_id, thing1) = thing;
+pub fn move_thing_direct(thing:(Index, &mut Thing), new_pos:Vec2, state:&State, ignore:Option<Index>) -> CollisionResult {
     let mut result = CollisionResult::None;
-
+    let (thing_id, thing1) = thing;
+    *thing1.pos_mut() = new_pos;
     if *thing1.solid() != Solid::None {
         for (thing_id2, thing2) in state.things.iter() {
+            // check same
+            if thing_id == thing_id2 {
+                continue;
+            }
+
+            // check if Solid and not just partially solid
+            if *thing2.solid() != Solid::Solid {
+                continue;
+            }
+
+            // check ignore
             if let Some(ignore) = ignore {
                 if thing_id2 == ignore {
                     continue;
                 }
             }
-            if *thing2.solid() == Solid::Solid {
-                if thing_id != thing_id2 {
-                    let dir = new_pos - *thing1.pos();
-                    let n = *thing1.pos() - *thing2.pos();
-                    let dir = dir.normalize();
-                    let n = n.normalize();
 
-                    if dir.dot(n) < 0.0 {
-                        let hit = collision_test_circle_circle(Circle {
-                            c:new_pos,
-                            r:*thing1.radius()
-                        }, Circle {
-                            c:*thing2.pos(),
-                            r:*thing2.radius()
-                        });
-                        if hit {
-                            result = CollisionResult::Thing(thing_id2);
-                            break;
-                        }
+            let pos1:Isometry<f32> = [thing1.pos().x, thing1.pos().y].into();
+            let ball1 = Ball::new(*thing1.radius());
+            
+            let pos2:Isometry<f32> = [thing2.pos().x, thing2.pos().y].into();
+            let ball2 = Ball::new(*thing2.radius());
+
+            let c = contact(&pos1, &ball1, &pos2, &ball2, 1.0);
+            match c {
+                Ok(res) => {
+                    match res {
+                        Some(res) => {
+                            if res.dist < 0.0 {
+                                let p:Vec2 = [res.normal1.x, res.normal1.y].into();
+                                let p = p * res.dist;
+                                *thing1.pos_mut() += p;
+                                result = CollisionResult::Thing(thing_id2);
+                                break;
+                            }
+                        },
+                        _ => {},
                     }
-                }
+                },
+                _ => {},
             }
         }
     }
-
-    if result == CollisionResult::None {
-        *thing1.pos_mut() = new_pos;
-    }
-
+  
     return result;
 }

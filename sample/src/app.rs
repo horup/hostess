@@ -10,6 +10,10 @@ use glam::Vec2;
 use hostess::{log::info, uuid::Uuid, Bincoded, ClientMsg, ServerMsg};
 use web_sys::console::info;
 
+
+// Dev flags
+static DEV_QUICK_LOGIN:bool = true;
+
 pub struct App {
     player_name: String,
     debug: bool,
@@ -645,7 +649,15 @@ impl App {
                     client_id: self.id.clone(),
                     client_name: self.player_name.clone(),
                 });
-            }
+            },
+            AppState::EnterName { name} => {
+                if DEV_QUICK_LOGIN {
+                    self.client_messages.push(ClientMsg::Hello {
+                        client_id: self.id.clone(),
+                        client_name:format!("{}", self.id.as_u128())
+                    }); 
+                }
+            },
             _ => {}
         }
     }

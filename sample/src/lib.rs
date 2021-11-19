@@ -27,6 +27,7 @@ use wasm_bindgen::prelude::*;
 static mut APP:Option<App> = None;
 static mut LAST_TICK:f64 = 0.0;
 
+
 #[wasm_bindgen]
 pub fn start() {
     wasm_logger::init(wasm_logger::Config::default());
