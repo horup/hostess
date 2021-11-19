@@ -53,7 +53,7 @@ pub fn update_things(state: &mut State, dt: f64) {
                         remove.push(id);
                         hits.push((owner, target));
                     }
-                    CollisionResult::Polyline(id) => {
+                    CollisionResult::Polyline(id, normal) => {
                         remove.push(id);
                     }
                 }
@@ -151,11 +151,11 @@ fn collision_test_circle_circle(circle1: Circle, circle2: Circle) -> bool {
     false
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq)]
 pub enum CollisionResult {
     None,
     Thing(Index),
-    Polyline(Index),
+    Polyline(Index, Vec2),
 }
 
 pub fn move_thing_direct_sweep(
@@ -181,10 +181,9 @@ pub fn move_thing_direct_sweep(
             if result != CollisionResult::None {
                 break;
             }
+
         }
     }
-
-
     result
 }
 
@@ -268,12 +267,7 @@ pub fn move_thing_direct(
                             let p: Vec2 = [res.normal1.x, res.normal1.y].into();
                             let p = p * res.dist;
                             *thing1.pos_mut() += p;
-                            result = CollisionResult::Polyline(id);
-
-                            if let Thing::Projectile(p) = &thing1 {
-                             //   info!("hello world");
-                            }
-
+                            result = CollisionResult::Polyline(thing_id, Vec2::new(res.normal2.x, res.normal2.y));
                             break;
                         }
                     }

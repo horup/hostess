@@ -1,7 +1,7 @@
 use generational_arena::Index;
 use glam::Vec2;
 use hostess::log::info;
-use sample_lib::{State, Thing, move_thing_direct};
+use sample_lib::{State, Thing, move_thing_direct, move_thing_direct_sweep};
 
 pub struct Bot {
     pub thing_id: Index,
@@ -36,7 +36,7 @@ impl Bot {
                     let v = self.dir;
                     let v = v * player.speed * delta as f32;
                     let new_pos = player.pos + v;
-                    move_thing_direct((self.thing_id, thing), new_pos, &cloned, None);
+                    move_thing_direct_sweep((self.thing_id, thing), new_pos, &cloned, None);
                 }
             }
            
