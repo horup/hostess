@@ -19,10 +19,16 @@ pub enum Event {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Polygon {
+    pub points:Vec<Vec2>
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
     pub timestamp:f64,
     pub things: Arena<Thing>,
     pub events:Vec<Event>,
+    pub map:Arena<Polygon>,
     pub width: f32,
     pub height: f32,
 }
@@ -32,12 +38,17 @@ impl Bincoded for State {
 
 impl State {
     pub fn new() -> Self {
+        let mut map = Arena::new();
+        map.insert(Polygon {
+            points:[Vec2::new(7.0, 7.0), Vec2::new(10.0, 7.0), Vec2::new(9.0, 13.0)].into()
+        });
         Self {
             timestamp:0.0,
             things: Arena::new(),
             width: 40.0,
             height: 30.0,
-            events:Vec::new()
+            events:Vec::new(),
+            map
         }
     }
 }
@@ -51,7 +62,7 @@ impl StateHistory {
     pub fn new() -> Self {
         StateHistory {
             history:VecDeque::with_capacity(10),
-            default_state:State::new()
+            default_state:State::new(),
         }
     }
 

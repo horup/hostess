@@ -182,6 +182,24 @@ impl App {
         }
     }
 
+    fn draw_map(&self) {
+        for (_, p) in &self.current.map {
+            self.canvas.begin_path();
+            let mut first = true;
+            for p in &p.points {
+                if first {
+                    self.canvas.move_to(p.x as f64, p.y as f64);
+                    first = false;
+                } else {
+                    self.canvas.line_to(p.x as f64, p.y as f64);
+                }
+            }
+
+            self.canvas.close_path();
+            self.canvas.stroke();
+        }
+    }
+
     fn draw_game(&self) {
         if self.app_state != AppState::InGame {
             return;
@@ -210,6 +228,8 @@ impl App {
                 self.draw_thing_name(thing, thing.lerp_pos(prev, self.lerp_alpha));
             }
         }
+
+        self.draw_map();
 
         for (id, effect) in self.effects.iter() {
             self.draw_effect(effect);

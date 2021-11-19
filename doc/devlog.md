@@ -1,4 +1,4 @@
-- 2021-11-19    45m introduced Parry2d
+- 2021-11-19    70m introduced Parry2d, started working on polygon support
 - 2021-11-18    100m refactored thing into a single enum, improved ui and hearts a bit, added projectile hit effect
 - 2021-11-17    120m worked on effects, added preventdefault, added scoring
 - 2021-11-16    75m improved bots a bit,  refactored things, started working on event system, added simple shooting effect

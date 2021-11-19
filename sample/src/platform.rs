@@ -67,6 +67,30 @@ impl Canvas {
         self.context.clear_rect(0.0, 0.0, self.width() as f64, self.height() as f64);
     }
 
+    pub fn begin_path(&self) {
+        self.context.begin_path();
+    }
+
+    pub fn move_to(&self, x:f64, y:f64) {
+        self.context.move_to(x, y);
+    }
+
+    pub fn line_to(&self, x:f64, y:f64) {
+        self.context.line_to(x, y);
+    }
+
+    pub fn close_path(&self) {
+        self.context.close_path();
+    } 
+
+    pub fn fill(&self) {
+        self.context.fill();
+    }
+
+    pub fn stroke(&self) {
+        self.context.stroke();
+    }
+
     pub fn set_fille_style(&self, value:&str) {
         self.context.set_fill_style(&JsValue::from_str(value));
     }
