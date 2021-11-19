@@ -166,8 +166,24 @@ pub fn move_thing_direct_sweep(
 ) -> CollisionResult {
     let mut result = CollisionResult::None;
     let vel = new_pos - *thing.1.pos();
+    if vel.length() > 0.0 {
+        let mut dist = vel.length();
+        let max_step = *thing.1.radius() / 2.0;
+        let d = vel.normalize();
 
-    result = move_thing_direct(thing, new_pos, state, ignore);
+        let mut new_pos = *thing.1.pos();
+        while dist > 0.0 {
+            let step = dist.min(max_step);
+            new_pos += d * step;
+            result = move_thing_direct((thing.0, thing.1), new_pos, state, ignore);
+            dist -= step;
+
+            if result != CollisionResult::None {
+                break;
+            }
+        }
+    }
+
 
     result
 }
@@ -255,7 +271,7 @@ pub fn move_thing_direct(
                             result = CollisionResult::Polyline(id);
 
                             if let Thing::Projectile(p) = &thing1 {
-                                info!("hello world");
+                             //   info!("hello world");
                             }
 
                             break;
