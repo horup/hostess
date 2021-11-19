@@ -1,7 +1,7 @@
 use generational_arena::Index;
 use glam::Vec2;
 use hostess::log::info;
-use sample_lib::{State, Thing, move_thing_direct, move_thing_direct_sweep};
+use sample_lib::{State, Thing, move_thing_direct_sweep};
 
 pub struct Bot {
     pub thing_id: Index,

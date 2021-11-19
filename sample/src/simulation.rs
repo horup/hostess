@@ -18,7 +18,7 @@ pub fn apply_input(state: &mut State, input: &Input, authorative: bool) {
                 let mut new_pos = player.pos;
                 if player.is_alive() {
                     new_pos = input.movement * player.speed as f32 + *thing.pos();
-                    move_thing_direct((thing_id, thing), new_pos, &cloned, None);
+                    move_thing_direct_sweep((thing_id, thing), new_pos, &cloned, None);
                 }
             }
         }
@@ -166,6 +166,7 @@ pub fn move_thing_direct_sweep(
 ) -> CollisionResult {
     let mut result = CollisionResult::None;
     let vel = new_pos - *thing.1.pos();
+    let mut ok_pos = *thing.1.pos();
     if vel.length() > 0.0 {
         let mut dist = vel.length();
         let max_step = *thing.1.radius() / 2.0;
@@ -178,6 +179,16 @@ pub fn move_thing_direct_sweep(
             result = move_thing_direct((thing.0, thing.1), new_pos, state, ignore);
             dist -= step;
 
+            // do a test to see if we are colliding, if so overwrite current pos with last
+            // known ok pos
+        /*    let p = *thing.1.pos();
+            if move_thing_direct((thing.0, thing.1), p, state, ignore) == CollisionResult::None {
+                ok_pos = new_pos;
+            } else {
+                *thing.1.pos_mut() = ok_pos;
+                break;
+            }*/
+
             if result != CollisionResult::None {
                 break;
             }
@@ -187,7 +198,7 @@ pub fn move_thing_direct_sweep(
     result
 }
 
-pub fn move_thing_direct(
+fn move_thing_direct(
     thing: (Index, &mut Thing),
     new_pos: Vec2,
     state: &State,
@@ -240,9 +251,9 @@ pub fn move_thing_direct(
             }
         }
 
-        if result != CollisionResult::None {
+        /*if result != CollisionResult::None {
             return result;
-        }
+        }*/
 
         for (id, p) in &state.map {
             let mut points = Vec::new();
@@ -267,7 +278,9 @@ pub fn move_thing_direct(
                             let p: Vec2 = [res.normal1.x, res.normal1.y].into();
                             let p = p * res.dist;
                             *thing1.pos_mut() += p;
-                            result = CollisionResult::Polyline(thing_id, Vec2::new(res.normal2.x, res.normal2.y));
+                            if result == CollisionResult::None {
+                                result = CollisionResult::Polyline(thing_id, Vec2::new(res.normal2.x, res.normal2.y));
+                            }
                             break;
                         }
                     }
