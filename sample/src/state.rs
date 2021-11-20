@@ -61,7 +61,7 @@ impl State {
         let i = *next_spawn as usize % spawn_points.len();
         *next_spawn += 1;
         if *next_spawn as usize > spawn_points.len() {
-            *next_spawn = 0;
+            *next_spawn = -1;
         }
         if let Some(pos) = spawn_points.get(i) {
             return *pos;
