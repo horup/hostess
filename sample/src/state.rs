@@ -19,8 +19,23 @@ pub enum Event {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Polygon {
+pub struct Polyline {
     pub points:Vec<Vec2>
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Map {
+    pub polylines:Arena<Polyline>,
+    pub spawn_points:Vec<Vec2>
+}
+
+impl Map {
+    pub fn new() -> Self {
+        Self {
+            polylines:Arena::new(),
+            spawn_points:Vec::new()
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -28,7 +43,7 @@ pub struct State {
     pub timestamp:f64,
     pub things: Arena<Thing>,
     pub events:Vec<Event>,
-    pub map:Arena<Polygon>,
+    pub map:Map,
     pub width: f32,
     pub height: f32,
 }
@@ -38,10 +53,43 @@ impl Bincoded for State {
 
 impl State {
     pub fn new() -> Self {
-        let mut map = Arena::new();
-        map.insert(Polygon {
-            points:[Vec2::new(7.0, 7.0), Vec2::new(10.0, 7.0), Vec2::new(9.0, 13.0)].into()
+        let mut polys = Arena::new();
+        
+        
+        polys.insert(Polyline {
+            points:[Vec2::new(7.0, 8.0), Vec2::new(10.0, 7.0), Vec2::new(9.0, 13.0)].into()
         });
+
+
+        polys.insert(Polyline {
+            points:[Vec2::new(30.0, 15.0), Vec2::new(35.0, 16.0), Vec2::new(32.0, 22.0)].into()
+        });
+
+        polys.insert(Polyline {
+            points:[Vec2::new(5.0, 25.0), Vec2::new(10.0, 25.0), Vec2::new(15.0, 21.0)].into()
+        });
+
+        polys.insert(Polyline {
+            points:[Vec2::new(21.0, 5.0), Vec2::new(29.0, 5.0), Vec2::new(27.0, 15.0), Vec2::new(22.0, 16.0)].into()
+        });
+
+
+        let mut map = Map::new();
+        map.polylines = polys;
+
+        map.spawn_points.push([2.0, 2.0].into());
+        map.spawn_points.push([19.0, 2.0].into());
+        map.spawn_points.push([39.0, 2.0].into());
+
+        map.spawn_points.push([2.0, 15.0].into());
+        map.spawn_points.push([19.0, 15.0].into());
+        map.spawn_points.push([38.0, 15.0].into());
+
+        map.spawn_points.push([2.0, 28.0].into());
+        map.spawn_points.push([19.0, 28.0].into());
+        map.spawn_points.push([38.0, 28.0].into());
+
+
         Self {
             timestamp:0.0,
             things: Arena::new(),

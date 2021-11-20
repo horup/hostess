@@ -31,10 +31,9 @@ impl Server {
             // less than two players and no bots, ensure 10 bots are spawned
             if self.bots.len() == 0 {
                 while self.bots.len() < 10 {
-                    let thing = Thing::random_new_player(&self.current, "bot");
+                    let thing = Thing::new_player("bot");
                     let index = self.current.things.insert(thing);
                     let bot = Bot::new(index);
-    
                     self.bots.push(bot);
                 }
             }
@@ -55,7 +54,7 @@ impl Server {
             // if player has no 'thing'
             // ensure one is spawned for the player
             if player.thing == None {
-                let mut thing = Thing::random_new_player(&self.current, &player.client_name);
+                let mut thing = Thing::new_player(&player.client_name);
                 player.thing = Some(self.current.things.insert(thing));
                 // let the player know his thing id and tick_rate
                 push_custom_to(context, player.client_id, CustomMsg::ServerPlayerInfo {

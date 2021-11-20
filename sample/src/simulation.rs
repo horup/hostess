@@ -6,6 +6,7 @@ use parry2d::{
     query::{contact, details::contact_ball_ball},
     shape::{Ball, Polyline},
 };
+use rand::random;
 
 use crate::{Event, Input, Player, Solid, State, Thing};
 
@@ -96,10 +97,11 @@ pub fn update_things(state: &mut State, dt: f64) {
                 player.respawn_timer -= dt as f32;
                 if player.respawn_timer <= 0.0 {
                     player.respawn_timer = 0.0;
-                    thing.respawn(
-                        rand::random::<f32>() * state.width,
-                        rand::random::<f32>() * state.height,
-                    );
+                    let i = random::<usize>() % state.map.spawn_points.len();
+                    if let Some(p) = state.map.spawn_points.get(i) {
+                        thing.respawn(p.x, p.y);
+                    }
+                  
                 }
             }
         }
@@ -255,7 +257,7 @@ fn move_thing_direct(
             return result;
         }*/
 
-        for (id, p) in &state.map {
+        for (id, p) in &state.map.polylines {
             let mut points = Vec::new();
             for p in &p.points {
                 points.push([p.x, p.y].into());

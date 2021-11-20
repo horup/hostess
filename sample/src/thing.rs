@@ -62,11 +62,12 @@ pub enum Thing {
 
 
 impl Thing {
-    pub fn new_player(x:f32, y:f32, name:&str) -> Self {
+    pub fn new_player(name:&str) -> Self {
         Self::Player(PlayerThing {
-            pos:[x, y].into(),
             radius:0.5,
-            speed:5.0,
+            speed:7.5,
+            hearts:0,
+            respawn_timer:0.0,
             name:name.into(),
             ..Default::default()
         })
@@ -90,11 +91,6 @@ impl Thing {
             owner,
             vel
         })
-    }
-
-    pub fn random_new_player(state:&State, name:&str) -> Self {
-        let thing = Thing::new_player(rand::random::<f32>() * state.width, rand::random::<f32>() * state.height, name);
-        thing
     }
 
     pub fn pos(&self) -> &Vec2 {

@@ -13,6 +13,7 @@ use web_sys::console::info;
 
 // Dev flags
 static DEV_QUICK_LOGIN:bool = true;
+static DEV_SHOW_SPAWNPOINTS:bool = false;
 
 pub struct App {
     player_name: String,
@@ -183,7 +184,7 @@ impl App {
     }
 
     fn draw_map(&self) {
-        for (_, p) in &self.current.map {
+        for (_, p) in &self.current.map.polylines {
             self.canvas.begin_path();
             let mut first = true;
             for p in &p.points {
@@ -197,6 +198,12 @@ impl App {
 
             self.canvas.close_path();
             self.canvas.stroke();
+        }
+
+        if DEV_SHOW_SPAWNPOINTS {
+            for spawn in &self.current.map.spawn_points {
+                self.canvas.draw_circle(spawn.x as f64, spawn.y as f64, 0.1);
+            }
         }
     }
 
