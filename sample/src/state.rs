@@ -53,6 +53,23 @@ impl Bincoded for State {
 }
 
 impl State {
+
+    pub fn next_spawn_pos(next_spawn:&mut i16, spawn_points:&Vec<Vec2>) -> Vec2 {
+        if *next_spawn == -1 {
+            *next_spawn = rand::random::<i16>() % spawn_points.len() as i16;
+        }
+        let i = *next_spawn as usize % spawn_points.len();
+        *next_spawn += 1;
+        if *next_spawn as usize > spawn_points.len() {
+            *next_spawn = 0;
+        }
+        if let Some(pos) = spawn_points.get(i) {
+            return *pos;
+        }
+
+        Vec2::new(0.0, 0.0)
+    }
+  
     pub fn new() -> Self {
         let mut polys = Arena::new();
         
@@ -94,7 +111,7 @@ impl State {
 
 
         Self {
-            next_spawn:0,
+            next_spawn:-1,
             timestamp:0.0,
             things: Arena::new(),
             width: 40.0,

@@ -95,19 +95,12 @@ pub fn update_things(state: &mut State, dt: f64) {
     for (id, thing) in state.things.iter_mut() {
         if let Thing::Player(player) = thing {
             if !player.is_alive() {
+                if player.spawn_pos == None {
+                    player.spawn_pos = Some(State::next_spawn_pos(&mut state.next_spawn, &state.map.spawn_points));
+                }
                 player.respawn_timer -= dt as f32;
                 if player.respawn_timer <= 0.0 {
-                    player.respawn_timer = 0.0;
-                    let i = state.next_spawn as usize % state.map.spawn_points.len();
-                    //let i = random::<usize>() % state.map.spawn_points.len();
-                    if let Some(p) = state.map.spawn_points.get(i) {
-                        thing.respawn(p.x, p.y);
-
-                        if state.next_spawn == 0 {
-                            state.next_spawn = random::<i16>();
-                        }
-                        state.next_spawn += 1;
-                    }
+                    thing.spawn();
                 }
             }
         }

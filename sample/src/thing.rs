@@ -44,7 +44,8 @@ pub struct PlayerThing {
     pub deaths:i32,
     pub kills:i32,
     pub no_interpolation:bool,
-    pub name:String
+    pub name:String,
+    pub spawn_pos:Option<Vec2>
 }
 
 impl PlayerThing {
@@ -67,20 +68,20 @@ impl Thing {
             radius:0.5,
             speed:7.5,
             hearts:0,
-            respawn_timer:0.0,
+            respawn_timer:3.0,
             name:name.into(),
             ..Default::default()
         })
     }
 
-    pub fn respawn(&mut self, x:f32, y:f32) {
+    pub fn spawn(&mut self) {
         if let Thing::Player(player) = self {
-            player.pos = Vec2::new(x, y);
+            player.pos = player.spawn_pos.unwrap_or_default();
+            player.spawn_pos = None;
             player.solid = Solid::Solid;
             player.hearts = 3;
             player.respawn_timer = 0.0;
         }
-        
     }
 
     pub fn new_projectile(pos:Vec2, vel:Vec2, owner:Index) -> Self {

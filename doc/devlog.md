@@ -1,4 +1,4 @@
-- 2021-11-20    50m added spawnpoints, added Map struct, added clamp to bounds to input handling
+- 2021-11-20    80m added spawnpoints, added Map struct, added clamp to bounds to input handling, worked on respawning
 - 2021-11-19    110m introduced Parry2d, started working on polyline support, added colission to polyline, improved collision a bit
 - 2021-11-18    100m refactored thing into a single enum, improved ui and hearts a bit, added projectile hit effect
 - 2021-11-17    120m worked on effects, added preventdefault, added scoring

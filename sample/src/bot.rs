@@ -31,7 +31,6 @@ impl Bot {
         let cloned = state.clone();
         if let Some(thing) = state.things.get_mut(self.thing_id) {
             if let Thing::Player(player) = thing {
-
                 if player.is_alive() {
                     let v = self.dir;
                     let v = v * player.speed * delta as f32;

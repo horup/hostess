@@ -28,9 +28,9 @@ impl Server {
         self.current.events.clear();
         self.current.timestamp = context.time;
         if self.players.len() < 2 {
-            // less than two players and no bots, ensure 10 bots are spawned
+            // less than two players and no bots, ensure some bots are spawned
             if self.bots.len() == 0 {
-                while self.bots.len() < 10 {
+                while self.bots.len() < 4 {
                     let thing = Thing::new_player("bot");
                     let index = self.current.things.insert(thing);
                     let bot = Bot::new(index);
@@ -85,9 +85,6 @@ impl Server {
                                 if dir.length() > 0.0 {
                                     let dir = dir.normalize();
                                     let mut v = dir * 20.0;
-                                  /*   if let Some(old) = self.history.prev().things.get(thing_id) {
-                                        v += player.pos - old.pos;
-                                    }*/
                                     let p = Thing::new_projectile(player.pos, v, thing_id);
                                     spawn.push(p);
                                 }
@@ -131,8 +128,9 @@ impl GameServer for Server {
     fn tick(&mut self, mut context:Context) -> Context {
         while let Some(msg) = context.pop_host_msg() {
             match msg {
-                HostMsg::ClientJoined { client_id, client_name } => {
+                HostMsg::ClientJoined { client_id, mut client_name } => {
                     if !self.players.contains_key(&client_id) {
+                        client_name.truncate(16);
                         self.players.insert(client_id, Player {
                             client_id:client_id,
                             client_name,

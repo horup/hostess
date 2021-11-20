@@ -338,14 +338,17 @@ impl App {
                     if let Some(thing) = self.current.things.get(thing_id) {
                         if let Thing::Player(player) = thing {
                             if !player.is_alive() {
-                                self.canvas.fill_text(
-                                    &format!(
-                                        "You are dead! Respawning... {:0.00}",
-                                        player.respawn_timer
-                                    ),
-                                    cx,
-                                    cy,
-                                );
+                                if let Some(spawn_pos) = player.spawn_pos {
+                                    self.canvas.fill_text(
+                                        &format!(
+                                            "Respawning... {:0.00}",
+                                            player.respawn_timer
+                                        ),
+                                        spawn_pos.x as f64,
+                                        spawn_pos.y as f64,
+                                    );
+                                }
+                               
                             }
                         }
                     }
