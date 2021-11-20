@@ -20,6 +20,7 @@ pub fn apply_input(state: &mut State, input: &Input, authorative: bool) {
                 if player.is_alive() {
                     new_pos = input.movement * player.speed as f32 + *thing.pos();
                     move_thing_direct_sweep((thing_id, thing), new_pos, &cloned, None);
+                    clamp_to_bounds(thing, state.width, state.height);
                 }
             }
         }
@@ -97,11 +98,16 @@ pub fn update_things(state: &mut State, dt: f64) {
                 player.respawn_timer -= dt as f32;
                 if player.respawn_timer <= 0.0 {
                     player.respawn_timer = 0.0;
-                    let i = random::<usize>() % state.map.spawn_points.len();
+                    let i = state.next_spawn as usize % state.map.spawn_points.len();
+                    //let i = random::<usize>() % state.map.spawn_points.len();
                     if let Some(p) = state.map.spawn_points.get(i) {
                         thing.respawn(p.x, p.y);
+
+                        if state.next_spawn == 0 {
+                            state.next_spawn = random::<i16>();
+                        }
+                        state.next_spawn += 1;
                     }
-                  
                 }
             }
         }
@@ -109,14 +115,11 @@ pub fn update_things(state: &mut State, dt: f64) {
 
     // ensuring things stay within bounds
     // and remove projectiles that venture out of bounds
-    let w = state.width;
-    let h = state.height;
     for (id, thing) in state.things.iter_mut() {
-        let pos = *thing.pos();
-        *thing.pos_mut() = pos.clamp(Vec2::new(0.0, 0.0), Vec2::new(w, h));
+        let clamped = clamp_to_bounds(thing, state.width, state.height);
 
         if let Thing::Projectile(projectile) = thing {
-            if pos != projectile.pos {
+            if clamped {
                 remove.push(id);
             }
         }
@@ -132,6 +135,17 @@ pub fn update_things(state: &mut State, dt: f64) {
             }
         }
     }
+}
+
+pub fn clamp_to_bounds(thing:&mut Thing, width:f32, height:f32) -> bool {
+    let pos = *thing.pos();
+    *thing.pos_mut() = pos.clamp(Vec2::new(0.0, 0.0), Vec2::new(width, height));
+
+    if pos != *thing.pos() {
+        return true;
+    } 
+
+    return false;
 }
 
 pub struct Circle {

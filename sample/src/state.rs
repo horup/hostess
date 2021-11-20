@@ -41,6 +41,7 @@ impl Map {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
     pub timestamp:f64,
+    pub next_spawn:i16,
     pub things: Arena<Thing>,
     pub events:Vec<Event>,
     pub map:Map,
@@ -78,19 +79,22 @@ impl State {
         map.polylines = polys;
 
         map.spawn_points.push([2.0, 2.0].into());
+        map.spawn_points.push([19.0, 15.0].into());
+        map.spawn_points.push([38.0, 28.0].into());
+        map.spawn_points.push([19.0, 28.0].into());
         map.spawn_points.push([19.0, 2.0].into());
         map.spawn_points.push([39.0, 2.0].into());
-
+        map.spawn_points.push([2.0, 28.0].into());
         map.spawn_points.push([2.0, 15.0].into());
-        map.spawn_points.push([19.0, 15.0].into());
         map.spawn_points.push([38.0, 15.0].into());
 
-        map.spawn_points.push([2.0, 28.0].into());
-        map.spawn_points.push([19.0, 28.0].into());
-        map.spawn_points.push([38.0, 28.0].into());
+
+ 
+
 
 
         Self {
+            next_spawn:0,
             timestamp:0.0,
             things: Arena::new(),
             width: 40.0,
