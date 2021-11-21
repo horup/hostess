@@ -132,7 +132,8 @@ pub fn update_things(state: &mut State, dt: f64) {
 
 pub fn clamp_to_bounds(thing:&mut Thing, width:f32, height:f32) -> bool {
     let pos = *thing.pos();
-    *thing.pos_mut() = pos.clamp(Vec2::new(0.0, 0.0), Vec2::new(width, height));
+    let margin = 1.0;
+    *thing.pos_mut() = pos.clamp(Vec2::new(margin, margin * 2.0), Vec2::new(width - margin, height - margin));
 
     if pos != *thing.pos() {
         return true;

@@ -65,9 +65,6 @@
       
         async function run() {
             let res = await init();
-            let lag_ms = 100;
-
-
             window.send = (msg) => {
             };
            
@@ -114,9 +111,7 @@
                 ws.onmessage = (e)=>{
                     e.data.arrayBuffer().then(buffer => {
                         var buffer = new Uint8Array(buffer);
-                        setTimeout(()=>{
-                            message(buffer);
-                        }, lag_ms);
+                        message(buffer);
                     })
                 }
                 ws.onerror = (e)=>{

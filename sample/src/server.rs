@@ -45,9 +45,11 @@ impl Server {
         }
 
         let tick_rate = self.tick_rate() as u8;
-
-        // do generic update of things, such as moving projectiles
-        update_things(&mut self.current, context.delta);
+        
+        // process bots
+        for bot in self.bots.iter_mut() {
+            bot.tick(&mut self.current, context.delta);
+        }
         
         // process inputs from players
         for (_, player) in &mut self.players {
@@ -98,11 +100,9 @@ impl Server {
                 }
             }
         }
-
-        // process bots
-        for bot in self.bots.iter_mut() {
-            bot.tick(&mut self.current, context.delta);
-        }
+        
+        // do generic update of things, such as moving projectiles
+        update_things(&mut self.current, context.delta);
 
         // for each player, transmit state diff
         for (client_id, player) in &mut self.players {

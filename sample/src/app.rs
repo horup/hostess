@@ -14,6 +14,7 @@ use web_sys::console::info;
 // Dev flags
 static DEV_QUICK_LOGIN:bool = true;
 static DEV_SHOW_SPAWNPOINTS:bool = false;
+static DEV_SHOW_NETSTAT:bool = false;
 
 pub struct App {
     player_name: String,
@@ -277,7 +278,7 @@ impl App {
             }
         }
 
-        let show_score = self.show_score || !self.is_my_thing_alive();
+        let show_score = self.show_score;
         
         if show_score {
             let mut y = 3.0;
@@ -338,17 +339,23 @@ impl App {
                     if let Some(thing) = self.current.things.get(thing_id) {
                         if let Thing::Player(player) = thing {
                             if !player.is_alive() {
+                                self.canvas.fill_text(
+                                    &format!(
+                                        "Respawning... {:0.1}",
+                                        player.respawn_timer
+                                    ),
+                                    cx as f64,
+                                    cy as f64,
+                                );
+
                                 if let Some(spawn_pos) = player.spawn_pos {
-                                    self.canvas.fill_text(
-                                        &format!(
-                                            "Respawning... {:0.00}",
-                                            player.respawn_timer
-                                        ),
-                                        spawn_pos.x as f64,
-                                        spawn_pos.y as f64,
-                                    );
+                                    let r = 0.5;
+                                    let b = 40;
+                                    if self.updates % b > b / 2 {
+                                        self.canvas.draw_circle(spawn_pos.x as f64, spawn_pos.y as f64, r);
+                                        self.canvas.fill_text("HERE", spawn_pos.x as f64, spawn_pos.y as f64 + 1.5)
+                                    }
                                 }
-                               
                             }
                         }
                     }
@@ -358,7 +365,7 @@ impl App {
     }
 
     fn draw_ui_debug(&self, grid_size: f64) {
-        if self.debug {
+        if DEV_SHOW_NETSTAT {
             self.canvas.set_text_style("right", "middle");
             self.canvas.fill_text(
                 format!("{:0.00} ms", self.ping).as_str(),
@@ -370,7 +377,6 @@ impl App {
                 self.canvas.width() as f64 / grid_size - 0.1,
                 1.5,
             );
-            //self.canvas.fill_text(format!("recv:{:0.00} kb/s", self.server_bytes_sec / 1000.0).as_str(), self.canvas.width() as f64 / grid_size - 0.1, 2.5);
         }
     }
 

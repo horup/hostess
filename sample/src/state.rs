@@ -95,12 +95,12 @@ impl State {
         let mut map = Map::new();
         map.polylines = polys;
 
-        map.spawn_points.push([2.0, 2.0].into());
+        map.spawn_points.push([2.0, 3.0].into());
         map.spawn_points.push([19.0, 15.0].into());
         map.spawn_points.push([38.0, 28.0].into());
         map.spawn_points.push([19.0, 28.0].into());
-        map.spawn_points.push([19.0, 2.0].into());
-        map.spawn_points.push([39.0, 2.0].into());
+        map.spawn_points.push([19.0, 3.0].into());
+        map.spawn_points.push([39.0, 3.0].into());
         map.spawn_points.push([2.0, 28.0].into());
         map.spawn_points.push([2.0, 15.0].into());
         map.spawn_points.push([38.0, 15.0].into());
