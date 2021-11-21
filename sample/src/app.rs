@@ -12,9 +12,9 @@ use web_sys::console::info;
 
 
 // Dev flags
-static DEV_QUICK_LOGIN:bool = true;
-static DEV_SHOW_SPAWNPOINTS:bool = false;
-static DEV_SHOW_NETSTAT:bool = false;
+static DEV_QUICK_LOGIN:bool         = false;
+static DEV_SHOW_SPAWNPOINTS:bool    = false;
+static DEV_SHOW_NETSTAT:bool        = false;
 
 pub struct App {
     player_name: String,
