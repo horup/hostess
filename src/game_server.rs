@@ -63,10 +63,23 @@ pub struct GameServerConstructor {
     arc:Arc<GameServerConstructorFn>
 }
 
+
 impl GameServerConstructor {
-    pub fn new(f:GameServerConstructorFn) -> Self {
+    pub fn new_constructor(f:GameServerConstructorFn) -> Self {
         Self {
             arc:Arc::new(Box::new(f))
+        }
+    }
+
+    pub fn new<T:GameServer + Default>() -> Self {
+
+        let f:fn()->Box<dyn GameServer> = || {
+            return Box::new(T::default());
+        };
+
+        let boxed = Box::new(f);
+        Self {
+            arc:Arc::new(boxed)
         }
     }
 

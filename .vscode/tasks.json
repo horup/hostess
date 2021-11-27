@@ -3,12 +3,15 @@
 	"tasks": [
 		{
 			"type": "cargo",
-			"command": "build",
+			"command": "test",
 			"problemMatcher": [
 				"$rustc"
 			],
-			"group": "build",
-			"label": "hostess: build"
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"label": "hostess: test"
 		}
 	]
 }
