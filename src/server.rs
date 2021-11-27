@@ -9,7 +9,7 @@ use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
 use warp::{Error, Filter, ws::{Message, WebSocket}};
 
-use crate::{Bincoded, ClientMsg, ServerMsg, lobby::Lobby, game_server::GameServerConstructor};
+use crate::{Bincoded, ClientMsg, ServerMsg, game_server::{GameServer, GameServerConstructor}, lobby::Lobby};
 
 #[derive(Clone)]
 pub struct ServerConfig {
@@ -19,7 +19,7 @@ pub struct ServerConfig {
 
 pub struct Server {
     addr: String,
-    pub lobby: Arc<RwLock<Lobby>>,
+    lobby: Arc<RwLock<Lobby>>,
     pub config:ServerConfig
 }
 
@@ -135,6 +135,11 @@ impl Server {
             lobby: Arc::new(RwLock::new(Lobby::new())),
             config:ServerConfig { host_creation: false, constructor:constructor }
         }
+    }
+
+    pub async fn new_game_server(&mut self, creator:Uuid, constructor:GameServerConstructor) {
+        let mut lobby = self.lobby.write().await;
+        lobby.new_host(creator, constructor);
     }
 
     async fn client_joined_lobby(
