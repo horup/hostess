@@ -1,7 +1,8 @@
 pub use crate::shared::{HostInfo};
-use uuid::Uuid;
-use serde::{Deserialize, Serialize};
-use crate::bincoded::Bincoded;
+pub use uuid::Uuid;
+pub use serde::{Deserialize, Serialize};
+pub use crate::bincoded::Bincoded;
+
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ClientMsg {

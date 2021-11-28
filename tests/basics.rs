@@ -1,12 +1,11 @@
-use std::{net::TcpStream, process::exit};
-
-use futures_util::{future, pin_mut, SinkExt, Stream, StreamExt};
+use std::{process::exit};
+use futures_util::{ SinkExt, Stream, StreamExt};
 use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, game_server::{Config, GameServer, GameServerConstructor}, manager::ServerManager};
-use tokio::{io::{AsyncReadExt, AsyncWriteExt}, time::Duration};
+use tokio::{time::Duration};
 use tokio_tungstenite::{
     connect_async,
     tungstenite::{client::IntoClientRequest, Message},
-    MaybeTlsStream, WebSocketStream,
+   
 };
 use uuid::Uuid;
 
@@ -55,7 +54,7 @@ impl TestGame {
 }
 
 async fn send<T: SinkExt<Message> + Unpin>(t: &mut T, msg: ClientMsg) {
-    let res = t.send(Message::binary(msg.to_bincode())).await;
+    let _ = t.send(Message::binary(msg.to_bincode())).await;
 }
 
 async fn recv<T: Unpin + Stream<Item = Result<Message, U>>, U : std::fmt::Debug>(t: &mut T) -> ServerMsg {
@@ -112,7 +111,7 @@ pub async fn basics() {
             ServerMsg::LobbyJoined {  } => {
                 lobby_joined = true;
             },
-            ServerMsg::HostCreated { host_id } => {
+            ServerMsg::HostCreated { host_id:_ } => {
 
             },
             ServerMsg::Hosts { hosts } => {
@@ -129,7 +128,7 @@ pub async fn basics() {
                 assert_eq!(host.id, joined_host.id);
                 send(&mut ws_stream, ClientMsg::CustomMsg { msg: [1,2,3,4].into() }).await;
             },
-            ServerMsg::Pong { tick, server_bytes_sec, client_bytes_sec } => {
+            ServerMsg::Pong { tick:_, server_bytes_sec:_, client_bytes_sec:_ } => {
 
             },
             ServerMsg::Custom { msg } => {
