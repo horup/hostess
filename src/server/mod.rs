@@ -65,12 +65,12 @@ pub trait Server : Send + Sync + 'static {
 pub type GameServerConstructorFn = Box<dyn Fn() -> Box<dyn Server> + Send + Sync>;
 
 #[derive(Clone)]
-pub struct GameServerConstructor {
+pub struct ServerConstructor {
     arc:Arc<GameServerConstructorFn>
 }
 
 
-impl GameServerConstructor {
+impl ServerConstructor {
     pub fn new_constructor(f:GameServerConstructorFn) -> Self {
         Self {
             arc:Arc::new(Box::new(f))

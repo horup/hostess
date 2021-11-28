@@ -14,14 +14,16 @@ use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
 use warp::{Error, Filter, ws::{Message, WebSocket}};
 
-use crate::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{GameServerConstructor}};
+use crate::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{ServerConstructor}};
 
 #[derive(Clone)]
 pub struct Config {
     pub host_creation:bool,
-    pub constructor:GameServerConstructor
+    pub constructor:ServerConstructor
 }
 
+/// takes care of hosting one or more servers
+/// each server handles a single instance
 pub struct Hostess {
     addr: String,
     lobby: Arc<RwLock<Lobby>>,
@@ -134,7 +136,9 @@ impl From<SplitStream<WebSocket>> for ClientStream {
 }
 
 impl Hostess {
-    pub fn new(addr: &str, constructor:GameServerConstructor) -> Self {
+    /// instantiates a new Hostess instance.
+    /// `constructor` is the function responsible for constructing the Server
+    pub fn new(addr: &str, constructor:ServerConstructor) -> Self {
         Self {
             addr: addr.into(),
             lobby: Arc::new(RwLock::new(Lobby::new())),
@@ -142,6 +146,7 @@ impl Hostess {
         }
     }
 
+    /// creates a new server with the given `creator` id
     pub async fn new_server(&mut self, creator:Uuid) {
         let mut lobby = self.lobby.write().await;
         lobby.new_host(creator, self.config.constructor.clone());
@@ -270,7 +275,12 @@ impl Hostess {
         }
     }
 
-    pub fn spawn(self) -> JoinHandle<()> {
+    /// Starts a web server listening on the `addr` supplied in the `new()`
+    /// 
+    /// Accepts WebSocket upgrades on any address.
+    /// 
+    /// Serves static files from the `./public` directory
+    pub fn start(self) -> JoinHandle<()> {
         return tokio::spawn(async move {
             let addr = SocketAddr::from_str(&self.addr).expect("Could not parse address");
 

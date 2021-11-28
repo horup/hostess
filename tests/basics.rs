@@ -1,6 +1,6 @@
 use std::{process::exit};
 use futures_util::{ SinkExt, Stream, StreamExt};
-use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Config, Server, GameServerConstructor}, hostess::Hostess};
+use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Config, Server, ServerConstructor}, hostess::Hostess};
 use tokio::{time::Duration};
 use tokio_tungstenite::{
     connect_async,
@@ -48,8 +48,8 @@ impl Server for TestGame {
 }
 
 impl TestGame {
-    pub fn constructor() -> GameServerConstructor {
-        GameServerConstructor::new::<Self>()
+    pub fn constructor() -> ServerConstructor {
+        ServerConstructor::new::<Self>()
     }
 }
 
@@ -85,7 +85,7 @@ pub async fn basics() {
                 .await;
         }
 
-        let _ = hostess.spawn().await;
+        let _ = hostess.start().await;
     });
 
     // connect to server

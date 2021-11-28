@@ -2,7 +2,7 @@ use std::{collections::HashMap};
 
 use log::info;
 use uuid::Uuid;
-use crate::{server::GameServerConstructor};
+use crate::{server::ServerConstructor};
 
 use super::host::Host;
 use crate::shared::HostInfo;
@@ -18,7 +18,7 @@ impl Lobby {
         }
     }
 
-    pub fn new_host(&mut self, creator:Uuid, constructor:GameServerConstructor) -> Uuid {
+    pub fn new_host(&mut self, creator:Uuid, constructor:ServerConstructor) -> Uuid {
         let host_id = Uuid::new_v4();
         let host = Host::new(HostInfo {
             id:host_id,

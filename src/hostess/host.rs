@@ -7,7 +7,7 @@ use log::{info};
 use tokio::select;
 use crate::shared::{HostInfo};
 
-use crate::{client::{ClientMsg, ServerMsg}, server::{GameServerConstructor, Context, GameServerMsg, HostMsg}, hostess::{ClientSink, Client}};
+use crate::{client::{ClientMsg, ServerMsg}, server::{ServerConstructor, Context, GameServerMsg, HostMsg}, hostess::{ClientSink, Client}};
 
 enum Msg {
     HostMsg(HostMsg),
@@ -29,7 +29,7 @@ pub struct Host {
 }
 
 impl Host {
-    pub fn new(info:HostInfo, constructor:GameServerConstructor) -> Self {
+    pub fn new(info:HostInfo, constructor:ServerConstructor) -> Self {
         let buffer_len = 1024;
         let (sender, mut receiver) = channel::<Msg>(buffer_len);
         let host = Self {
