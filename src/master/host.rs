@@ -7,7 +7,7 @@ use log::{info};
 use tokio::select;
 use crate::shared::{HostInfo};
 
-use crate::{client::{ClientMsg, ServerMsg}, server::{ServerConstructor, Context, GameServerMsg, HostMsg}, master::{ClientSink, Client}};
+use crate::{client::{ClientMsg, ServerMsg}, server::{ServerConstructor, Ctx, GameServerMsg, HostMsg}, master::{ClientSink, Client}};
 
 enum Msg {
     HostMsg(HostMsg),
@@ -43,7 +43,7 @@ impl Host {
             let period = Duration::from_millis(1000 / config.tick_rate);
             let mut timer = interval(period);
             timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
-            let mut context = Context {
+            let mut context = Ctx {
                 game_messages:VecDeque::new(),
                 host_messages:VecDeque::with_capacity(buffer_len),
                 delta:timer.period().as_secs_f64(),
@@ -63,7 +63,7 @@ impl Host {
                         let diff = now - last_tick;
                         context.delta = diff.as_secs_f64();
                         context.time += context.delta;
-                        context = g.tick(context);
+                        g.tick(&mut context);
                         for msg in context.game_messages.drain(..) {
                             match msg {
                                 GameServerMsg::CustomToAll { msg } => {

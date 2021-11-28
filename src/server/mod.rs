@@ -33,7 +33,7 @@ pub struct Config {
     pub max_players:u64
 }
 
-pub struct Context {
+pub struct Ctx {
     pub host_messages:VecDeque<HostMsg>,
     pub game_messages:VecDeque<GameServerMsg>,
 
@@ -45,7 +45,7 @@ pub struct Context {
     pub time:f64
 }
 
-impl Context {
+impl Ctx {
     pub fn pop_host_msg(&mut self) -> Option<HostMsg> {
         let msg = self.host_messages.pop_front();
         return msg;
@@ -59,7 +59,7 @@ impl Context {
 
 pub trait Server : Send + Sync + 'static {
     fn init(&mut self) -> Config;
-    fn tick(&mut self, context:Context) -> Context;
+    fn tick(&mut self, ctx:&mut Ctx);
 }
 
 pub type GameServerConstructorFn = Box<dyn Fn() -> Box<dyn Server> + Send + Sync>;

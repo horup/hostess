@@ -15,7 +15,7 @@ pub struct TestGame {
 }
 
 impl Server for TestGame {
-    fn tick(&mut self, mut context: hostess::server::Context) -> hostess::server::Context {
+    fn tick(&mut self, context: &mut hostess::server::Ctx) {
         let messages = context.host_messages.clone();
         for msg in messages.iter() {
             match msg {
@@ -36,7 +36,6 @@ impl Server for TestGame {
                 },
             }
         }
-        context
     }
 
     fn init(&mut self) -> hostess::server::Config {
