@@ -14,7 +14,7 @@ use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
 use warp::{Error, Filter, ws::{Message, WebSocket}};
 
-use crate::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{ServerConstructor}};
+use crate::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Server, ServerConstructor}};
 
 #[derive(Clone)]
 pub struct Config {
@@ -151,6 +151,10 @@ impl Master {
     pub async fn new_server(&mut self, creator:Uuid) {
         let mut lobby = self.lobby.write().await;
         lobby.new_host(creator, self.config.constructor.clone());
+    }
+
+    pub async fn new_server2(&mut self, creator:Uuid, server:Box<dyn Server>) {
+        let mut lobby = self.lobby.write().await;
     }
 
     async fn client_joined_lobby(
