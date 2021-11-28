@@ -24,7 +24,8 @@ pub struct Config {
 
 /// takes care of hosting one or more servers
 /// each server handles a single instance
-pub struct Hostess {
+#[derive(Clone)]
+pub struct Master {
     addr: String,
     lobby: Arc<RwLock<Lobby>>,
     config:Config
@@ -135,7 +136,7 @@ impl From<SplitStream<WebSocket>> for ClientStream {
     }
 }
 
-impl Hostess {
+impl Master {
     /// instantiates a new Hostess instance.
     /// `constructor` is the function responsible for constructing the Server
     pub fn new(addr: &str, constructor:ServerConstructor) -> Self {

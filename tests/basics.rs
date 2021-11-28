@@ -1,6 +1,6 @@
 use std::{process::exit};
 use futures_util::{ SinkExt, Stream, StreamExt};
-use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Config, Server, ServerConstructor}, hostess::Hostess};
+use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Config, Server, ServerConstructor}, master::Master};
 use tokio::{time::Duration};
 use tokio_tungstenite::{
     connect_async,
@@ -78,15 +78,17 @@ pub async fn basics() {
 
     // create a manager with some game_servers
     let _ = tokio::spawn(async {
-        let mut hostess = Hostess::new(LISTEN, TestGame::constructor());
+        let mut master = Master::new(LISTEN, TestGame::constructor());
 
         for _ in 0..10 {
-            hostess.new_server(Uuid::default())
+            master.new_server(Uuid::default())
                 .await;
         }
 
-        let _ = hostess.start().await;
+        let _ = master.start().await;
     });
+
+    tokio::time::sleep(Duration::from_millis(1000)).await;
 
     // connect to server
     let req = format!("ws://{}", LISTEN).into_client_request().unwrap();
