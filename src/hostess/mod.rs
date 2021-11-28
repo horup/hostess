@@ -17,18 +17,18 @@ use warp::{Error, Filter, ws::{Message, WebSocket}};
 use crate::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{GameServerConstructor}};
 
 #[derive(Clone)]
-pub struct ServerConfig {
+pub struct Config {
     pub host_creation:bool,
     pub constructor:GameServerConstructor
 }
 
-pub struct ServerManager {
+pub struct Hostess {
     addr: String,
     lobby: Arc<RwLock<Lobby>>,
-    pub config:ServerConfig
+    config:Config
 }
 
-pub struct ConnectedClient {
+pub struct Client {
     pub sink: ClientSink,
     pub stream: ClientStream,
     pub client_id:Uuid,
@@ -133,24 +133,24 @@ impl From<SplitStream<WebSocket>> for ClientStream {
     }
 }
 
-impl ServerManager {
+impl Hostess {
     pub fn new(addr: &str, constructor:GameServerConstructor) -> Self {
         Self {
             addr: addr.into(),
             lobby: Arc::new(RwLock::new(Lobby::new())),
-            config:ServerConfig { host_creation: false, constructor:constructor }
+            config:Config { host_creation: false, constructor:constructor }
         }
     }
 
-    pub async fn new_game_server(&mut self, creator:Uuid, constructor:GameServerConstructor) {
+    pub async fn new_server(&mut self, creator:Uuid) {
         let mut lobby = self.lobby.write().await;
-        lobby.new_host(creator, constructor);
+        lobby.new_host(creator, self.config.constructor.clone());
     }
 
     async fn client_joined_lobby(
-        mut client:ConnectedClient,
+        mut client:Client,
         lobby: Arc<RwLock<Lobby>>,
-        config:ServerConfig
+        config:Config
     ) {
         info!("Client {:?} entered lobby", client.client_id);
 
@@ -213,7 +213,7 @@ impl ServerManager {
     }
 
 
-    async fn client_connected(ws: WebSocket, lobby: Arc<RwLock<Lobby>>, config:ServerConfig) {
+    async fn client_connected(ws: WebSocket, lobby: Arc<RwLock<Lobby>>, config:Config) {
         let (tx, rx) = ws.split();
         let mut tx:ClientSink = tx.into();
         let mut stream:ClientStream = rx.into();
@@ -256,7 +256,7 @@ impl ServerManager {
             let msg = ServerMsg::LobbyJoined {};
             match tx.send(msg).await {
                 Ok(_) => {
-                    Self::client_joined_lobby(ConnectedClient{sink: tx, stream, client_id, client_name: name}, lobby, config).await
+                    Self::client_joined_lobby(Client{sink: tx, stream, client_id, client_name: name}, lobby, config).await
                 },
                 Err(_) => error!("Client {} failed to join", client_id),
             }

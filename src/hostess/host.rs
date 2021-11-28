@@ -7,7 +7,7 @@ use log::{info};
 use tokio::select;
 use crate::shared::{HostInfo};
 
-use crate::{client::{ClientMsg, ServerMsg}, server::{GameServerConstructor, Context, GameServerMsg, HostMsg}, manager::{ClientSink, ConnectedClient}};
+use crate::{client::{ClientMsg, ServerMsg}, server::{GameServerConstructor, Context, GameServerMsg, HostMsg}, hostess::{ClientSink, Client}};
 
 enum Msg {
     HostMsg(HostMsg),
@@ -144,7 +144,7 @@ impl Host {
         host
     }
 
-    pub async fn join(&self, client:ConnectedClient) -> Option<ConnectedClient> {
+    pub async fn join(&self, client:Client) -> Option<Client> {
         info!("Client {} with name '{}' joined Host {}", client.client_id, client.client_name, self.info.id);
         let tx = client.sink;
         let mut rx = client.stream;
@@ -197,7 +197,7 @@ impl Host {
         
         info!("Client {} left Host {}", client.client_id, self.info.id);
         if let Ok(tx) = return_rx.await {
-            return Some(ConnectedClient {
+            return Some(Client {
                 sink: tx,
                 stream: rx,
                 client_id:client.client_id,
