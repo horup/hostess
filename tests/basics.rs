@@ -1,6 +1,6 @@
 use std::{process::exit};
 use futures_util::{ SinkExt, Stream, StreamExt};
-use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, game_server::{Config, GameServer, GameServerConstructor}, manager::ServerManager};
+use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Config, Server, GameServerConstructor}, manager::ServerManager};
 use tokio::{time::Duration};
 use tokio_tungstenite::{
     connect_async,
@@ -14,22 +14,22 @@ pub struct TestGame {
     pub client_id:Option<Uuid>
 }
 
-impl GameServer for TestGame {
-    fn tick(&mut self, mut context: hostess::game_server::Context) -> hostess::game_server::Context {
+impl Server for TestGame {
+    fn tick(&mut self, mut context: hostess::server::Context) -> hostess::server::Context {
         let messages = context.host_messages.clone();
         for msg in messages.iter() {
             match msg {
-                hostess::game_server::HostMsg::ClientJoined { client_id, client_name } => {
+                hostess::server::HostMsg::ClientJoined { client_id, client_name } => {
                     assert_eq!(client_name, "Tester");
                     self.client_id = Some(client_id.clone());
                 },
-                hostess::game_server::HostMsg::ClientLeft { client_id } => {
+                hostess::server::HostMsg::ClientLeft { client_id } => {
                     assert_eq!(self.client_id.unwrap(), *client_id);
                     self.client_id = None;
                 },
-                hostess::game_server::HostMsg::CustomMsg { client_id, msg } => {
+                hostess::server::HostMsg::CustomMsg { client_id, msg } => {
                     assert_eq!(self.client_id.unwrap(), *client_id);
-                    context.push_game_msg(hostess::game_server::GameServerMsg::CustomTo {
+                    context.push_game_msg(hostess::server::GameServerMsg::CustomTo {
                         client_id: *client_id,
                         msg: msg.clone(),
                     });
@@ -39,7 +39,7 @@ impl GameServer for TestGame {
         context
     }
 
-    fn init(&mut self) -> hostess::game_server::Config {
+    fn init(&mut self) -> hostess::server::Config {
         Config {
             tick_rate:20,
             max_players:1

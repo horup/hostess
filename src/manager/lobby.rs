@@ -2,7 +2,7 @@ use std::{collections::HashMap};
 
 use log::info;
 use uuid::Uuid;
-use crate::{game_server::GameServerConstructor};
+use crate::{server::GameServerConstructor};
 
 use super::host::Host;
 use crate::shared::HostInfo;

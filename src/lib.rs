@@ -5,7 +5,7 @@ pub use uuid;
 pub mod manager;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub mod game_server;
+pub mod server;
 pub mod client;
 pub mod bincoded;
 pub mod shared;

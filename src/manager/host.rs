@@ -7,7 +7,7 @@ use log::{info};
 use tokio::select;
 use crate::shared::{HostInfo};
 
-use crate::{client::{ClientMsg, ServerMsg}, game_server::{GameServerConstructor, Context, GameServerMsg, HostMsg}, manager::{ClientSink, ConnectedClient}};
+use crate::{client::{ClientMsg, ServerMsg}, server::{GameServerConstructor, Context, GameServerMsg, HostMsg}, manager::{ClientSink, ConnectedClient}};
 
 enum Msg {
     HostMsg(HostMsg),

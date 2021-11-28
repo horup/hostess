@@ -57,12 +57,12 @@ impl Context {
     }
 }
 
-pub trait GameServer : Send + Sync + 'static {
+pub trait Server : Send + Sync + 'static {
     fn init(&mut self) -> Config;
     fn tick(&mut self, context:Context) -> Context;
 }
 
-pub type GameServerConstructorFn = Box<dyn Fn() -> Box<dyn GameServer> + Send + Sync>;
+pub type GameServerConstructorFn = Box<dyn Fn() -> Box<dyn Server> + Send + Sync>;
 
 #[derive(Clone)]
 pub struct GameServerConstructor {
@@ -77,9 +77,9 @@ impl GameServerConstructor {
         }
     }
 
-    pub fn new<T:GameServer + Default>() -> Self {
+    pub fn new<T:Server + Default>() -> Self {
 
-        let f:fn()->Box<dyn GameServer> = || {
+        let f:fn()->Box<dyn Server> = || {
             return Box::new(T::default());
         };
 
@@ -89,7 +89,7 @@ impl GameServerConstructor {
         }
     }
 
-    pub fn construct(&self) -> Box<dyn GameServer> {
+    pub fn construct(&self) -> Box<dyn Server> {
         let f = self.arc.as_ref();
         f()
     }
