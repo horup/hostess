@@ -5,8 +5,9 @@ use tokio::{sync::{mpsc::channel, mpsc::Sender}, time::{MissedTickBehavior, inte
 use uuid::Uuid;
 use log::{info};
 use tokio::select;
+use crate::shared::{HostInfo};
 
-use crate::{ClientMsg, HostInfo, ServerMsg, manager::{ClientSink, ConnectedClient}, game_server::{GameServerConstructor, Context, GameServerMsg, HostMsg}};
+use crate::{client::{ClientMsg, ServerMsg}, game_server::{GameServerConstructor, Context, GameServerMsg, HostMsg}, manager::{ClientSink, ConnectedClient}};
 
 enum Msg {
     HostMsg(HostMsg),

@@ -1,3 +1,9 @@
+mod lobby;
+use lobby::*;
+
+mod host;
+use host::*;
+
 use std::{net::SocketAddr, str::FromStr, sync::Arc, time::Instant};
 
 use futures_util::{
@@ -9,7 +15,7 @@ use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
 use warp::{Error, Filter, ws::{Message, WebSocket}};
 
-use crate::{Bincoded, ClientMsg, ServerMsg, game_server::{GameServer, GameServerConstructor}, lobby::Lobby};
+use crate::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, game_server::{GameServer, GameServerConstructor}};
 
 #[derive(Clone)]
 pub struct ServerConfig {

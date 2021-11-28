@@ -1,7 +1,7 @@
 use std::{net::TcpStream, process::exit};
 
 use futures_util::{future, pin_mut, SinkExt, Stream, StreamExt};
-use hostess::{Bincoded, ClientMsg, ServerMsg, game_server::{Config, GameServer, GameServerConstructor}, manager::ServerManager};
+use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, game_server::{Config, GameServer, GameServerConstructor}, manager::ServerManager};
 use tokio::{io::{AsyncReadExt, AsyncWriteExt}, time::Duration};
 use tokio_tungstenite::{
     connect_async,
