@@ -38,7 +38,8 @@ impl Host {
 
         tokio::spawn(async move {
             let mut g = constructor.construct();
-            let period = Duration::from_millis(1000 / g.tick_rate());
+            let config = g.init();
+            let period = Duration::from_millis(1000 / config.tick_rate);
             let mut timer = interval(period);
             timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
             let mut context = Context {

@@ -27,6 +27,12 @@ pub enum GameServerMsg {
     }
 }
 
+#[derive(Clone, Debug, Copy)]
+pub struct Config {
+    pub tick_rate:u64,
+    pub max_players:u64
+}
+
 pub struct Context {
     pub host_messages:VecDeque<HostMsg>,
     pub game_messages:VecDeque<GameServerMsg>,
@@ -52,7 +58,7 @@ impl Context {
 }
 
 pub trait GameServer : Send + Sync + 'static {
-    fn tick_rate(&self) -> u64;
+    fn init(&mut self) -> Config;
     fn tick(&mut self, context:Context) -> Context;
 }
 

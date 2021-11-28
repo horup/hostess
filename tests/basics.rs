@@ -1,11 +1,7 @@
 use std::{net::TcpStream, process::exit};
 
 use futures_util::{future, pin_mut, SinkExt, Stream, StreamExt};
-use hostess::{
-    game_server::{GameServer, GameServerConstructor},
-    server::Server,
-    Bincoded, ClientMsg, ServerMsg,
-};
+use hostess::{Bincoded, ClientMsg, ServerMsg, game_server::{Config, GameServer, GameServerConstructor}, server::Server};
 use tokio::{io::{AsyncReadExt, AsyncWriteExt}, time::Duration};
 use tokio_tungstenite::{
     connect_async,
@@ -20,10 +16,6 @@ pub struct TestGame {
 }
 
 impl GameServer for TestGame {
-    fn tick_rate(&self) -> u64 {
-        64
-    }
-
     fn tick(&mut self, mut context: hostess::game_server::Context) -> hostess::game_server::Context {
         let messages = context.host_messages.clone();
         for msg in messages.iter() {
@@ -46,6 +38,13 @@ impl GameServer for TestGame {
             }
         }
         context
+    }
+
+    fn init(&mut self) -> hostess::game_server::Config {
+        Config {
+            tick_rate:20,
+            max_players:1
+        }
     }
 }
 
