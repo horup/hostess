@@ -5,7 +5,7 @@ pub use tokio;
 pub mod host;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub mod server;
+pub mod manager;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod lobby;

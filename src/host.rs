@@ -6,7 +6,7 @@ use uuid::Uuid;
 use log::{info};
 use tokio::select;
 
-use crate::{ClientMsg, HostInfo, ServerMsg, server::{ClientSink, ConnectedClient}, game_server::{GameServerConstructor, Context, GameServerMsg, HostMsg}};
+use crate::{ClientMsg, HostInfo, ServerMsg, manager::{ClientSink, ConnectedClient}, game_server::{GameServerConstructor, Context, GameServerMsg, HostMsg}};
 
 enum Msg {
     HostMsg(HostMsg),

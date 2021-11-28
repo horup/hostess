@@ -17,7 +17,7 @@ pub struct ServerConfig {
     pub constructor:GameServerConstructor
 }
 
-pub struct Server {
+pub struct ServerManager {
     addr: String,
     lobby: Arc<RwLock<Lobby>>,
     pub config:ServerConfig
@@ -128,7 +128,7 @@ impl From<SplitStream<WebSocket>> for ClientStream {
     }
 }
 
-impl Server {
+impl ServerManager {
     pub fn new(addr: &str, constructor:GameServerConstructor) -> Self {
         Self {
             addr: addr.into(),

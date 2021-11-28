@@ -1,7 +1,7 @@
 use std::{net::TcpStream, process::exit};
 
 use futures_util::{future, pin_mut, SinkExt, Stream, StreamExt};
-use hostess::{Bincoded, ClientMsg, ServerMsg, game_server::{Config, GameServer, GameServerConstructor}, server::Server};
+use hostess::{Bincoded, ClientMsg, ServerMsg, game_server::{Config, GameServer, GameServerConstructor}, manager::ServerManager};
 use tokio::{io::{AsyncReadExt, AsyncWriteExt}, time::Duration};
 use tokio_tungstenite::{
     connect_async,
@@ -77,17 +77,17 @@ pub async fn basics() {
         exit(1);
     });
 
-    // create a server with some game_servers
-    let server = tokio::spawn(async {
-        let mut hostess = Server::new(LISTEN, TestGame::constructor());
+    // create a manager with some game_servers
+    let _ = tokio::spawn(async {
+        let mut manager = ServerManager::new(LISTEN, TestGame::constructor());
 
         for _ in 0..10 {
-            hostess
+            manager
                 .new_game_server(Uuid::default(), TestGame::constructor())
                 .await;
         }
 
-        let _ = hostess.spawn().await;
+        let _ = manager.spawn().await;
     });
 
     // connect to server

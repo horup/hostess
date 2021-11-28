@@ -27,7 +27,7 @@ pub enum GameServerMsg {
     }
 }
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Debug)]
 pub struct Config {
     pub tick_rate:u64,
     pub max_players:u64
