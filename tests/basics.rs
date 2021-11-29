@@ -136,10 +136,8 @@ pub async fn basics() {
                 break;
             },
             ServerMsg::JoinRejected {
-
-            } => {
-                
-            }
+                host
+            } => { }
         }
     }
 }

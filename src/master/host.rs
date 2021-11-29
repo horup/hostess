@@ -1,7 +1,7 @@
-use std::{collections::{HashMap, VecDeque}, time::{Duration, Instant}};
+use std::{collections::{HashMap, VecDeque}, sync::Arc, time::{Duration, Instant}};
 
 use futures_util::{FutureExt, pin_mut};
-use tokio::{sync::{mpsc::channel, mpsc::Sender}, time::{MissedTickBehavior, interval}};
+use tokio::{sync::{RwLock, mpsc::Sender, mpsc::channel}, time::{MissedTickBehavior, interval}};
 use uuid::Uuid;
 use log::{info};
 use tokio::select;
@@ -24,26 +24,29 @@ enum Msg {
 }
 #[derive(Clone)]
 pub struct Host {
-    pub info:HostInfo,
+    pub info:Arc<RwLock<HostInfo>>,
     sender:Sender<Msg>,
 }
 
 impl Host {
-    pub fn new(mut info:HostInfo, constructor:Constructor) -> Self {
+    pub fn new(host_info:Arc<RwLock<HostInfo>>, constructor:Constructor) -> Self {
         let buffer_len = 1024;
         let (sender, mut receiver) = channel::<Msg>(buffer_len);
-       
-        let mut g = constructor.construct();
-        let config = g.init();
-        info.max_players = config.max_players;
+
         let host = Self {
-            info:info.clone(),
+            info:host_info.clone(),
             sender,
         };
 
-
         tokio::spawn(async move {
-           
+            let mut g = constructor.construct();
+            let config = g.init();
+            {
+                let mut host_info = host_info.write().await;
+                host_info.current_players = 0;
+                host_info.max_players = config.max_players;
+            }
+
             let period = Duration::from_millis(1000 / config.tick_rate);
             let mut timer = interval(period);
             timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
@@ -99,6 +102,8 @@ impl Host {
                                         match &msg {
                                             HostMsg::ClientLeft { client_id } => {
                                                 if let Some((tx, transfer)) = clients.remove(client_id) {
+                                                    let mut host_info = host_info.write().await;
+                                                    host_info.current_players -= 1;
                                                     let _ = transfer.send(tx);
                                                 }
                                             },
@@ -113,16 +118,27 @@ impl Host {
                                         sink: mut tx, 
                                         return_sink: return_tx 
                                     } => {
-                                        context.host_messages.push_back(HostMsg::ClientJoined {
-                                            client_id:client_id,
-                                            client_name:client_name
-                                        });
+                                        let mut host_info = host_info.write().await;
+                                        if host_info.current_players >= host_info.max_players {
+                                            // if max players reach, reject.
+                                            let _ = tx.send(ServerMsg::JoinRejected {
+                                                host:host_info.clone()
+                                            }).await;
 
-                                        let _ = tx.send(ServerMsg::HostJoined {
-                                            host:info.clone()
-                                        }).await;
-    
-                                        clients.insert(client_id, (tx, return_tx));
+                                            let _ = return_tx.send(tx);
+                                        } else {
+                                            // else accept the join
+                                            context.host_messages.push_back(HostMsg::ClientJoined {
+                                                client_id:client_id,
+                                                client_name:client_name
+                                            });
+                                            host_info.current_players += 1;
+                                            let _ = tx.send(ServerMsg::HostJoined {
+                                                host:host_info.clone()
+                                            }).await;
+        
+                                            clients.insert(client_id, (tx, return_tx));
+                                        }
                                     },
                                     Msg::Ping {
                                         client_id,
@@ -146,11 +162,11 @@ impl Host {
             }
         });
 
-        host
+        return host;
     }
 
     pub async fn join(&self, client:Client) -> Option<Client> {
-        info!("Client {} with name '{}' joined Host {}", client.client_id, client.client_name, self.info.id);
+        info!("Client {} with name '{}' joined Host {}", client.client_id, client.client_name, self.info.read().await.id);
         let tx = client.sink;
         let mut rx = client.stream;
 
@@ -200,7 +216,7 @@ impl Host {
             client_id:client.client_id
         })).await;
         
-        info!("Client {} left Host {}", client.client_id, self.info.id);
+        info!("Client {} left Host {}", client.client_id, self.info.read().await.id);
         if let Ok(tx) = return_rx.await {
             return Some(Client {
                 sink: tx,

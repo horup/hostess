@@ -166,7 +166,7 @@ impl Master {
 
         // send list of hosts to client
         let _ = client.sink.send(ServerMsg::Hosts {
-            hosts:lobby.read().await.hosts()
+            hosts:lobby.read().await.hosts().await
         }).await;
 
         while let Some(msg) = client.stream.stream.next().await {
@@ -191,7 +191,7 @@ impl Master {
                                     },
                                     ClientMsg::RefreshHosts => {
                                         let _ = client.sink.send(ServerMsg::Hosts {
-                                            hosts:lobby.read().await.hosts()
+                                            hosts:lobby.read().await.hosts().await
                                         }).await;
                                     },
                                     ClientMsg::JoinHost { host_id } => {

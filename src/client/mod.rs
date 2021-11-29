@@ -70,6 +70,7 @@ pub enum ServerMsg {
         msg:Vec<u8>
     },
     JoinRejected {
+        host:HostInfo
     }
 }
 

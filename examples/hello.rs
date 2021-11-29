@@ -53,6 +53,11 @@ pub fn spawn_client() -> JoinHandle<()> {
                             host_id: hosts.first().unwrap().id,
                         }).await;
                     },
+                    ServerMsg::JoinRejected {
+                        host
+                    } => {
+                        println!("failed to join host {:?}", host);
+                    }
                     _ => {}
                 }
             }

@@ -1,6 +1,7 @@
-use std::{collections::HashMap};
+use std::{collections::HashMap, sync::Arc};
 
 use log::info;
+use tokio::sync::RwLock;
 use uuid::Uuid;
 use crate::{server::{Server, Constructor}};
 
@@ -20,20 +21,24 @@ impl Lobby {
 
     pub fn new_host(&mut self, creator:Uuid, constructor:Constructor) -> Uuid {
         let host_id = Uuid::new_v4();
-        let host = Host::new(HostInfo {
+        let host = Host::new(Arc::new(RwLock::new(HostInfo {
             id:host_id,
             creator:creator,
             max_players:0,
             current_players:0
-        }, constructor);
+        })), constructor);
 
         self.hosts.insert(host_id, host);
         info!("Host {:?} created by client {}", host_id, creator);
         return host_id;
     }
 
-    pub fn hosts(&self) -> Vec<HostInfo> {
-        let list = self.hosts.iter().map(|(_, host)| host.info.clone()).collect();
+    pub async fn hosts(&self) -> Vec<HostInfo> {
+        let mut list = Vec::new();
+        for (_, host) in self.hosts.iter() {
+            list.push(host.info.read().await.clone());
+        }
+       
         return list;
     }
 
