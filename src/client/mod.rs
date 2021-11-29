@@ -1,8 +1,18 @@
+#[cfg(not(target_arch = "wasm32"))]
+pub mod tungstenite_client;
+
 pub use crate::shared::{HostInfo};
 pub use uuid::Uuid;
 pub use serde::{Deserialize, Serialize};
 pub use crate::bincoded::Bincoded;
 
+
+
+
+pub trait Client {
+    fn send(&mut self, msg:ClientMsg);
+    fn recv(&mut self, msg:ServerMsg);
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 /// message sent from Client to Server
