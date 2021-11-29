@@ -29,17 +29,21 @@ pub struct Host {
 }
 
 impl Host {
-    pub fn new(info:HostInfo, constructor:Constructor) -> Self {
+    pub fn new(mut info:HostInfo, constructor:Constructor) -> Self {
         let buffer_len = 1024;
         let (sender, mut receiver) = channel::<Msg>(buffer_len);
+       
+        let mut g = constructor.construct();
+        let config = g.init();
+        info.max_players = config.max_players;
         let host = Self {
             info:info.clone(),
             sender,
         };
 
+
         tokio::spawn(async move {
-            let mut g = constructor.construct();
-            let config = g.init();
+           
             let period = Duration::from_millis(1000 / config.tick_rate);
             let mut timer = interval(period);
             timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
@@ -113,6 +117,7 @@ impl Host {
                                             client_id:client_id,
                                             client_name:client_name
                                         });
+
                                         let _ = tx.send(ServerMsg::HostJoined {
                                             host:info.clone()
                                         }).await;

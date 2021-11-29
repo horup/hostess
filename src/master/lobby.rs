@@ -22,7 +22,9 @@ impl Lobby {
         let host_id = Uuid::new_v4();
         let host = Host::new(HostInfo {
             id:host_id,
-            creator:creator
+            creator:creator,
+            max_players:0,
+            current_players:0
         }, constructor);
 
         self.hosts.insert(host_id, host);

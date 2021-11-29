@@ -135,6 +135,11 @@ pub async fn basics() {
                 assert_eq!(msg.len(), 4);
                 break;
             },
+            ServerMsg::JoinRejected {
+
+            } => {
+                
+            }
         }
     }
 }

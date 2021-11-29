@@ -54,6 +54,7 @@ pub enum ServerMsg {
     HostJoined {
         host:HostInfo
     },
+   
     Pong {
         tick:f64,
 
@@ -67,6 +68,8 @@ pub enum ServerMsg {
     },
     Custom {
         msg:Vec<u8>
+    },
+    JoinRejected {
     }
 }
 

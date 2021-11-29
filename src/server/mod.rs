@@ -30,7 +30,7 @@ pub enum GameServerMsg {
 #[derive(Debug)]
 pub struct Config {
     pub tick_rate:u64,
-    pub max_players:u64
+    pub max_players:u32
 }
 
 pub struct Ctx {
