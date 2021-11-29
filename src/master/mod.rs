@@ -14,12 +14,12 @@ use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
 use warp::{Error, Filter, ws::{Message, WebSocket}};
 
-use crate::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Server, ServerConstructor}};
+use crate::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Server, Constructor}};
 
 #[derive(Clone)]
 pub struct Config {
     pub host_creation:bool,
-    pub constructor:ServerConstructor
+    pub constructor:Constructor
 }
 
 /// takes care of hosting one or more servers
@@ -139,7 +139,7 @@ impl From<SplitStream<WebSocket>> for ClientStream {
 impl Master {
     /// instantiates a new Hostess instance.
     /// `constructor` is the function responsible for constructing the Server
-    pub fn new(addr: &str, constructor:ServerConstructor) -> Self {
+    pub fn new(addr: &str, constructor:Constructor) -> Self {
         Self {
             addr: addr.into(),
             lobby: Arc::new(RwLock::new(Lobby::new())),

@@ -17,11 +17,9 @@ impl Server for HelloServer {
     }
 }
 
-
-
 #[tokio::main]
 pub async fn main() {
-    let mut master = Master::new("127.0.0.1:1234", ServerConstructor::new::<HelloServer>());
+    let mut master = Master::new("127.0.0.1:1234", Constructor::new::<HelloServer>());
     master.new_server(Uuid::default()).await;
     let _ = master.start().await;
 }
