@@ -5,6 +5,7 @@ pub use crate::bincoded::Bincoded;
 
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+/// message sent from Client to Server
 pub enum ClientMsg {
     Hello {
         client_id:Uuid,
@@ -29,6 +30,7 @@ pub enum ClientMsg {
 
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+/// message sent from Server to Client
 pub enum ServerMsg {
     LobbyJoined {
 
