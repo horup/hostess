@@ -1,5 +1,7 @@
 pub use log;
 pub use uuid;
+#[cfg(not(target_arch = "wasm32"))]
+pub use tokio;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod master;
