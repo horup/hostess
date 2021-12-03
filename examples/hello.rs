@@ -79,7 +79,7 @@ pub fn spawn_master() -> JoinHandle<()> {
 pub async fn main() {
     let master = spawn_master();
 
-    for i in 0..10 {
+    for _ in 0..10 {
         spawn_client();
     }
 

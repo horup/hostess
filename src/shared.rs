@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct HostInfo {
     pub id:Uuid,
