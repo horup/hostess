@@ -16,12 +16,11 @@ impl Server for HelloServer {
     }
 
     fn tick(&mut self, ctx:&mut Ctx) {
-        for msg in ctx.instance_messages.drain(..) {
+        while let Some(msg) = ctx.pop_msg() {
             match msg {
-                InstanceMsg::ClientJoined { client_id: _, client_name: _ } => self.players += 1,
-                InstanceMsg::ClientLeft { client_id: _ } => self.players -= 1,
-                InstanceMsg::CustomMsg { client_id: _, msg:_ } => {
-                    
+                InMsg::ClientJoined { client_id: _, client_name: _ } => self.players += 1,
+                InMsg::ClientLeft { client_id: _ } => self.players -= 1,
+                InMsg::CustomMsg { client_id: _, msg:_ } => {
                 },
             }
         }

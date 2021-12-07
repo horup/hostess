@@ -7,10 +7,10 @@ use log::{info};
 use tokio::select;
 use crate::{shared::{InstanceInfo}, server};
 
-use crate::{client::{ClientMsg, ServerMsg}, server::{Constructor, Ctx, InstanceMsg}, master::{ClientSink, Client}};
+use crate::{client::{ClientMsg, ServerMsg}, server::{Constructor, Ctx, InMsg}, master::{ClientSink, Client}};
 
 enum Msg {
-    InstanceMsg(InstanceMsg),
+    InstanceMsg(InMsg),
     ClientTransfer {
         client_id:Uuid,
         client_name:String,
@@ -51,8 +51,8 @@ impl Instance {
             let mut timer = interval(period);
             timer.set_missed_tick_behavior(MissedTickBehavior::Skip);
             let mut context = Ctx {
-                game_messages:VecDeque::new(),
-                instance_messages:VecDeque::with_capacity(buffer_len),
+                out_messages:VecDeque::new(),
+                in_messages:VecDeque::with_capacity(buffer_len),
                 delta:timer.period().as_secs_f64(),
                 time:0.0
             };
@@ -71,16 +71,16 @@ impl Instance {
                         context.delta = diff.as_secs_f64();
                         context.time += context.delta;
                         g.tick(&mut context);
-                        for msg in context.game_messages.drain(..) {
+                        for msg in context.out_messages.drain(..) {
                             match msg {
-                                server::ServerMsg::CustomToAll { msg } => {
+                                server::OutMsg::CustomToAll { msg } => {
                                     for (sink, _) in &mut clients.values_mut() {
                                         let _ = sink.send(ServerMsg::Custom{
                                             msg:msg.clone()
                                         }).await;
                                     }
                                 },
-                                server::ServerMsg::CustomTo { client_id, msg } => {
+                                server::OutMsg::CustomTo { client_id, msg } => {
                                     if let Some((sink, _)) = clients.get_mut(&client_id) {
                                         let _ = sink.send(ServerMsg::Custom{
                                             msg:msg.clone()
@@ -90,7 +90,7 @@ impl Instance {
                             }
                         }
 
-                        context.instance_messages.clear();
+                        context.in_messages.clear();
 
                         last_tick = Instant::now();
                     },
@@ -100,7 +100,7 @@ impl Instance {
                                 match msg {
                                     Msg::InstanceMsg(msg) => {
                                         match &msg {
-                                            InstanceMsg::ClientLeft { client_id } => {
+                                            InMsg::ClientLeft { client_id } => {
                                                 if let Some((tx, transfer)) = clients.remove(client_id) {
                                                     let mut host_info = info.write().await;
                                                     host_info.current_players -= 1;
@@ -110,7 +110,7 @@ impl Instance {
                                             _=>{}
                                         }
     
-                                        context.instance_messages.push_back(msg);
+                                        context.in_messages.push_back(msg);
                                     },
                                     Msg::ClientTransfer { 
                                         client_id, 
@@ -128,7 +128,7 @@ impl Instance {
                                             let _ = return_tx.send(tx);
                                         } else {
                                             // else accept the join
-                                            context.instance_messages.push_back(InstanceMsg::ClientJoined {
+                                            context.in_messages.push_back(InMsg::ClientJoined {
                                                 client_id:client_id,
                                                 client_name:client_name
                                             });
@@ -190,7 +190,7 @@ impl Instance {
                         ClientMsg::CustomMsg {
                             msg
                         } => {
-                            let _ = host_sender.send(Msg::InstanceMsg(InstanceMsg::CustomMsg {
+                            let _ = host_sender.send(Msg::InstanceMsg(InMsg::CustomMsg {
                                 client_id:client.client_id,
                                 msg
                             })).await;
@@ -212,7 +212,7 @@ impl Instance {
             }
         }
 
-        let _ = host_sender.send(Msg::InstanceMsg(InstanceMsg::ClientLeft {
+        let _ = host_sender.send(Msg::InstanceMsg(InMsg::ClientLeft {
             client_id:client.client_id
         })).await;
         

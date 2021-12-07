@@ -2,7 +2,7 @@ use std::{collections::VecDeque, sync::Arc};
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
-pub enum InstanceMsg {
+pub enum InMsg {
     ClientJoined {
         client_id:Uuid,
         client_name:String
@@ -17,7 +17,7 @@ pub enum InstanceMsg {
 }
 
 #[derive(Clone, Debug)]
-pub enum ServerMsg {
+pub enum OutMsg {
     CustomToAll {
         msg:Vec<u8>
     },
@@ -34,8 +34,8 @@ pub struct Config {
 }
 
 pub struct Ctx {
-    pub instance_messages:VecDeque<InstanceMsg>,
-    pub game_messages:VecDeque<ServerMsg>,
+    pub(crate) in_messages:VecDeque<InMsg>,
+    pub(crate) out_messages:VecDeque<OutMsg>,
 
     /// delta time between ticks in seconds between ticks
     /// this value can go from close zero to many thousands 
@@ -46,14 +46,20 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    pub fn pop_host_msg(&mut self) -> Option<InstanceMsg> {
-        let msg = self.instance_messages.pop_front();
+    pub fn pop_msg(&mut self) -> Option<InMsg> {
+        let msg = self.in_messages.pop_front();
         return msg;
     }
 
-    pub fn push_game_msg(&mut self, msg:ServerMsg) {
+    pub fn push_msg(&mut self, msg:OutMsg) {
         let msg = msg.into();
-        self.game_messages.push_back(msg);
+        self.out_messages.push_back(msg);
+    }
+
+    pub fn pop_all(&mut self) -> VecDeque<InMsg> {
+        let cloned = self.in_messages.clone();
+        self.in_messages.clear();
+        return cloned;
     }
 }
 

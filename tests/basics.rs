@@ -1,6 +1,6 @@
 use std::{process::exit};
 use futures_util::{ SinkExt, Stream, StreamExt};
-use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Config, Server, Constructor, self}, master::Master};
+use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Config, Server, Constructor, self, InMsg, OutMsg, Ctx}, master::Master};
 use tokio::{time::Duration};
 use tokio_tungstenite::{
     connect_async,
@@ -15,21 +15,21 @@ pub struct TestGame {
 }
 
 impl Server for TestGame {
-    fn tick(&mut self, context: &mut hostess::server::Ctx) {
-        let messages = context.instance_messages.clone();
+    fn tick(&mut self, context: &mut Ctx) {
+        let messages = context.pop_all();
         for msg in messages.iter() {
             match msg {
-                hostess::server::InstanceMsg::ClientJoined { client_id, client_name } => {
+                InMsg::ClientJoined { client_id, client_name } => {
                     assert_eq!(client_name, "Tester");
                     self.client_id = Some(client_id.clone());
                 },
-                hostess::server::InstanceMsg::ClientLeft { client_id } => {
+                InMsg::ClientLeft { client_id } => {
                     assert_eq!(self.client_id.unwrap(), *client_id);
                     self.client_id = None;
                 },
-                hostess::server::InstanceMsg::CustomMsg { client_id, msg } => {
+                InMsg::CustomMsg { client_id, msg } => {
                     assert_eq!(self.client_id.unwrap(), *client_id);
-                    context.push_game_msg(server::ServerMsg::CustomTo {
+                    context.push_msg(OutMsg::CustomTo {
                         client_id: *client_id,
                         msg: msg.clone(),
                     });
