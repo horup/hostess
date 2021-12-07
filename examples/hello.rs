@@ -16,7 +16,7 @@ impl Server for HelloServer {
     }
 
     fn tick(&mut self, ctx:&mut Ctx) {
-        for msg in ctx.host_messages.drain(..) {
+        for msg in ctx.instance_messages.drain(..) {
             match msg {
                 InstanceMsg::ClientJoined { client_id: _, client_name: _ } => self.players += 1,
                 InstanceMsg::ClientLeft { client_id: _ } => self.players -= 1,

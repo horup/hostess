@@ -16,7 +16,7 @@ pub struct TestGame {
 
 impl Server for TestGame {
     fn tick(&mut self, context: &mut hostess::server::Ctx) {
-        let messages = context.host_messages.clone();
+        let messages = context.instance_messages.clone();
         for msg in messages.iter() {
             match msg {
                 hostess::server::InstanceMsg::ClientJoined { client_id, client_name } => {

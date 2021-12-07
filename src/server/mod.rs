@@ -34,7 +34,7 @@ pub struct Config {
 }
 
 pub struct Ctx {
-    pub host_messages:VecDeque<InstanceMsg>,
+    pub instance_messages:VecDeque<InstanceMsg>,
     pub game_messages:VecDeque<GameServerMsg>,
 
     /// delta time between ticks in seconds between ticks
@@ -47,7 +47,7 @@ pub struct Ctx {
 
 impl Ctx {
     pub fn pop_host_msg(&mut self) -> Option<InstanceMsg> {
-        let msg = self.host_messages.pop_front();
+        let msg = self.instance_messages.pop_front();
         return msg;
     }
 

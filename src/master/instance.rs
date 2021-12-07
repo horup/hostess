@@ -52,7 +52,7 @@ impl Instance {
             timer.set_missed_tick_behavior(MissedTickBehavior::Skip);
             let mut context = Ctx {
                 game_messages:VecDeque::new(),
-                host_messages:VecDeque::with_capacity(buffer_len),
+                instance_messages:VecDeque::with_capacity(buffer_len),
                 delta:timer.period().as_secs_f64(),
                 time:0.0
             };
@@ -90,7 +90,7 @@ impl Instance {
                             }
                         }
 
-                        context.host_messages.clear();
+                        context.instance_messages.clear();
 
                         last_tick = Instant::now();
                     },
@@ -110,7 +110,7 @@ impl Instance {
                                             _=>{}
                                         }
     
-                                        context.host_messages.push_back(msg);
+                                        context.instance_messages.push_back(msg);
                                     },
                                     Msg::ClientTransfer { 
                                         client_id, 
@@ -128,7 +128,7 @@ impl Instance {
                                             let _ = return_tx.send(tx);
                                         } else {
                                             // else accept the join
-                                            context.host_messages.push_back(InstanceMsg::ClientJoined {
+                                            context.instance_messages.push_back(InstanceMsg::ClientJoined {
                                                 client_id:client_id,
                                                 client_name:client_name
                                             });
