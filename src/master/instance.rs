@@ -5,12 +5,12 @@ use tokio::{sync::{RwLock, mpsc::Sender, mpsc::channel}, time::{MissedTickBehavi
 use uuid::Uuid;
 use log::{info};
 use tokio::select;
-use crate::shared::{HostInfo};
+use crate::shared::{InstanceInfo};
 
-use crate::{client::{ClientMsg, ServerMsg}, server::{Constructor, Ctx, GameServerMsg, HostMsg}, master::{ClientSink, Client}};
+use crate::{client::{ClientMsg, ServerMsg}, server::{Constructor, Ctx, GameServerMsg, InstanceMsg}, master::{ClientSink, Client}};
 
 enum Msg {
-    HostMsg(HostMsg),
+    InstanceMsg(InstanceMsg),
     ClientTransfer {
         client_id:Uuid,
         client_name:String,
@@ -23,13 +23,13 @@ enum Msg {
     }
 }
 #[derive(Clone)]
-pub struct Host {
-    pub info:Arc<RwLock<HostInfo>>,
+pub struct Instance {
+    pub info:Arc<RwLock<InstanceInfo>>,
     sender:Sender<Msg>,
 }
 
-impl Host {
-    pub fn new(host_info:Arc<RwLock<HostInfo>>, constructor:Constructor) -> Self {
+impl Instance {
+    pub fn new(host_info:Arc<RwLock<InstanceInfo>>, constructor:Constructor) -> Self {
         let buffer_len = 1024;
         let (sender, mut receiver) = channel::<Msg>(buffer_len);
 
@@ -98,9 +98,9 @@ impl Host {
                         match msg {
                             Some(msg) => {
                                 match msg {
-                                    Msg::HostMsg(msg) => {
+                                    Msg::InstanceMsg(msg) => {
                                         match &msg {
-                                            HostMsg::ClientLeft { client_id } => {
+                                            InstanceMsg::ClientLeft { client_id } => {
                                                 if let Some((tx, transfer)) = clients.remove(client_id) {
                                                     let mut host_info = host_info.write().await;
                                                     host_info.current_players -= 1;
@@ -122,19 +122,19 @@ impl Host {
                                         if host_info.current_players >= host_info.max_players {
                                             // if max players reach, reject.
                                             let _ = tx.send(ServerMsg::JoinRejected {
-                                                host:host_info.clone()
+                                                instance:host_info.clone()
                                             }).await;
 
                                             let _ = return_tx.send(tx);
                                         } else {
                                             // else accept the join
-                                            context.host_messages.push_back(HostMsg::ClientJoined {
+                                            context.host_messages.push_back(InstanceMsg::ClientJoined {
                                                 client_id:client_id,
                                                 client_name:client_name
                                             });
                                             host_info.current_players += 1;
-                                            let _ = tx.send(ServerMsg::HostJoined {
-                                                host:host_info.clone()
+                                            let _ = tx.send(ServerMsg::JoinedInstance {
+                                                instance:host_info.clone()
                                             }).await;
         
                                             clients.insert(client_id, (tx, return_tx));
@@ -183,14 +183,14 @@ impl Host {
             match msg {
                 Ok(msg) => {
                     match msg {
-                        ClientMsg::LeaveHost {} => {
+                        ClientMsg::LeaveInstance {} => {
                             // exit while and leave host
                             break;
                         },
                         ClientMsg::CustomMsg {
                             msg
                         } => {
-                            let _ = host_sender.send(Msg::HostMsg(HostMsg::CustomMsg {
+                            let _ = host_sender.send(Msg::InstanceMsg(InstanceMsg::CustomMsg {
                                 client_id:client.client_id,
                                 msg
                             })).await;
@@ -212,7 +212,7 @@ impl Host {
             }
         }
 
-        let _ = host_sender.send(Msg::HostMsg(HostMsg::ClientLeft {
+        let _ = host_sender.send(Msg::InstanceMsg(InstanceMsg::ClientLeft {
             client_id:client.client_id
         })).await;
         

@@ -1,18 +1,10 @@
 #[cfg(not(target_arch = "wasm32"))]
 pub mod tungstenite_client;
 
-pub use crate::shared::{HostInfo};
+pub use crate::shared::{InstanceInfo};
 pub use uuid::Uuid;
 pub use serde::{Deserialize, Serialize};
 pub use crate::bincoded::Bincoded;
-
-
-
-
-pub trait Client {
-    fn send(&mut self, msg:ClientMsg);
-    fn recv(&mut self, msg:ServerMsg);
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 /// message sent from Client to Server
@@ -21,13 +13,10 @@ pub enum ClientMsg {
         client_id:Uuid,
         client_name:String
     },
-    CreateHost {
-
+    JoinInstance {
+        instance_id:Uuid
     },
-    JoinHost {
-        host_id:Uuid
-    },
-    LeaveHost {
+    LeaveInstance {
     },
     CustomMsg {
         msg:Vec<u8>
@@ -35,26 +24,22 @@ pub enum ClientMsg {
     Ping {
         tick:f64
     },
-    RefreshHosts,
+    RefreshInstances,
 }
 
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 /// message sent from Server to Client
 pub enum ServerMsg {
-    LobbyJoined {
+    JoinedLobby {
 
     },
-    HostCreated {
-        host_id:Uuid
+    Instances {
+        instances:Vec<InstanceInfo>
     },
-    Hosts {
-        hosts:Vec<HostInfo>
+    JoinedInstance {
+        instance:InstanceInfo
     },
-    HostJoined {
-        host:HostInfo
-    },
-   
     Pong {
         tick:f64,
 
@@ -70,7 +55,7 @@ pub enum ServerMsg {
         msg:Vec<u8>
     },
     JoinRejected {
-        host:HostInfo
+        instance:InstanceInfo
     }
 }
 

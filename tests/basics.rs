@@ -19,15 +19,15 @@ impl Server for TestGame {
         let messages = context.host_messages.clone();
         for msg in messages.iter() {
             match msg {
-                hostess::server::HostMsg::ClientJoined { client_id, client_name } => {
+                hostess::server::InstanceMsg::ClientJoined { client_id, client_name } => {
                     assert_eq!(client_name, "Tester");
                     self.client_id = Some(client_id.clone());
                 },
-                hostess::server::HostMsg::ClientLeft { client_id } => {
+                hostess::server::InstanceMsg::ClientLeft { client_id } => {
                     assert_eq!(self.client_id.unwrap(), *client_id);
                     self.client_id = None;
                 },
-                hostess::server::HostMsg::CustomMsg { client_id, msg } => {
+                hostess::server::InstanceMsg::CustomMsg { client_id, msg } => {
                     assert_eq!(self.client_id.unwrap(), *client_id);
                     context.push_game_msg(hostess::server::GameServerMsg::CustomTo {
                         client_id: *client_id,
@@ -103,29 +103,26 @@ pub async fn basics() {
     )
     .await;
 
-    let mut joined_host = None;
+    let mut joined_instance = None;
     let mut lobby_joined = false;
     loop {
         let msg = recv(&mut ws_stream).await;
         match msg {
-            ServerMsg::LobbyJoined {  } => {
+            ServerMsg::JoinedLobby {  } => {
                 lobby_joined = true;
             },
-            ServerMsg::HostCreated { host_id:_ } => {
-
-            },
-            ServerMsg::Hosts { hosts } => {
+            ServerMsg::Instances { instances } => {
                 assert_eq!(lobby_joined, true);
-                if joined_host.is_none() {
-                    assert_eq!(hosts.len(), 10);
-                    let first = hosts.first().unwrap();
-                    joined_host = Some(first.clone());
-                    send(&mut ws_stream, ClientMsg::JoinHost { host_id:first.id}).await;
+                if joined_instance.is_none() {
+                    assert_eq!(instances.len(), 10);
+                    let first = instances.first().unwrap();
+                    joined_instance = Some(first.clone());
+                    send(&mut ws_stream, ClientMsg::JoinInstance { instance_id:first.id}).await;
                 }
             },
-            ServerMsg::HostJoined { host } => {
-                let joined_host = joined_host.as_ref().unwrap();
-                assert_eq!(host.id, joined_host.id);
+            ServerMsg::JoinedInstance { instance } => {
+                let joined_instance = joined_instance.as_ref().unwrap();
+                assert_eq!(instance.id, joined_instance.id);
                 send(&mut ws_stream, ClientMsg::CustomMsg { msg: [1,2,3,4].into() }).await;
             },
             ServerMsg::Pong { tick:_, server_bytes_sec:_, client_bytes_sec:_ } => {
@@ -136,7 +133,7 @@ pub async fn basics() {
                 break;
             },
             ServerMsg::JoinRejected {
-                host
+                instance
             } => { }
         }
     }

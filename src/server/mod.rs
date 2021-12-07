@@ -2,7 +2,7 @@ use std::{collections::VecDeque, sync::Arc};
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
-pub enum HostMsg {
+pub enum InstanceMsg {
     ClientJoined {
         client_id:Uuid,
         client_name:String
@@ -34,7 +34,7 @@ pub struct Config {
 }
 
 pub struct Ctx {
-    pub host_messages:VecDeque<HostMsg>,
+    pub host_messages:VecDeque<InstanceMsg>,
     pub game_messages:VecDeque<GameServerMsg>,
 
     /// delta time between ticks in seconds between ticks
@@ -46,7 +46,7 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    pub fn pop_host_msg(&mut self) -> Option<HostMsg> {
+    pub fn pop_host_msg(&mut self) -> Option<InstanceMsg> {
         let msg = self.host_messages.pop_front();
         return msg;
     }

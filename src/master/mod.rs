@@ -1,7 +1,7 @@
 mod lobby;
 use lobby::*;
 
-mod host;
+mod instance;
 
 use std::{net::SocketAddr, str::FromStr, sync::Arc, time::Instant};
 
@@ -165,8 +165,8 @@ impl Master {
         info!("Client {:?} entered lobby", client.client_id);
 
         // send list of hosts to client
-        let _ = client.sink.send(ServerMsg::Hosts {
-            hosts:lobby.read().await.hosts().await
+        let _ = client.sink.send(ServerMsg::Instances {
+            instances:lobby.read().await.hosts().await
         }).await;
 
         while let Some(msg) = client.stream.stream.next().await {
@@ -177,7 +177,7 @@ impl Master {
                         match bincode::deserialize::<ClientMsg>(bytes) {
                             Ok(msg) => {
                                 match msg {
-                                    ClientMsg::CreateHost {} => {
+                                 /*   ClientMsg::CreateHost {} => {
                                         if config.host_creation {
                                             // create new host
                                             let mut lobby = lobby.write().await;
@@ -188,13 +188,13 @@ impl Master {
                                                 host_id:host_id
                                             }).await;
                                         }
-                                    },
-                                    ClientMsg::RefreshHosts => {
-                                        let _ = client.sink.send(ServerMsg::Hosts {
-                                            hosts:lobby.read().await.hosts().await
+                                    },*/
+                                    ClientMsg::RefreshInstances => {
+                                        let _ = client.sink.send(ServerMsg::Instances {
+                                            instances:lobby.read().await.hosts().await
                                         }).await;
                                     },
-                                    ClientMsg::JoinHost { host_id } => {
+                                    ClientMsg::JoinInstance { instance_id: host_id } => {
                                         let lobby = lobby.read().await;
                                         if let Some(host) = lobby.get_host(host_id) {
                                             if let Some(c) = host.join(client).await {
@@ -263,7 +263,7 @@ impl Master {
         if let Some(client_id) = id {
             // Hello received, send Welcome message
             // and proceed to lobby if successfull
-            let msg = ServerMsg::LobbyJoined {};
+            let msg = ServerMsg::JoinedLobby {};
             match tx.send(msg).await {
                 Ok(_) => {
                     Self::client_joined_lobby(Client{sink: tx, stream, client_id, client_name: name}, lobby, config).await

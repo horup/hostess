@@ -18,9 +18,9 @@ impl Server for HelloServer {
     fn tick(&mut self, ctx:&mut Ctx) {
         for msg in ctx.host_messages.drain(..) {
             match msg {
-                HostMsg::ClientJoined { client_id: _, client_name: _ } => self.players += 1,
-                HostMsg::ClientLeft { client_id: _ } => self.players -= 1,
-                HostMsg::CustomMsg { client_id: _, msg:_ } => {
+                InstanceMsg::ClientJoined { client_id: _, client_name: _ } => self.players += 1,
+                InstanceMsg::ClientLeft { client_id: _ } => self.players -= 1,
+                InstanceMsg::CustomMsg { client_id: _, msg:_ } => {
                     
                 },
             }
@@ -47,14 +47,14 @@ pub fn spawn_client() -> JoinHandle<()> {
             // consume messages from server
             for msg in client.messages().await.unwrap().iter() {
                 match msg {
-                    ServerMsg::Hosts {hosts} => {
+                    ServerMsg::Instances {instances: hosts} => {
                         // join host
-                        client.send(ClientMsg::JoinHost {
-                            host_id: hosts.first().unwrap().id,
+                        client.send(ClientMsg::JoinInstance {
+                            instance_id: hosts.first().unwrap().id,
                         }).await;
                     },
                     ServerMsg::JoinRejected {
-                        host
+                        instance: host
                     } => {
                         println!("failed to join host {:?}", host);
                     }
