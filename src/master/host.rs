@@ -49,7 +49,7 @@ impl Host {
 
             let period = Duration::from_millis(1000 / config.tick_rate);
             let mut timer = interval(period);
-            timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
+            timer.set_missed_tick_behavior(MissedTickBehavior::Skip);
             let mut context = Ctx {
                 game_messages:VecDeque::new(),
                 host_messages:VecDeque::with_capacity(buffer_len),
