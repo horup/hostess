@@ -14,7 +14,7 @@ use tokio::{sync::RwLock, task::JoinHandle};
 use uuid::Uuid;
 use warp::{Error, Filter, ws::{Message, WebSocket}};
 
-use crate::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Server, Constructor}};
+use crate::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Constructor}};
 
 #[derive(Clone)]
 pub struct Config {
@@ -156,7 +156,7 @@ impl Master {
     async fn client_joined_lobby(
         mut client:Client,
         lobby: Arc<RwLock<Lobby>>,
-        config:Config
+        _config:Config
     ) {
         info!("Client {:?} entered lobby", client.client_id);
 

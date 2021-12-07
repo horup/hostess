@@ -1,6 +1,6 @@
 use std::{process::exit};
 use futures_util::{ SinkExt, Stream, StreamExt};
-use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Config, Server, Constructor, self, InMsg, OutMsg, Ctx}, master::Master};
+use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Config, Server, Constructor, InMsg, OutMsg, Ctx}, master::Master};
 use tokio::{time::Duration};
 use tokio_tungstenite::{
     connect_async,

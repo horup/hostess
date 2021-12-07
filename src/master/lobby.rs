@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use log::info;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use crate::{server::{Server, Constructor}};
+use crate::{server::{Constructor}};
 
 use super::instance::Instance;
 use crate::shared::InstanceInfo;

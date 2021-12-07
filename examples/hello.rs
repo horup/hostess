@@ -37,7 +37,7 @@ pub fn spawn_client() -> JoinHandle<()> {
         client.connect().await;
 
         // send hello
-        let res = client.send(ClientMsg::Hello {
+        let _ = client.send(ClientMsg::Hello {
             client_id: Uuid::new_v4(),
             client_name: "Test Client".into(),
         }).await;
