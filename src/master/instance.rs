@@ -29,12 +29,12 @@ pub struct Instance {
 }
 
 impl Instance {
-    pub fn new(host_info:Arc<RwLock<InstanceInfo>>, constructor:Constructor) -> Self {
+    pub fn new(info:Arc<RwLock<InstanceInfo>>, constructor:Constructor) -> Self {
         let buffer_len = 1024;
         let (sender, mut receiver) = channel::<Msg>(buffer_len);
 
-        let host = Self {
-            info:host_info.clone(),
+        let instance = Self {
+            info:info.clone(),
             sender,
         };
 
@@ -42,9 +42,9 @@ impl Instance {
             let mut g = constructor.construct();
             let config = g.init();
             {
-                let mut host_info = host_info.write().await;
-                host_info.current_players = 0;
-                host_info.max_players = config.max_players;
+                let mut instance = info.write().await;
+                instance.current_players = 0;
+                instance.max_players = config.max_players;
             }
 
             let period = Duration::from_millis(1000 / config.tick_rate);
@@ -102,7 +102,7 @@ impl Instance {
                                         match &msg {
                                             InstanceMsg::ClientLeft { client_id } => {
                                                 if let Some((tx, transfer)) = clients.remove(client_id) {
-                                                    let mut host_info = host_info.write().await;
+                                                    let mut host_info = info.write().await;
                                                     host_info.current_players -= 1;
                                                     let _ = transfer.send(tx);
                                                 }
@@ -118,7 +118,7 @@ impl Instance {
                                         sink: mut tx, 
                                         return_sink: return_tx 
                                     } => {
-                                        let mut host_info = host_info.write().await;
+                                        let mut host_info = info.write().await;
                                         if host_info.current_players >= host_info.max_players {
                                             // if max players reach, reject.
                                             let _ = tx.send(ServerMsg::JoinRejected {
@@ -162,7 +162,7 @@ impl Instance {
             }
         });
 
-        return host;
+        return instance;
     }
 
     pub async fn join(&self, client:Client) -> Option<Client> {
