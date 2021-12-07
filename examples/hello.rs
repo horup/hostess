@@ -69,7 +69,7 @@ pub fn spawn_client() -> JoinHandle<()> {
 pub fn spawn_master() -> JoinHandle<()> {
     tokio::spawn(async {
         let mut master = Master::new(ADDR, Constructor::new::<HelloServer>());
-        master.new_server(Uuid::default()).await;
+        master.new_instance(Uuid::default()).await;
         let _ = master.start().await;
     })
 }

@@ -138,7 +138,7 @@ impl From<SplitStream<WebSocket>> for ClientStream {
 
 impl Master {
     /// instantiates a new Hostess instance.
-    /// `constructor` is the function responsible for constructing the Server
+    /// `constructor` is the function responsible for constructing the Server on a new instace
     pub fn new(addr: &str, constructor:Constructor) -> Self {
         Self {
             addr: addr.into(),
@@ -147,14 +147,10 @@ impl Master {
         }
     }
 
-    /// creates a new server with the given `creator` id
-    pub async fn new_server(&mut self, creator:Uuid) {
+    /// creates a new server instance with the given `creator` id
+    pub async fn new_instance(&mut self, creator:Uuid) {
         let mut lobby = self.lobby.write().await;
-        lobby.new_host(creator, self.config.constructor.clone());
-    }
-
-    pub async fn new_server2(&mut self, creator:Uuid, server:Box<dyn Server>) {
-        let mut lobby = self.lobby.write().await;
+        lobby.new_instance(creator, self.config.constructor.clone());
     }
 
     async fn client_joined_lobby(
@@ -166,7 +162,7 @@ impl Master {
 
         // send list of hosts to client
         let _ = client.sink.send(ServerMsg::Instances {
-            instances:lobby.read().await.hosts().await
+            instances:lobby.read().await.instances().await
         }).await;
 
         while let Some(msg) = client.stream.stream.next().await {
@@ -191,12 +187,12 @@ impl Master {
                                     },*/
                                     ClientMsg::RefreshInstances => {
                                         let _ = client.sink.send(ServerMsg::Instances {
-                                            instances:lobby.read().await.hosts().await
+                                            instances:lobby.read().await.instances().await
                                         }).await;
                                     },
                                     ClientMsg::JoinInstance { instance_id: host_id } => {
                                         let lobby = lobby.read().await;
-                                        if let Some(host) = lobby.get_host(host_id) {
+                                        if let Some(host) = lobby.get_instance(host_id) {
                                             if let Some(c) = host.join(client).await {
                                                 client = c;
                                             } else {

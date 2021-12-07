@@ -80,7 +80,7 @@ pub async fn basics() {
         let mut master = Master::new(LISTEN, TestGame::constructor());
 
         for _ in 0..10 {
-            master.new_server(Uuid::default())
+            master.new_instance(Uuid::default())
                 .await;
         }
 

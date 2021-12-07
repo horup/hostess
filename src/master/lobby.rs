@@ -19,21 +19,21 @@ impl Lobby {
         }
     }
 
-    pub fn new_host(&mut self, creator:Uuid, constructor:Constructor) -> Uuid {
-        let host_id = Uuid::new_v4();
-        let host = Instance::new(Arc::new(RwLock::new(InstanceInfo {
-            id:host_id,
+    pub fn new_instance(&mut self, creator:Uuid, constructor:Constructor) -> Uuid {
+        let id = Uuid::new_v4();
+        let instance = Instance::new(Arc::new(RwLock::new(InstanceInfo {
+            id,
             creator:creator,
             max_players:0,
             current_players:0
         })), constructor);
 
-        self.instances.insert(host_id, host);
-        info!("Host {:?} created by client {}", host_id, creator);
-        return host_id;
+        self.instances.insert(id, instance);
+        info!("Host {:?} created by client {}", id, creator);
+        return id;
     }
 
-    pub async fn hosts(&self) -> Vec<InstanceInfo> {
+    pub async fn instances(&self) -> Vec<InstanceInfo> {
         let mut list = Vec::new();
         for (_, host) in self.instances.iter() {
             list.push(host.info.read().await.clone());
@@ -42,7 +42,7 @@ impl Lobby {
         return list;
     }
 
-    pub fn get_host(&self, id:Uuid) -> Option<Instance> {
+    pub fn get_instance(&self, id:Uuid) -> Option<Instance> {
         if let Some(host) = self.instances.get(&id) {
             return Some(host.clone());
         }
