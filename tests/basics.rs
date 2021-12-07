@@ -1,6 +1,6 @@
 use std::{process::exit};
 use futures_util::{ SinkExt, Stream, StreamExt};
-use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Config, Server, Constructor}, master::Master};
+use hostess::{bincoded::Bincoded, client::{ClientMsg, ServerMsg}, server::{Config, Server, Constructor, self}, master::Master};
 use tokio::{time::Duration};
 use tokio_tungstenite::{
     connect_async,
@@ -29,7 +29,7 @@ impl Server for TestGame {
                 },
                 hostess::server::InstanceMsg::CustomMsg { client_id, msg } => {
                     assert_eq!(self.client_id.unwrap(), *client_id);
-                    context.push_game_msg(hostess::server::GameServerMsg::CustomTo {
+                    context.push_game_msg(server::ServerMsg::CustomTo {
                         client_id: *client_id,
                         msg: msg.clone(),
                     });
@@ -133,7 +133,7 @@ pub async fn basics() {
                 break;
             },
             ServerMsg::JoinRejected {
-                instance
+                instance:_
             } => { }
         }
     }

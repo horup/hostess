@@ -5,9 +5,9 @@ use tokio::{sync::{RwLock, mpsc::Sender, mpsc::channel}, time::{MissedTickBehavi
 use uuid::Uuid;
 use log::{info};
 use tokio::select;
-use crate::shared::{InstanceInfo};
+use crate::{shared::{InstanceInfo}, server};
 
-use crate::{client::{ClientMsg, ServerMsg}, server::{Constructor, Ctx, GameServerMsg, InstanceMsg}, master::{ClientSink, Client}};
+use crate::{client::{ClientMsg, ServerMsg}, server::{Constructor, Ctx, InstanceMsg}, master::{ClientSink, Client}};
 
 enum Msg {
     InstanceMsg(InstanceMsg),
@@ -73,14 +73,14 @@ impl Instance {
                         g.tick(&mut context);
                         for msg in context.game_messages.drain(..) {
                             match msg {
-                                GameServerMsg::CustomToAll { msg } => {
+                                server::ServerMsg::CustomToAll { msg } => {
                                     for (sink, _) in &mut clients.values_mut() {
                                         let _ = sink.send(ServerMsg::Custom{
                                             msg:msg.clone()
                                         }).await;
                                     }
                                 },
-                                GameServerMsg::CustomTo { client_id, msg } => {
+                                server::ServerMsg::CustomTo { client_id, msg } => {
                                     if let Some((sink, _)) = clients.get_mut(&client_id) {
                                         let _ = sink.send(ServerMsg::Custom{
                                             msg:msg.clone()

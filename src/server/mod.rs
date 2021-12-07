@@ -17,7 +17,7 @@ pub enum InstanceMsg {
 }
 
 #[derive(Clone, Debug)]
-pub enum GameServerMsg {
+pub enum ServerMsg {
     CustomToAll {
         msg:Vec<u8>
     },
@@ -35,7 +35,7 @@ pub struct Config {
 
 pub struct Ctx {
     pub instance_messages:VecDeque<InstanceMsg>,
-    pub game_messages:VecDeque<GameServerMsg>,
+    pub game_messages:VecDeque<ServerMsg>,
 
     /// delta time between ticks in seconds between ticks
     /// this value can go from close zero to many thousands 
@@ -51,7 +51,7 @@ impl Ctx {
         return msg;
     }
 
-    pub fn push_game_msg(&mut self, msg:GameServerMsg) {
+    pub fn push_game_msg(&mut self, msg:ServerMsg) {
         let msg = msg.into();
         self.game_messages.push_back(msg);
     }
